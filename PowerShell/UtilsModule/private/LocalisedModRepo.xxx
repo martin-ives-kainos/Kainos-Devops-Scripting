@@ -1,0 +1,70 @@
+$ErrorActionPreference = "Stop"
+
+Import-Module -Name (Join-Path $PsScriptRoot "UtilsModule") -ErrorAction Stop
+
+$reqdModules = @("PSIni")
+
+<# # Fix the missing paths...oops
+
+$sysPaths='C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules'
+
+$VariableName = "PSModulePath"
+
+foreach ($newPath in $sysPaths -split ';') {
+    $currentValues = ([Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::Machine) -split ';') -ne '' ? ([Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::User) -split ';') : @()
+    if (Test-Path $newPath -PathType Container) {
+        $updatedValue = $currentValues + $NewPath
+        [Environment]::SetEnvironmentVariable($VariableName, ($updatedValue -join ';'), [System.EnvironmentVariableTarget]::User)
+    } else {
+        Write-Host "The path '$newPath' does not exist. Skipping..."
+    }
+} #>
+
+$psGallery = Get-PSRepository -Name "PSGallery" -ErrorAction SilentlyContinue
+if (-not $psGallery) {
+    Write-Host "PSGallery repository not found. Registering..."
+    Register-PSRepository -Name "PSGallery" -SourceLocation "https://www.powershellgallery.com/api/v2/" -InstallationPolicy Trusted
+}
+if (-not $psGallery.Trusted) {
+    Write-Host "PSGallery repository is not trusted. Setting it to trusted..."
+    Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted  
+}
+
+$localModPath = Join-Path $env:USERPROFILE "Documents\PowerShell\Modules"
+if (-not (Test-Path $localModPath -PathType Container)) {
+    Write-Host "Creating local module path: $localModPath"
+    New-Item -ItemType Directory -Path $localModPath -Force | Out-Null
+}
+
+Save-Module -Name PSIni -Path $localModPath -Repository PSGallery
+Get-ChildItem -Path $localModPath
+
+Update-UserEnvPath -VariableName "PSModulePath" -NewPath $localModPath
+
+# Register the local current user module path as a repository if not already registered
+$localRepo = Get-PSRepository -Name "LocalModules" -ErrorAction SilentlyContinue
+if (-not $localRepo) {
+    Write-Host "Registering local module path as a repository..."
+    Register-PSRepository -Name "LocalModules" -SourceLocation $localModPath -InstallationPolicy Trusted
+} 
+
+# Get-PSRepository | Format-List
+
+# Ensure that the LocalModules path is in PSModulePath
+
+
+Install-Module -Name PSIni -Repository LocalModules -Force -Scope CurrentUser
+
+#foreach ($module in $reqdModules) {
+
+<# foreach ($module in $reqdModules) {
+    if (-not (Get-Module -ListAvailable -Name $module)) {
+        Write-Host "Module '$module' is not installed. Installing..."
+        Install-Module -Name $module -Force -Scope CurrentUser
+    }
+} #>
+# # Source - https://stackoverflow.com/a/57714861
+# Posted by Eric Eskildsen, modified by community. See post 'Timeline' for change history
+# Retrieved 2026-08-18, License - CC BY-SA 4.0
+
+# Register-PSRepository -Name 'myRepositoryName' -SourceLocation 'C:\MyExampleFolder'
