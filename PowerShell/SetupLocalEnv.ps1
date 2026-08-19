@@ -1,28 +1,39 @@
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $false)]
+    [string[]]$reqdModules = @("PSIni"),
+    [bool]$FixModulePath = $false
+)
 $ErrorActionPreference = "Stop"
 
 Import-Module -Name (Join-Path $PsScriptRoot "UtilsModule") -ErrorAction Stop
 
-$reqdModules = @("PSIni", "Pester")
+Function Fix-PSModulePath {
+    $psModPath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
+
+    $fixPsModPath = @()
+    foreach ($path in $psModPath) {
+        if ($path.StartsWith($HOME) -and $path.ToLower().Contains("modules")) {
+            Write-Host "Removing conflicting module path from user environment variable: $path"
+            continue
+        }
+        $fixPsModPath += $path
+    }
+
+    $localModPath = Join-Path $env:USERPROFILE "Documents\WindowsPowerShell\Modules"
+    if (-not (Test-Path $localModPath -PathType Container)) {
+        Write-Host "Creating local module path: $localModPath"
+        New-Item -ItemType Directory -Path $localModPath -Force | Out-Null
+    }
+    $newPsModPath = ($localModPath + ";" + ($fixPsModPath -join ';')).Trim(';')
+    [Environment]::SetEnvironmentVariable("PSModulePath", $newPsModPath, [System.EnvironmentVariableTarget]::User)
+}
 
 # Fix if there is a conflicyting module path in the user environment variable`
-$psModPath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
-
-$fixPsModPath = @()
-foreach ($path in $psModPath) {
-    if ($path.StartsWith($HOME) -and $path.ToLower().Contains("modules")) {
-        Write-Host "Removing conflicting module path from user environment variable: $path"
-        continue
-    }
-        $fixPsModPath += $path
+if ($FixModulePath) {
+    Write-Host "Fixing PSModulePath in user environment variable..."
+    Fix-PSModulePath
 }
-
-$localModPath = Join-Path $env:USERPROFILE "Documents\WindowsPowerShell\Modules"
-if (-not (Test-Path $localModPath -PathType Container)) {
-    Write-Host "Creating local module path: $localModPath"
-    New-Item -ItemType Directory -Path $localModPath -Force | Out-Null
-}
-$newPsModPath = ($localModPath + ";" + ($fixPsModPath -join ';')).Trim(';')
-[Environment]::SetEnvironmentVariable("PSModulePath", $newPsModPath, [System.EnvironmentVariableTarget]::User)
 
 
 # $env:PSModulePath = $env:PSModulePath -replace "C:\\Program Files\\PowerShell\\Modules", ""
@@ -37,20 +48,10 @@ if (-not $psGallery.Trusted) {
     Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted  
 }
 
+#Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser -ErrorAction SilentlyContinue
 
-<# $localModuleFolders = Get-ChildItem -Path $localModPath -Directory | Select-Object -ExpandProperty Name
+$psModPath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
 
-foreach ($module in $reqdModules) {
-    if ($localModuleFolders -notcontains $module) {
-        Write-Host "Module '$module' not found in local module path. Installing..."
-        Save-Module -Name $module -Path $localModPath -Repository PSGallery -Force
-    }
-    else {
-        Write-Host "Module '$module' already exists in local module path. Skipping installation."
-    }
-}
- #>
-
-<# Save-Module -Name PSIni -Path $localModPath -Repository PSGallery
-Get-ChildItem -Path $localModPath
- #>
+Install-Module -Name PsIni -Scope CurrentUser -Force -AllowClobber
+$installedModules = Get-InstalledModule -ErrorAction SilentlyContinue
+$installedModules
