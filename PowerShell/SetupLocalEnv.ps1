@@ -74,6 +74,9 @@ if ($dupPath.Count -gt 0) {
     Write-Host "Cleaned up duplicate entries in user PSModulePath."
 }
 
+# Add additional methods and properties to the userSettings object for easier access and manipulation
+$userSettings | Add-Member -Force -MemberType NoteProperty -Name VerModulePaths -Value @()
+
 $userSettings | Add-Member -MemberType ScriptMethod -Name "GetVerModulePaths" -Value {
     $modulePaths = @()
     foreach ($path in $this.LocalModulePaths) {
@@ -86,26 +89,40 @@ $userSettings | Add-Member -MemberType ScriptMethod -Name "GetVerModulePaths" -V
         }
         $modulePaths += $newPath
     }
-    return $modulePaths
+    $this.VerModulePaths = ($modulePaths | Sort-Object -Property MajorVersion -Descending)
+    return $null
 }
 
-$verModPaths = $userSettings.GetVerModulePaths() | Sort-Object -Property MajorVersion -Descending
+
+$userSettings | Add-Member -Force -MemberType ScriptMethod -Name "GetVerPath" -Value {
+    param (
+        [Parameter(Mandatory = $true)]
+        [int]$MajorVersion
+    )
+    return ($this.VerModulePaths | Where-Object { $_.MajorVersion -eq $MajorVersion }).Path
+}
+
+$userSettings.GetVerModulePaths()
+
+
+$vModPath = $userSettings.GetVerPath($PsVersion.Major)
 
 # Ensure that the required modules are installed and available in the user's PSModulePath
-foreach ($modulePath in $verModPaths) {
+foreach ($modulePath in $userSettings.VerModulePaths) {
     Update-UserEnvPath -VariableName "PSModulePath" -NewPath $modulePath.Path
 }
 
 foreach ($module in $userSettings.reqdModules) {
-    if (-not (Get-InstalledModule -Name $module -ErrorAction SilentlyContinue)) {
-        Write-Host "Installing required module: $module"
+    $iMod = Get-Module -Name $module -ListAvailable | Where-Object { $_.Path.StartsWith($vModPath) }
+    if ($null -eq $iMod) {
+        Write-Host "Module '$module' not found in PSModulePath. Attempting to install..."
         try {
-            Install-Module -Name $module -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+            Install-Module -Name $module -Scope CurrentUser -Force -AllowClobber -SkipPublisherCheck -ErrorAction Stop
         }
         catch {
             Write-Warning "Failed to install module '$module': $_"
-            Save-Module -Name $module -Path $utilsAppPath -Force -ErrorAction Stop
-            Write-Host "Module '$module' saved to $utilsAppPath. Please ensure this path is included in your PSModulePath."
+            Save-Module -Name $module -Path $vModPath -Force -ErrorAction Stop
+            Write-Host "Module '$module' saved to $vModPath. Please ensure this path is included in your PSModulePath."
         }
     }
     else {
