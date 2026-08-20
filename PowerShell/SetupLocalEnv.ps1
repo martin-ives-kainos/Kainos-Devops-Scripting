@@ -6,9 +6,37 @@ param (
 )
 $ErrorActionPreference = "Stop"
 
+$utilsAppPath = Join-Path $HOME "utils"
+
+if (-not (Test-Path $utilsAppPath -PathType Container)) {
+    Write-Host "Utils directory not found: $utilsAppPath"
+    New-Item -ItemType Directory -Path $utilsAppPath -Force | Out-Null
+}
+
+$PsVersion = $PSVersionTable.PSVersion
+if ($PsVersion.Major -lt 7) {
+    Write-Host "PowerShell version 7 or higher is required. Current version: $PsVersion"
+
+    # Check for PowerShell 7 installation
+    $pwshExecutable = Get-ChildItem -Path $utilsAppPath -Filter "pwsh.exe" -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+    if (-not $pwshExecutable) {
+        Write-Host "PowerShell 7 not found in utils directory: $utilsAppPath"
+        exit 1
+    }
+
+    $allPaths = [environment]::GetEnvironmentVariable("PATH", [System.EnvironmentVariableTarget]::User).Trim(';') -split ';'
+    if ($allPaths -notcontains $pwshExecutable.DirectoryName) {
+        Write-Host "Adding PowerShell 7 directory to PATH: $($pwshExecutable.DirectoryName)"
+        $newPath = $pwshExecutable.DirectoryName + ";" + [environment]::GetEnvironmentVariable("PATH", [System.EnvironmentVariableTarget]::User)
+        [Environment]::SetEnvironmentVariable("PATH", $newPath, [System.EnvironmentVariableTarget]::User)
+    }
+}
+
 Import-Module -Name (Join-Path $PsScriptRoot "UtilsModule") -ErrorAction Stop
 
 Function Fix-PSModulePath {
+
     $psModPath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
 
     $fixPsModPath = @()
@@ -20,12 +48,17 @@ Function Fix-PSModulePath {
         $fixPsModPath += $path
     }
 
-    $localModPath = Join-Path $env:USERPROFILE "Documents\WindowsPowerShell\Modules"
-    if (-not (Test-Path $localModPath -PathType Container)) {
-        Write-Host "Creating local module path: $localModPath"
-        New-Item -ItemType Directory -Path $localModPath -Force | Out-Null
+    $localPaths = @(
+        (Join-Path $env:USERPROFILE "Documents\WindowsPowerShell\Modules"),
+        (Join-Path $env:USERPROFILE "Documents\PowerShell\Modules")
+    )
+    foreach ($localPath in $localPaths) {
+        if (-not (Test-Path $localPath -PathType Container)) {
+            Write-Host "Creating local module path: $localPath"
+            New-Item -ItemType Directory -Path $localPath -Force | Out-Null
+        }
     }
-    $newPsModPath = ($localModPath + ";" + ($fixPsModPath -join ';')).Trim(';')
+    $newPsModPath = (($localPaths -join ';').Trim(';') + ";" + ($fixPsModPath -join ';')).Trim(';')
     [Environment]::SetEnvironmentVariable("PSModulePath", $newPsModPath, [System.EnvironmentVariableTarget]::User)
 }
 
