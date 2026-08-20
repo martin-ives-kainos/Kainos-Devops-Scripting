@@ -20,8 +20,8 @@ if (-not (Test-Path $defaultSettingsFile -PathType Leaf)) {
         "LocalAppFolder"    = 'utils'
         "FixModulePath"    = $FixModulePath
         "LocalModulePaths" = @(
-            "Documents\WindowsPowerShell\Modules"
-            "Documents\PowerShell\Modules"
+            "5;Documents\WindowsPowerShell\Modules"
+            "7;Documents\PowerShell\Modules"
         )
     }
     $defaultSettings | ConvertTo-Json -Depth 99 | Out-File -Append $defaultSettingsFile
@@ -64,23 +64,49 @@ if ($PsVersion.Major -lt 7) {
     Write-Host "PowerShell version 7 or higher is required. Current version: $PsVersion"
 }
 
-# Ensure that the required modules are installed and available in the user's PSModulePath
-foreach ($modulePath in $userSettings.LocalModulePaths) {
-    $fullModulePath = Join-Path $HOME $modulePath
-    if (-not (Test-Path $fullModulePath -PathType Container)) {
-        Write-Host "Creating module path directory: $fullModulePath"
-        New-Item -ItemType Directory -Path $fullModulePath -Force | Out-Null
-    }
-    Update-UserEnvPath -VariableName "PSModulePath" -NewPath $fullModulePath
+# Clean up any duplicate entries in the user PSModulePath environment variable
+$dupPath = Get-DuplicatedUserEnvPaths -VariableName "PSModulePath"
+if ($dupPath.Count -gt 0) {
+    Write-Host "Duplicate entries found in user PSModulePath: $($dupPath -join ', ')"
+    $userPSModulePath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
+    $cleanedPaths = $userPSModulePath | Where-Object { $dupPath -notcontains $_ }
+    [Environment]::SetEnvironmentVariable("PSModulePath", ($cleanedPaths -join ';'), [System.EnvironmentVariableTarget]::User)
+    Write-Host "Cleaned up duplicate entries in user PSModulePath."
 }
 
-#$psModPath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
+$userSettings | Add-Member -MemberType ScriptMethod -Name "GetVerModulePaths" -Value {
+    $modulePaths = @()
+    foreach ($path in $this.LocalModulePaths) {
+        $newPath = New-Object PSObject -Property @{
+            MajorVersion = ($path -split ';')[0]
+            Path         = (Join-Path $HOME ($path -split ';')[1])
+        }
+        if (Test-Path $newPath.Path -PathType Container) {
+            New-Item -ItemType Directory -Path $newPath.Path -Force | Out-Null
+        }
+        $modulePaths += $newPath
+    }
+    return $modulePaths
+}
+
+$verModPaths = $userSettings.GetVerModulePaths() | Sort-Object -Property MajorVersion -Descending
+
+# Ensure that the required modules are installed and available in the user's PSModulePath
+foreach ($modulePath in $verModPaths) {
+    Update-UserEnvPath -VariableName "PSModulePath" -NewPath $modulePath.Path
+}
 
 foreach ($module in $userSettings.reqdModules) {
-    if (-not (Get-Module -ListAvailable -Name $module)) {
+    if (-not (Get-InstalledModule -Name $module -ErrorAction SilentlyContinue)) {
         Write-Host "Installing required module: $module"
-        Install-Module -Name $module -Scope CurrentUser -Force -AllowClobber
-
+        try {
+            Install-Module -Name $module -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "Failed to install module '$module': $_"
+            Save-Module -Name $module -Path $utilsAppPath -Force -ErrorAction Stop
+            Write-Host "Module '$module' saved to $utilsAppPath. Please ensure this path is included in your PSModulePath."
+        }
     }
     else {
         Write-Host "Required module already installed: $module"
