@@ -1,0 +1,12 @@
+{
+  "LocalModulePaths": [
+    "Documents\\WindowsPowerShell\\Modules",
+    "Documents\\PowerShell\\Modules"
+  ],
+  "reqdModules": [
+    "PSIni",
+    "Pester"
+  ],
+  "LocalAppFolder": "utils",
+  "FixModulePath": null
+}
