@@ -16,7 +16,7 @@ function Read-LocalCredential {
         $UserName = $env:USERNAME
     }
 
-    $savedFile = (Join-Path $env:USERPROFILE ('LocalCred_{0}.xml' -f $AppName.Trim()))
+    $savedFile = (Join-Path $env:APPDATA ('LocalCred_{0}.xml' -f $AppName.Trim()))
     if (Test-Path $savedFile -PathType Leaf) {
         $credential = Import-Clixml -Path $savedFile
     }
