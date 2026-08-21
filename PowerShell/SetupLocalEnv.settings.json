@@ -4,8 +4,8 @@
     "Documents\\PowerShell\\Modules"
   ],
   "reqdModules": [
-    "PSIni",
-    "Pester"
+    "PSIni;0",
+    "Pester;6.1.0"
   ],
   "LocalAppFolder": "utils",
   "FixModulePath": null

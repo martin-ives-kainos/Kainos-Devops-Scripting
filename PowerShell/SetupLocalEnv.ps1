@@ -1,8 +1,5 @@
 [CmdletBinding()]
 param (
-#    [Parameter(Mandatory = $false)]
-#    [string[]]$reqdModules = @("PSIni"),
-#    [bool]$FixModulePath = $false
 )
 $ErrorActionPreference = "Stop"
 
@@ -14,11 +11,11 @@ if (-not (Test-Path $defaultSettingsFile -PathType Leaf)) {
     Write-Host "Default settings file not found: creating $defaultSettingsFile"
     $defaultSettings = @{
         "reqdModules"      = @(
-            "PSIni"
-            "Pester"
+            "PSIni;0"
+            "Pester;6.1.0"
         )
         "LocalAppFolder"    = 'utils'
-        "FixModulePath"    = $FixModulePath
+        "FixModulePath"    = $false
         "LocalModulePaths" = @(
             "5;Documents\WindowsPowerShell\Modules"
             "7;Documents\PowerShell\Modules"
@@ -113,20 +110,43 @@ foreach ($modulePath in $userSettings.VerModulePaths) {
 }
 
 foreach ($module in $userSettings.reqdModules) {
-    $iMod = Get-Module -Name $module -ListAvailable | Where-Object { $_.Path.StartsWith($vModPath) }
+    $modName, $modMinVer = $module -split ";"
+    $iMod = Get-Module -Name $modName -ListAvailable | Where-Object {$_.Path.StartsWith($vModPath) -and ($_.Version.ToString() -ge $modMinVer)}
     if ($null -eq $iMod) {
         Write-Host "Module '$module' not found in PSModulePath. Attempting to install..."
         try {
             Install-Module -Name $module -Scope CurrentUser -Force -AllowClobber -SkipPublisherCheck -ErrorAction Stop
         }
         catch {
-            Write-Warning "Failed to install module '$module': $_"
-            Save-Module -Name $module -Path $vModPath -Force -ErrorAction Stop
-            Write-Host "Module '$module' saved to $vModPath. Please ensure this path is included in your PSModulePath."
+            $saveParams = @{
+                Name = $modName
+                Path = $vModPath
+            }
+            if ($modMinVer -gt '0') {
+                $saveParams.Add('MinimumVersion', $modMinVer)
+            }
+            Write-Warning "Failed to install module '$modName': $_"
+            Save-Module @saveParams -Force -ErrorAction Stop
+            Write-Host "Module '$modName' saved to $vModPath. Please ensure this path is included in your PSModulePath."
         }
     }
     else {
-        Write-Host "Required module already installed: $module"
+        Write-Host "Required module already installed: $modName v$($iMod.Version)"
+    }
+
+    # Test if we can import the module after installation
+    $importParams = @{
+        Name = $modName
+    }
+    if ($modMinVer -gt '0') {
+        $importParams.Add('MinimumVersion', $modMinVer)
+    }
+    try {
+        Import-Module @importParams  -ErrorAction Stop
+        Write-Host "Successfully imported module: $modName v$($iMod.Version)"
+    }
+    catch {
+        Write-Warning "Failed to import module '$modName v$($iMod.Version)' after installation: $_"
     }
 }
 
