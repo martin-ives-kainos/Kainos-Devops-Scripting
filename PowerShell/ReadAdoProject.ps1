@@ -17,5 +17,7 @@ $adoPatCred.GetNetworkCredential().Password | az devops login --organization ("h
 
 # Initially we can map out th pipelines
 
+
+
 az pipelines runs list --status completed --result succeeded --top 3 --output table --project $settings.AzureDevops.Project
 

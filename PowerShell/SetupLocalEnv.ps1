@@ -13,6 +13,8 @@ if (-not (Test-Path $defaultSettingsFile -PathType Leaf)) {
         "reqdModules"      = @(
             "PSIni;0"
             "Pester;6.1.0"
+            "PSDocs"
+            "PSDocs.Azure"
         )
         "LocalAppFolder"    = 'utils'
         "FixModulePath"    = $false
@@ -56,10 +58,7 @@ if (-not (Test-Path $unblockLog -PathType Leaf)) {
 
 Update-UserEnvPath -VariableName "Path" -NewPath $pwshPath
 
-$PsVersion = $PSVersionTable.PSVersion
-if ($PsVersion.Major -lt 7) {
-    Write-Host "PowerShell version 7 or higher is required. Current version: $PsVersion"
-}
+#$PsVersion = $PSVersionTable.PSVersion
 
 # Clean up any duplicate entries in the user PSModulePath environment variable
 $dupPath = Get-DuplicatedUserEnvPaths -VariableName "PSModulePath"
@@ -72,7 +71,13 @@ if ($dupPath.Count -gt 0) {
 }
 
 # Add additional methods and properties to the userSettings object for easier access and manipulation
+$userSettings | Add-Member -Force -MemberType NoteProperty -Name PsVersion -Value $PSVersionTable.PSVersion
 $userSettings | Add-Member -Force -MemberType NoteProperty -Name VerModulePaths -Value @()
+
+
+if ($userSettings.PsVersion.Major -lt 7) {
+    Write-Host "PowerShell version 7 or higher is required. Current version: $userSettings.PsVersion"
+}
 
 $userSettings | Add-Member -MemberType ScriptMethod -Name "GetVerModulePaths" -Value {
     $modulePaths = @()
@@ -90,19 +95,18 @@ $userSettings | Add-Member -MemberType ScriptMethod -Name "GetVerModulePaths" -V
     return $null
 }
 
+$userSettings | Add-Member -MemberType ScriptMethod -Name 'GetInstalledVersion' -Value {
+    param([string]$ModuleName, [string]$MinimumVersion)
+    return (Get-Module -Name $ModuleName -ListAvailable | Where-Object {$_.Path.StartsWith($this.GetVerPath()) -and ($_.Version.ToString() -ge $MinimumVersion)})
+}
+
 
 $userSettings | Add-Member -Force -MemberType ScriptMethod -Name "GetVerPath" -Value {
-    param (
-        [Parameter(Mandatory = $true)]
-        [int]$MajorVersion
-    )
-    return ($this.VerModulePaths | Where-Object { $_.MajorVersion -eq $MajorVersion }).Path
+    return ($this.VerModulePaths | Where-Object { $_.MajorVersion -eq $this.PsVersion.Major }).Path
 }
 
 $userSettings.GetVerModulePaths()
 
-
-$vModPath = $userSettings.GetVerPath($PsVersion.Major)
 
 # Ensure that the required modules are installed and available in the user's PSModulePath
 foreach ($modulePath in $userSettings.VerModulePaths) {
@@ -111,7 +115,7 @@ foreach ($modulePath in $userSettings.VerModulePaths) {
 
 foreach ($module in $userSettings.reqdModules) {
     $modName, $modMinVer = $module -split ";"
-    $iMod = Get-Module -Name $modName -ListAvailable | Where-Object {$_.Path.StartsWith($vModPath) -and ($_.Version.ToString() -ge $modMinVer)}
+    $iMod = $userSettings.GetInstalledVersion($modName, $modMinVer)
     if ($null -eq $iMod) {
         Write-Host "Module '$module' not found in PSModulePath. Attempting to install..."
         try {
@@ -120,14 +124,19 @@ foreach ($module in $userSettings.reqdModules) {
         catch {
             $saveParams = @{
                 Name = $modName
-                Path = $vModPath
+                Path = $userSettings.GetVerPath()
             }
             if ($modMinVer -gt '0') {
                 $saveParams.Add('MinimumVersion', $modMinVer)
             }
             Write-Warning "Failed to install module '$modName': $_"
             Save-Module @saveParams -Force -ErrorAction Stop
-            Write-Host "Module '$modName' saved to $vModPath. Please ensure this path is included in your PSModulePath."
+            $iMod = $userSettings.GetInstalledVersion($modName, $modMinVer)
+            if ($null -ne $imod) {
+                Write-Host "Module '$modName' saved to $userSettings.GetVerPath(). Please ensure this path is included in your PSModulePath."
+            } else {
+                Write-Warning "Unable to locate Module '$modName' saved to $userSettings.GetVerPath()."
+            }
         }
     }
     else {
@@ -137,9 +146,7 @@ foreach ($module in $userSettings.reqdModules) {
     # Test if we can import the module after installation
     $importParams = @{
         Name = $modName
-    }
-    if ($modMinVer -gt '0') {
-        $importParams.Add('MinimumVersion', $modMinVer)
+        MinimumVersion = $iMod.Version.ToString()
     }
     try {
         Import-Module @importParams  -ErrorAction Stop

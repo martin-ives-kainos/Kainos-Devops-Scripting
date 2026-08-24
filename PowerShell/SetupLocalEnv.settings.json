@@ -5,7 +5,9 @@
   ],
   "reqdModules": [
     "PSIni;0",
-    "Pester;6.1.0"
+    "Pester;6.1.0",
+    "PSDocs",
+    "PSDocs.Azure"
   ],
   "LocalAppFolder": "utils",
   "FixModulePath": null
