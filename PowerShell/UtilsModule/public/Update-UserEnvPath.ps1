@@ -11,7 +11,7 @@ no duplicate paths are added and maintains proper path formatting using semicolo
 The name of the environment variable to update. Must be either "Path" or "PSModulePath".
 
 .PARAMETER NewPath
-The full path to add to the environment variable. This path will be validated against
+Array of full paths to add/remove to/from the user environment variable. This path will be validated against
 both user and system environment variables to prevent duplicates.
 
 .EXAMPLE
@@ -42,13 +42,17 @@ function Update-UserEnvPath {
         [string]$VariableName,
 
         [Parameter(Mandatory = $true)]
-        [string]$NewPath
+        [Alias('NewPath','NewPaths')]
+        [string[]]$NewPath,
+
+        [switch]$Remove
     )
 
     # Retrieve current environment paths from both user and system scopes
-    $userPaths = [Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::User) -split ';'
+    $userPaths = Get-UserEnvPath($VariableName)
     $systemPaths = [Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::Machine) -split ';'
 
+    
     # Check if the path already exists in the system environment variable
     if ($systemPaths -contains $NewPath) {
         Write-Host "The path '$NewPath' is already present in the system environment variable '$VariableName'. No update needed."

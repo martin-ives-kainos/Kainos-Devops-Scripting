@@ -1,8 +1,13 @@
 {
-  "LocalModulePaths": [
+  "OldLocalModulePaths": [
     "Documents\\WindowsPowerShell\\Modules",
     "Documents\\PowerShell\\Modules"
   ],
+  "ModulePrefix": [
+    "5;WindowsPowerShell",
+    "7;PowerShell"
+  ],
+  "ModuleUserShellPath": "Personal",
   "reqdModules": [
     "PSIni;0",
     "Pester;6.1.0",

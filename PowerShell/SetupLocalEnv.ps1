@@ -10,18 +10,23 @@ $defaultSettingsFile = ($PSCommandPath -replace "\.ps1$", ".settings.json")
 if (-not (Test-Path $defaultSettingsFile -PathType Leaf)) {
     Write-Host "Default settings file not found: creating $defaultSettingsFile"
     $defaultSettings = @{
-        "reqdModules"      = @(
+        "reqdModules"         = @(
             "PSIni;0"
             "Pester;6.1.0"
             "PSDocs"
             "PSDocs.Azure"
         )
-        "LocalAppFolder"    = 'utils'
-        "FixModulePath"    = $false
-        "LocalModulePaths" = @(
+        "LocalAppFolder"      = 'utils'
+        "FixModulePath"       = $false
+        "OldLocalModulePaths" = @(
             "5;Documents\WindowsPowerShell\Modules"
             "7;Documents\PowerShell\Modules"
         )
+        "ModulePrefix"        = @(
+            "5;WindowsPowerShell"
+            "7;PowerShell"
+        )
+        ModuleUserShellPath   = "Personal"
     }
     $defaultSettings | ConvertTo-Json -Depth 99 | Out-File -Append $defaultSettingsFile
 }
@@ -81,23 +86,26 @@ if ($userSettings.PsVersion.Major -lt 7) {
 
 $userSettings | Add-Member -MemberType ScriptMethod -Name "GetVerModulePaths" -Value {
     $modulePaths = @()
-    foreach ($path in $this.LocalModulePaths) {
-        $newPath = New-Object PSObject -Property @{
-            MajorVersion = ($path -split ';')[0]
-            Path         = (Join-Path $HOME ($path -split ';')[1])
-        }
-        if (Test-Path $newPath.Path -PathType Container) {
+
+    $userShellPath = Get-UserShellPath -FolderName $this.ModuleUserShellPath
+
+    foreach ($prefix in $this.ModulePrefix) {
+        $newPath = New-Object psobject
+        $newPath | Add-Member -MemberType NoteProperty -Name 'MajorVersion' -Value ($prefix -split ';')[0]
+        $newPath | Add-Member -MemberType NoteProperty -Name 'Path' -Value (Join-Path (Join-Path $userShellPath ($prefix -split ';')[1]) "Modules")
+        if (!(Test-Path $newPath.Path -PathType Container)) {
             New-Item -ItemType Directory -Path $newPath.Path -Force | Out-Null
         }
         $modulePaths += $newPath
     }
+
     $this.VerModulePaths = ($modulePaths | Sort-Object -Property MajorVersion -Descending)
     return $null
 }
 
 $userSettings | Add-Member -MemberType ScriptMethod -Name 'GetInstalledVersion' -Value {
     param([string]$ModuleName, [string]$MinimumVersion)
-    return (Get-Module -Name $ModuleName -ListAvailable | Where-Object {$_.Path.StartsWith($this.GetVerPath()) -and ($_.Version.ToString() -ge $MinimumVersion)})
+    return (Get-Module -Name $ModuleName -ListAvailable | Where-Object { $_.Path.StartsWith($this.GetVerPath()) -and ($_.Version.ToString() -ge $MinimumVersion) })
 }
 
 
@@ -109,15 +117,16 @@ $userSettings.GetVerModulePaths()
 
 
 # Ensure that the required modules are installed and available in the user's PSModulePath
+$psPaths = Get-UserEnvPath "PSModulePath" 
 foreach ($modulePath in $userSettings.VerModulePaths) {
     Update-UserEnvPath -VariableName "PSModulePath" -NewPath $modulePath.Path
 }
 
 foreach ($module in $userSettings.reqdModules) {
-    $modName, $modMinVer = $module -split ";"
+    $modName, $modMinVer = $module -split "; "
     $iMod = $userSettings.GetInstalledVersion($modName, $modMinVer)
     if ($null -eq $iMod) {
-        Write-Host "Module '$module' not found in PSModulePath. Attempting to install..."
+        Write-Host "Get-Module '$module' not found in PSModulePath. Attempting to install..."
         try {
             Install-Module -Name $module -Scope CurrentUser -Force -AllowClobber -SkipPublisherCheck -ErrorAction Stop
         }
@@ -134,7 +143,8 @@ foreach ($module in $userSettings.reqdModules) {
             $iMod = $userSettings.GetInstalledVersion($modName, $modMinVer)
             if ($null -ne $imod) {
                 Write-Host "Module '$modName' saved to $userSettings.GetVerPath(). Please ensure this path is included in your PSModulePath."
-            } else {
+            }
+            else {
                 Write-Warning "Unable to locate Module '$modName' saved to $userSettings.GetVerPath()."
             }
         }
@@ -145,7 +155,7 @@ foreach ($module in $userSettings.reqdModules) {
 
     # Test if we can import the module after installation
     $importParams = @{
-        Name = $modName
+        Name           = $modName
         MinimumVersion = $iMod.Version.ToString()
     }
     try {
