@@ -3,7 +3,7 @@
 Updates a user environment variable with a new path while preventing duplicates.
 
 .DESCRIPTION
-This function adds a new path to a user environment variable (Path or PSModulePath) 
+This function adds a new path to a user environment variable (Path or PSModulePath)
 if it doesn't already exist in either the user or system environment. The function ensures
 no duplicate paths are added and maintains proper path formatting using semicolon separators.
 
@@ -42,29 +42,129 @@ function Update-UserEnvPath {
         [string]$VariableName,
 
         [Parameter(Mandatory = $true)]
-        [Alias('NewPath','NewPaths')]
-        [string[]]$NewPath,
+        [Alias('NewPath', 'NewPaths')]
+        [string[]]$Paths,
 
-        [switch]$Remove
+        [ValidateSet('Add', 'Remove')]
+        [string]$Action = 'Add'
+
     )
 
     # Retrieve current environment paths from both user and system scopes
-    $userPaths = Get-UserEnvPath($VariableName)
-    $systemPaths = [Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::Machine) -split ';'
 
-    
-    # Check if the path already exists in the system environment variable
-    if ($systemPaths -contains $NewPath) {
-        Write-Host "The path '$NewPath' is already present in the system environment variable '$VariableName'. No update needed."
-        return
+    class EnvPaths {
+        [string]$Name
+        [System.Collections.Generic.List[string]]$UserPaths = @()
+        [System.Collections.Generic.List[string]]$MachinePaths = @()
+        [System.Collections.Generic.List[string]]$PathList
+        [bool]$IsDirty
+
+        EnvPaths([string]$Name) {
+            $this.Name = $Name
+            $this.LoadPathList()
+
+        }
+
+        [void] LoadPathList() {
+            $this.UserPaths = [System.Collections.Generic.List[string]](Get-PathEnvVar $this.Name)
+            $this.MachinePaths = [System.Collections.Generic.List[string]](Get-PathEnvVar $this.Name 'Machine')
+
+            $this.PathList = [System.Collections.Generic.List[string]]::new()
+
+            foreach ($path in ($this.UserPaths | Select-Object -Unique -CaseInsensitive)) {
+                $trimmed = $path.Trim()
+                if (-not [string]::IsNullOrWhiteSpace($trimmed) -and $this.MachinePaths -notcontains $trimmed) {
+                    $this.PathList.Add($trimmed)
+                }
+            }
+            $this.IsDirty = $false
+        }
+
+        [string[]] NormalisedPaths([string[]]$Paths) {
+            [string[]]$normList = @()
+            foreach ($path in $Paths) {
+                try {
+                    $normList += [IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables($path)).TrimEnd('\')
+                }
+                catch {
+                    $normList += $path.TrimEnd('\')
+                }
+            }
+            return $normList
+        }
+
+        [string] FullExpandedPath([string]$RawPath) {
+            return try {
+                [IO.Path]::GetFullPath(
+                    [System.Environment]::ExpandEnvironmentVariables($RawPath)
+                ).TrimEnd('\')
+            }
+            catch {
+                $existing.TrimEnd('\')
+            }
+        }
+
+        [bool] ExistsInMachinePaths([string]$Path) {
+            return $this.ExistsInPathList($Path, $this.MachinePaths)
+        }
+        [bool] ExistsInPathList([string]$Path) {
+            return $this.ExistsInPathList($Path, $this.PathList)
+        }
+        [bool] ExistsInUserPaths([string]$Path) {
+            return $this.ExistsInPathList($Path, $this.UserPaths)
+        }
+        [bool] ExistsInPathList([string]$Path, [System.Collections.Generic.List[string]]$TargetList) {
+            return ($TargetList.IndexOf($Path) -gt -1)
+        }
+
+        [void] AddPaths([string[]]$Paths) {
+
+            foreach ($newPath in $this.NormalisedPaths($Paths)) {
+                if ($this.ExistsInPathList($newPath)) {
+                    Write-Host "Path $newPath already exists, skipped"
+                }
+                else {
+                    Write-Host "Path $newPath will be added when saved"
+                    $this.PathList.Add($newPath)
+                    $this.IsDirty = $true
+                }
+            }
+        }
+
+        [void] RemovePaths([string[]]$Paths) {
+
+            foreach ($oldPath in $this.NormalisedPaths($Paths)) {
+                if ($this.ExistsInPathList($oldPath)) {
+                    $index = $this.PathList.IndexOf($oldPath)
+                    $this.PathList.RemoveAt($index)
+                    Write-Host "Path $oldPath found in list at $index, will be removed on save"
+                    $this.IsDirty = $true
+                }
+                else {
+                    Write-Host "Path $oldPath not found. skipped"
+                }
+            }
+        }
+
+        [void] Save() {
+            if ($this.IsDirty) {
+                Write-Host "Saving user path for $($this.Name)"
+                [Environment]::SetEnvironmentVariable($this.Name, ($this.PathList.ToArray() -join ';'), [System.EnvironmentVariableTarget]::User)
+            } else {
+                Write-Host "Nothing to save"
+            }
+        }
     }
 
-    # Add the new path to user environment if it's not already present
-    if ($userPaths -notcontains $NewPath) {
-        $updatedPaths = $userPaths + $NewPath
-        [Environment]::SetEnvironmentVariable($VariableName, ($updatedPaths -join ';'), [System.EnvironmentVariableTarget]::User)
-        Write-Host "Updated user environment variable '$VariableName' with new path: $NewPath"
-    } else {
-        Write-Host "The path '$NewPath' is already present in the user environment variable '$VariableName'. No update needed."
+    $myEnvPaths = [EnvPaths]::New($VariableName)
+    switch ($Action) {
+        'Add' {
+            $myEnvPaths.AddPaths($Paths)
+        }
+        'Remove' {
+            $myEnvPaths.RemovePaths($Paths)
+        }
     }
+    $myEnvPaths.Save()
+
 }

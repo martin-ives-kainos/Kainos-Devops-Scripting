@@ -61,7 +61,7 @@ if (-not (Test-Path $unblockLog -PathType Leaf)) {
 
 # Ensure that the PowerShell 7 directory is in the user PATH environment variable
 
-Update-UserEnvPath -VariableName "Path" -NewPath $pwshPath
+Update-UserEnvPath -VariableName "Path" -Paths @($pwshPath) -Action Add
 
 #$PsVersion = $PSVersionTable.PSVersion
 
@@ -117,13 +117,19 @@ $userSettings.GetVerModulePaths()
 
 
 # Ensure that the required modules are installed and available in the user's PSModulePath
-$psPaths = Get-UserEnvPath "PSModulePath" 
-foreach ($modulePath in $userSettings.VerModulePaths) {
-    Update-UserEnvPath -VariableName "PSModulePath" -NewPath $modulePath.Path
-}
+#$psPaths = Get-UserEnvPath "PSModulePath"
+Update-UserEnvPath -VariableName "PSModulePath" -NewPath ($userSettings.VerModulePaths | Select-Object -ExpandProperty Path)
+
+$oldPaths = @(
+    "C:\Users\MartinIves\Documents\WindowsPowerShell\Modules"
+    "C:\Users\MartinIves\Documents\PowerShell\Modules"
+)
+Update-UserEnvPath -VariableName "PSModulePath" -Paths $oldPaths -Action Remove
+
+
 
 foreach ($module in $userSettings.reqdModules) {
-    $modName, $modMinVer = $module -split "; "
+    $modName, $modMinVer = $module -split ";"
     $iMod = $userSettings.GetInstalledVersion($modName, $modMinVer)
     if ($null -eq $iMod) {
         Write-Host "Get-Module '$module' not found in PSModulePath. Attempting to install..."
