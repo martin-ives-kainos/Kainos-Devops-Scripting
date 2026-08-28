@@ -1,19 +1,26 @@
 {
-  "OldLocalModulePaths": [
-    "Documents\\WindowsPowerShell\\Modules",
-    "Documents\\PowerShell\\Modules"
-  ],
+  "LocalAppFolder": "utils",
+  "SaveNotInstall": true,
   "ModulePrefix": [
     "5;WindowsPowerShell",
     "7;PowerShell"
   ],
+  "FixModulePath": false,
+  "LocalModulePaths": [
+    "5;%USERPROFILE%\\Utils\\WindowsPowerShell\\Modules",
+    "7;%USERPROFILE%\\Utils\\PowerShell\\Modules"
+  ],
   "ModuleUserShellPath": "Personal",
+  "OldLocalModulePaths": [
+    "%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules",
+    "%USERPROFILE%\\Documents\\PowerShell\\Modules",
+    "%OneDrive%\\Documents\\PowerShell\\Modules",
+    "%OneDrive%\\Documents\\WindowsPowerShell\\Modules"
+  ],
   "reqdModules": [
     "PSIni;0",
     "Pester;6.1.0",
     "PSDocs",
     "PSDocs.Azure"
-  ],
-  "LocalAppFolder": "utils",
-  "FixModulePath": null
+  ]
 }

@@ -95,9 +95,7 @@ function Update-UserEnvPath {
 
         [string] FullExpandedPath([string]$RawPath) {
             return try {
-                [IO.Path]::GetFullPath(
-                    [System.Environment]::ExpandEnvironmentVariables($RawPath)
-                ).TrimEnd('\')
+                [IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables($RawPath)).TrimEnd('\')
             }
             catch {
                 $existing.TrimEnd('\')
