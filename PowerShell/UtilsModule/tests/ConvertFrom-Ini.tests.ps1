@@ -1,18 +1,7 @@
 BeforeAll {
     # Import the module to load the function being tested
     Import-Module (Join-Path $PSScriptRoot '..\UtilsModule.psd1' -Resolve) -Force -PassThru | Out-Null
-}
-
-function New-TestIniFile {
-    param (
-        [string]$Path
-    )
-    if ($Path -notmatch '\.ini$') {
-        $Path += '.ini'
-    }
-    $FullPath = Join-Path $TestDrive (Split-Path $Path -Leaf)
-    Get-Content $Path | Set-Content -Path $FullPath
-    return $FullPath
+    . (Join-Path $PSScriptRoot 'TestHelpers.ps1' -Resolve)
 }
 
 Describe 'ConvertFrom-Ini' {
