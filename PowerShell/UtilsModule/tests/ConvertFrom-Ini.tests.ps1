@@ -7,13 +7,13 @@ BeforeAll {
 Describe 'ConvertFrom-Ini' {
 
     BeforeAll {
-        #        $testFile = New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test1.ini' -Resolve)
+        #        $testFile = New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve)
     }
 
     It 'Parses sections and key/value pairs' {
 
         Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test1.ini' -Resolve))
+        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve))
 
         $result['Database']['Server'] | Should -Be 'SQL01'
         $result['Database']['Port'] | Should -Be '1433'
@@ -25,7 +25,7 @@ Describe 'ConvertFrom-Ini' {
     It 'Ignores comments and blank lines' {
 
         Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test2.ini' -Resolve))
+        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_IgnoresCommentsBlankLines.ini' -Resolve))
 
         $result['Test']['Key'] | Should -Be 'Value'
         $result.Keys.Count | Should -Be 1
@@ -34,7 +34,7 @@ Describe 'ConvertFrom-Ini' {
     It 'Stores keys before a section in _Global' {
 
         Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test3.ini' -Resolve))
+        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_StoreKeysBeforeSections_global.ini' -Resolve))
 
         $result['_Global']['RootKey'] | Should -Be 'RootValue'
         $result['Section']['Key'] | Should -Be 'Value'
