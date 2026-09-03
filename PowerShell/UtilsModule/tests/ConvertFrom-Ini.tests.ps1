@@ -48,6 +48,14 @@ Describe 'ConvertFrom-Ini' {
         $result['Test']['Key Name'] | Should -Be 'Some Value'
     }
 
+    It 'Parses values with embedded environment variables' {
+
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
+        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve))
+
+        $result['EnvVars']['UserName'] | Should -Be $env:USERNAME
+    }
+
     It 'Handles values containing equal signs' {
 
         Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
