@@ -55,16 +55,19 @@ Describe "Passed Parameter Validation" -Tag "Unit" {
     ) {
         if (!$TestParams.ContainsKey($Name)) {
             It "[$($Name)] Null value Passed" {
+                Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
                 $tParams = $TestParams + @{ $Name = $null }
                 { Save-ObjectToFile @tParams } | Should -Throw $Expected
             }
             It "[$($Name)] Empty value Passed" {
+                Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
                 $tParams = $TestParams + @{ $Name = [string]::Empty }
                 { Save-ObjectToFile @tParams } | Should -Throw $Expected
             }
         }
         else {
             It "[$($Name)] Test error with $($TestParams[$Name])" {
+                Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
                 { Save-ObjectToFile @TestParams } | Should -Throw $Expected
             }
         }
@@ -80,15 +83,19 @@ Describe "Function Save-ObjectToFile" -Tag Unit {
     }
 
     It "Check $testFile has been created" {
+        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
         (Test-Path $testFile -PathType Leaf) | Should -BeTrue
     }
     It "Test object is not null" {
+        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
         $tObject | Should -Not -BeNullOrEmpty
     }
     It "Read object is not null" {
+        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
         $rObject | Should -Not -BeNullOrEmpty
     }
     It "Property count matched" {
+        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
         ($rObject | Get-Member -MemberType NoteProperty).Count | Should -BeExactly ($tObject | Get-Member -MemberType NoteProperty).Count
     }
 }
