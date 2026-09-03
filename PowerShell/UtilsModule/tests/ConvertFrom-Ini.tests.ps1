@@ -64,4 +64,25 @@ Describe 'ConvertFrom-Ini' {
         $result['Test']['Connection'] |
         Should -Be 'Server=db01;User=test=value'
     }
+
+    It 'Handles values of arrays' {
+
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
+        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValueArray.ini' -Resolve))
+
+        $result['SimpleArray']['TestServers'] | Should -BeOfType [System.Collections.Generic.List[string]]
+        $result['SimpleArray']['TestServers'].Count | Should -Be 3
+        $result['SimpleArray']['TestServers'][0] | Should -Be 'SQL01
+        $result['SimpleArray']['TestServers'][1] | Should -Be 'SQL02'
+        $result['SimpleArray']['TestServers'][2] | Should -Be 'SQL03}
+
+    # data\Test_ParseSection_KeyValueArray.ini
+    <#
+[SimpleArray]
+TestServers=SQL01;SQL02;SQL03
+
+[EnvVars]
+UserName=%PATH%
+
+    #>
 }

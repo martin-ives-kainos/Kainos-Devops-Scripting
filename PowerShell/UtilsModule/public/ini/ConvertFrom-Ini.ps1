@@ -45,6 +45,12 @@ function ConvertFrom-Ini {
                 }
             }
 
+            if ($value.Contains('|')) {
+                # Split the value on semi colons and create [System.Collections.Generic.List[string]]
+
+                $value = [System.Collections.Generic.List[string]]($value.Trim('|').Split('|'))
+            }
+
             $ini[$section][$key] = $value
         }
     }
