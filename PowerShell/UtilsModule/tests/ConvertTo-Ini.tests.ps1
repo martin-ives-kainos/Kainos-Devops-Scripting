@@ -7,6 +7,7 @@ BeforeAll {
 Describe 'ConvertTo-Ini' {
 
     It 'Converts a hashtable to INI format' {
+        Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $data = @{
             Database = @{
                 Server = 'SQL01'
@@ -22,6 +23,7 @@ Describe 'ConvertTo-Ini' {
     }
 
     It 'Writes global keys without a section header' {
+        Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $data = @{
             _Global = @{
                 RootKey = 'RootValue'
@@ -35,6 +37,7 @@ Describe 'ConvertTo-Ini' {
     }
 
     It 'Round trips successfully' {
+        Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $original = @{
             Database = @{
                 Server = 'SQL01'

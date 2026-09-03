@@ -12,7 +12,7 @@ Describe 'ConvertFrom-Ini' {
 
     It 'Parses sections and key/value pairs' {
 
-        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve))
 
         $result['Database']['Server'] | Should -Be 'SQL01'
@@ -24,7 +24,7 @@ Describe 'ConvertFrom-Ini' {
 
     It 'Ignores comments and blank lines' {
 
-        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_IgnoresCommentsBlankLines.ini' -Resolve))
 
         $result['Test']['Key'] | Should -Be 'Value'
@@ -33,7 +33,7 @@ Describe 'ConvertFrom-Ini' {
 
     It 'Stores keys before a section in _Global' {
 
-        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_StoreKeysBeforeSections_global.ini' -Resolve))
 
         $result['_Global']['RootKey'] | Should -Be 'RootValue'
@@ -42,7 +42,7 @@ Describe 'ConvertFrom-Ini' {
 
     It 'Trims whitespace around keys and values' {
 
-        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_TrimWhiteSpace.ini' -Resolve))
 
         $result['Test']['Key Name'] | Should -Be 'Some Value'
@@ -50,7 +50,7 @@ Describe 'ConvertFrom-Ini' {
 
     It 'Handles values containing equal signs' {
 
-        Write-Host $____Pester.CurrentTest.Name -ForegroundColor Yellow -BackgroundColor Blue
+        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_HandlesEmbededEqualsInValue.ini' -Resolve))
 
         $result['Test']['Connection'] |
