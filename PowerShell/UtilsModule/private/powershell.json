@@ -1,0 +1,549 @@
+{
+    "_credFromString": {
+        "prefix": "_cred-from-string",
+        "body": [
+            "# ${1:Name} credentials",
+            "\\$username = '${2:Username}'",
+            "\\$password = '${3:Password}' | ConvertTo-SecureString -AsPlainText -Force",
+            "\\$credential = [PSCredential]::New(\\$username,\\$password)\r\r$0"
+        ],
+        "description": "Create credentials object from string within script (insecure)"
+    },
+    "BuildEnvVars": {
+        "description": "Create Comment block for Azure Pipeline Env Vars",
+        "prefix": "_buildVars",
+        "body": [
+            "<# #----------------------------------------------------------",
+            "    \\$env:VNEXT_REGION = 'uk'",
+            "    \\$env:VNEXT_DEPLOY_SLOT = 'stg'",
+            "    \\$env:BUILD_SOURCESDIRECTORY = (Join-Path \\$PSScriptRoot '..\\..' -Resolve)",
+            "    \\$env:BUILD_ARTIFACTSTAGINGDIRECTORY = (Join-Path \\$PSScriptRoot '..\\..\\.temp\\TestAzData' -Resolve)",
+            "    \\$env:AZDO_SERVICE_CONNECTIONS_FILEPATH = (Get-ChildItem (Join-Path \\$PSScriptRoot '..\\..' -Resolve) -Filter 'AzDoServiceConnections.json' -Recurse | Select-Object -First 1).FullName",
+            "    \\$env:AZDO_SERVICE_CONNECTION_NAME = 'Aprobrium UAE (8ec00540-f27f-40ec-b524-8af67f229790)'",
+            "    \\$env:AZDO_SERVICE_CONNECTION_NAME = 'VNext'",
+            "   #----------------------------------------------------------#>"
+        ]
+    },
+    "_ImportInModule": {
+        "body": "Import-Module (Get-ChildItem (Join-Path $$PSScriptRoot '..\\module' -Resolve) -Filter '*.psd1' -Recurse -Depth 1 | Select-Object -First 1).FullName",
+        "description": "Searches parent folder and for 1st psd1 in sub folder modules",
+        "prefix": "_ImportInModule"
+    },
+    "_ImportInModule_Pester": {
+        "body": "Import-Module (Get-ChildItem (Join-Path $$PSScriptRoot '..' -Resolve) -Filter '*.psd1' | Select-Object -First 1).FullName",
+        "description": "Searches parent folder and for 1st psd1 in sub folder modules",
+        "prefix": "_ImportInModulePester"
+    },
+    "_PTestModuleBeforeAll": {
+        "body": [],
+        "description": "Ensures correct setup testing in a module",
+        "prefix": "_PTestModuleBeforeAll"
+    },
+    "_PTestBasicDescribe": {
+        "body": [
+            "Describe -Tag 'Unit' 'Description of tests' -Skip:$$false {",
+            "    Context -Tag 'Unit' 'Description of context' -Skip:$$false {",
+            "        It -Tag 'Unit' 'Default inconclusive test' -Skip:$$false {",
+            "            Set-ItResult -Inconclusive -Because 'Need to define tests for this'",
+            "            <# TODO: Get-LocalCredential.tests.ps1",
+            "                Need to define tests for this",
+            "            #>",
+            "        }",
+            "    }",
+            "}"
+        ],
+        "description": "Inserts a Describe / Context / It block",
+        "prefix": "_PTestBasicDescribe"
+    },
+    "_PTestMsg": {
+        "body": "Write-Host ('[$TM_FILENAME_BASE] Message') -BackgroundColor Gray -ForegroundColor White",
+        "description": "Output a message in Pester, separate color",
+        "prefix": "_PTestMsg"
+    },
+    "Class-Setup": {
+        "description": "Templated Class structure",
+        "prefix": "Class-Init",
+        "body": [
+            "class $TM_FILENAME_BASE {",
+            "    $TM_FILENAME_BASE(<#OptionalParameters#>) {",
+            "        <# Initialize the class. Use $this to reference the properties of the instance you are creating #>",
+            "    }",
+            "}"
+        ]
+    },
+    "Class-Method-StackAdd": {
+        "description": "Add a base class use of MethodStackAdd",
+        "prefix": "_clsStackAddMethodName",
+        "body": "\\$this.MethodStackAdd('${0:Name}')"
+    },
+    "Class-Method-StackRemove": {
+        "description": "Add a base class use of MethodStackAdd",
+        "prefix": "_clsStackRemMethodName",
+        "body": "\\$this.MethodStackRemove()"
+    },
+    "Class-Method-Stacked": {
+        "body": [
+            "[void] ${0:methodname}(<#Params#>) {",
+            "    \\$this.MethodStackAdd('${0}')",
+            "    \\$this.MethodStackRemove()",
+            "}"
+        ],
+        "description": "Templated hidden method in class",
+        "prefix": "_clsStackedClassMethod"
+    },
+    "Class-Method-Hidden": {
+        "body": [
+            "hidden [void] ${1:methodname}(<#Params#>) {",
+            "}"
+        ],
+        "description": "Templated hidden method in class",
+        "prefix": "Class-Method-Hidden"
+    },
+    "Class-Property-Hidden": {
+        "body": [
+            "hidden [${1:type}] $$_${0:propertyname}"
+        ],
+        "description": "Templated hidden property in class",
+        "prefix": "Class-Property-Hidden"
+    },
+    "Class-WriteToLog-IndentDecrement": {
+        "body": [
+            "$$this.LogIndentDecrement()"
+        ],
+        "description": "Templated class WriteToLog Decrease Indent",
+        "prefix": "Class-WriteToLog-IndentDecrement"
+    },
+    "Class-WriteToLog-IndentIncrement": {
+        "body": [
+            "$$this.LogIndentIncrement()"
+        ],
+        "description": "Templated class WriteToLog increase Indent",
+        "prefix": "Class-WriteToLog-IndentIncrement"
+    },
+    "Class-WriteToLog-Info": {
+        "body": [
+            "$$this.WriteToLog('INIT', 'Message', @(), [WriteToLogLevel]::INFO)"
+        ],
+        "description": "Templated class WriteToLog Message",
+        "prefix": "Class-WriteToLog-Info"
+    },
+    "Class-WriteToLog-Warning": {
+        "body": [
+            "$$this.WriteToLog('INIT', 'Message', @(), [WriteToLogLevel]::WARNING)"
+        ],
+        "description": "Templated class WriteToLog Message for Warnings",
+        "prefix": "Class-WriteToLog-Warning"
+    },
+    "CLogging End": {
+        "body": [
+            "    Write-CustomLog -Level INFO -Message '{0}ENDED{0}' -Arguments @('----------')",
+            "if (!$$Quiet) {",
+            "}"
+        ],
+        "description": "Write-CustomLog INFO End of Process",
+        "prefix": "_CLogEnd"
+    },
+    "CLogging Error": {
+        "body": "Write-CustomLog -Level ERROR -Message '$1' -Arguments @() -ThrowOnError",
+        "description": "Write-CustomLog ERROR",
+        "prefix": "_CLogError"
+    },
+    "CLogging Info": {
+        "body": [
+            "Write-CustomLog -Level INFO -Message '$1' -Arguments @()"
+        ],
+        "description": "Write-CustomLog INFO",
+        "prefix": "_CLogInfo"
+    },
+    "CLogging Info Quiet": {
+        "body": [
+            "    Write-CustomLog -Level INFO -Message '$1' -Arguments @()",
+            "if (!$$Quiet) {",
+            "}"
+        ],
+        "description": "Write-CustomLog INFO, test for Quiet flag",
+        "prefix": "_CLogInfo-Quiet"
+    },
+    "CLogging Start": {
+        "body": [
+            "    Write-CustomLog -Level INFO -Message '{0}STARTED{0}' -Arguments @('----------')",
+            "if (!$$Quiet) {",
+            "}"
+        ],
+        "description": "Write-CustomLog INFO Start of Process",
+        "prefix": "_CLogStart"
+    },
+    "CLogging ThrowError": {
+        "body": "Write-CustomLog -Level ERROR -Message '$1' -ThrowError",
+        "description": "Write-CustomLog ERROR",
+        "prefix": "_CLogThrowError"
+    },
+    "CLogging Warning": {
+        "body": "Write-CustomLog -Level WARNING -Message '$1' -Arguments @()",
+        "description": "Write-CustomLog WARNING",
+        "prefix": "_CLogWarning"
+    },
+    "FileNameAsComment": {
+        "description": "Adds the script file name as a comment line",
+        "prefix": "filename_comment",
+        "body": "# File: ${TM_DIRECTORY}/$TM_FILENAME"
+    },
+    "GitRepoRootPathFunction": {
+        "prefix": "GitRepoRootPathFunction",
+        "description": "Add function to find the git repository root path from script path",
+        "body": [
+            "function Get-GitRootPath {",
+            "[CmdletBinding()]",
+            "param (",
+            "    [Parameter(Mandatory)]",
+            "    [ValidateScript({ (Test-Path $$_ -PathType Container) })]",
+            "    [string]$$Path",
+            ")",
+            "# Find the repository route path",
+            "$$counter = 1",
+            "$$gitfolder = Get-ChildItem $$Path -Dir -Force -Filter '.git'",
+            "while (($$null -eq $$gitfolder) -and ($$counter -lt 5)) {",
+            "    $$Path = (Join-Path $$Path '..' -Resolve)",
+            "    $$gitfolder = Get-ChildItem $$Path -Dir -Force -Filter '.git'",
+            "    $$counter++",
+            "}",
+            "if ($$null -eq $$gitfolder) {",
+            "    return $$null",
+            "}",
+            "return $$Path",
+            "}",
+        ]
+    },
+    "ModuleFunction": {
+        "body": [
+            "function $TM_FILENAME_BASE {",
+            "    [CmdletBinding()]",
+            "    param ()",
+            "    begin {",
+            "        Write-Verbose ('[{0}|{1}] --STARTED: message-text' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)",
+            "    }",
+            "    process {}",
+            "    end {",
+            "        Write-Verbose ('[{0}|{1}] --ENDED: message-text' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)",
+            "    }",
+            "}"
+        ],
+        "description": "Inserts a module function template",
+        "prefix": "_ModuleFunction"
+    },
+    "ParamValidDir": {
+        "body": "[ValidateScript({ (Test-Path $$_ -PathType Container) })]",
+        "description": "Parameter attribute to validate directory path",
+        "prefix": "ParamValidDir"
+    },
+    "ParamValidFile": {
+        "body": "[ValidateScript({ (Test-Path $$_ -PathType Leaf) })]",
+        "description": "Parameter attribute to validate directory path",
+        "prefix": "ParamValidFile"
+    },
+    "ParamValidXLCol": {
+        "body": "[ValidateScript({ (($$_ -gt 0) -and ($_ -lt 257) })]",
+        "description": "Parameter attribute to validate Excel Column number",
+        "prefix": "ParamValidXLCol"
+    },
+    "ParamValidXLRol": {
+        "body": "[ValidateScript({ (($$_ -gt 0) -and ($_ -lt 1048576)) })]",
+        "description": "Parameter attribute to validate Excel Row number",
+        "prefix": "ParamValidXLRol"
+    },
+    "EmbeddedStartUpFunction": {
+        "description": "Templated function for use in Pester Friendly Scripts",
+        "prefix": "embeddedStartUpFunc",
+        "body": [
+            "# File: ${TM_DIRECTORY}/$TM_FILENAME",
+            "[CmdletBinding()]",
+            "param (",
+            "    [string]\\$ModuleName = 'DevopsUtils',",
+            "    [bool]\\$RunningInBuild = (![string]::IsNullOrEmpty(\\$env:TF_BUILD))",
+            "   # TODO: Add any other top level parameters",
+            ")",
+            "",
+            "\\$ErrorActionPreference = 'stop'",
+            "",
+            " # TODO: Add / move to module cmdlet",
+            "function ${TM_FILENAME_BASE} {",
+            "    [CmdletBinding()]",
+            "    param (",
+            "        [Parameter(Mandatory = \\$true,",
+            "            Position = 0,",
+            "            ValueFromPipeline = \\$true,",
+            "            ValueFromPipelineByPropertyName = \\$true,",
+            "            HelpMessage = 'Calling script root path')]",
+            "        [Alias('PSScriptRoot')]",
+            "        [ValidateScript({ (Test-Path \\$_ -PathType Container) })]",
+            "        [string]\\$ScriptRootPath,",
+            "        [Parameter(Mandatory = \\$true,",
+            "            Position = 1,",
+            "            ValueFromPipeline = \\$true,",
+            "            ValueFromPipelineByPropertyName = \\$true,",
+            "            HelpMessage = 'Path the json Terraform State file.')]",
+            "        [Alias('FilePath')]",
+            "        [ValidateNotNullOrEmpty()]",
+            "        [string]\\$Path",
+            "    )",
+            "}",
+            "",
+            "Write-Host ('[{0}|{1}] Import Devops Module' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Split-Path -Leaf \\$PSCommandPath))",
+            "Import-Module (Get-ChildItem (Join-Path \\$PSScriptRoot '..\\module' -Resolve) -Filter ('{0}.psd1' -f \\$ModuleName) -Recurse -Depth 1 | Select-Object -First 1).FullName",
+            "",
+            "\\$localSettings = (New-LocalExecSettingsClass -ScriptName (Split-Path -Leaf \\$PSCommandPath).Replace('.ps1', '') -ScriptPath \\$PSScriptRoot)",
+            "",
+            "# To make this pester testable let us inspect the Call Stack",
+            "if (\\$null -ne (Get-PSCallStack | Where-Object { \\$_.FunctionName.ToLower().Contains('pester') })) {",
+            "    Write-Host ('{0} called from Pester Test' -f (Split-Path -Leaf \\$PSCommandPath)) -ForegroundColor Green",
+            "} else {",
+            "    # ----------------------------------------------------------------------------------",
+            "    # Match script parameters to cmdlet parameters",
+            "    # ----------------------------------------------------------------------------------",
+            "    \\$callParams = \\$localSettings.CallParamTable('${TM_FILENAME_BASE}', \\$ModuleName, \\$PSCmdlet.MyInvocation.MyCommand.Parameters)",
+            "    if (!\\$localSettings.IsBuild()) {",
+            "        Write-Warning ('[{0}|{1}] Running locally' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), \\$localSettings.ScriptName)",
+            "        \\$localSettings.SetFunctionCallParams()",
+            "        \\$localSettings.AzLogin()   # ----Use this if locally logging into Azure with your credentials",
+            "    }",
+            "    ${TM_FILENAME_BASE} @callParams",
+            "}",
+        ]
+    },
+    "PSDocs_ClassDesc": {
+        "body": [
+            "   $TM_FILENAME_BASE $1",
+            "#>",
+            "<# PSDOCS: Description"
+        ],
+        "description": "PSDocs Helper Class description comment for docs",
+        "prefix": "_psdocs_class_description"
+    },
+    "PSDocs_DocHelperSection": {
+        "body": [
+            "    $$TargetObject.WriteSectionLog($1, 'ENDED')",
+            "    $$TargetObject.WriteSectionLog($1, 'STARTED')",
+            "    ('Details for go here')",
+            "$$${1:sectionVarName} = $$TargetObject.AddIndexedSectionInfo('${2:SectionTitle}', 2)",
+            "Section -Name $$TargetObject.GetSectionInfo($1).Title -Force {",
+            "}"
+        ],
+        "description": "PSDocs Helper default section",
+        "prefix": "_psdocs_helper_section"
+    },
+    "PSDocs_DocHelperStart": {
+        "body": [
+            "",
+            "   $$mdHelp = $$TargetObject.MarkdownHelper()",
+            "   $$mdHelp.AddSectionInfo('$1','$1',2)",
+            "   $$TargetObject.WriteToLog($$InstanceName, 'End creating document')",
+            "   $$TargetObject.WriteToLog($$InstanceName, 'Start creating document')",
+            "   '[[_TOSP_]]'",
+            "Document '$TM_FILENAME_BASE' {",
+            "}"
+        ],
+        "description": "PSDocs Helper object message start of document",
+        "prefix": "_psdocs_helper_start"
+    },
+    "PSDocs_DocSection": {
+        "body": [
+            "    $$TargetObject.WriteSectionLog($1, 'ENDED')",
+            "    $$TargetObject.WriteSectionLog($1, 'STARTED')",
+            "    <# Section Code goes here #>",
+            "$$${1:sectKey} = $$TargetObject.AddIndexedSectionInfo('${0:SectionTitle}', 2)",
+            "Section -Name $$TargetObject.GetSectionInfo($1).Title -Force {",
+            "}"
+        ],
+        "description": "PSDocs Helper log message start of section",
+        "prefix": "_psdocs_section_start"
+    },
+    "PSDocs_DocStart": {
+        "body": [
+            "Document '$TM_FILENAME_BASE' {",
+            "}"
+        ],
+        "description": "PSDocs Helper log message start of document",
+        "prefix": "_psdocs_start"
+    },
+    "PSDocs_LogEnd": {
+        "body": "$$TargetObject.WriteToLog('ENDED', $$Document)",
+        "description": "PSDocs Helper log message end of document",
+        "prefix": "_psdocs_logend"
+    },
+    "Queue-Create": {
+        "body": "$$q = New-Object System.Collections.Queue",
+        "description": "Instantiate LIFO Queue",
+        "prefix": "_Queue-Create"
+    },
+    "Quiet-If": {
+        "body": [
+            " ",
+            "$TM_SELECTED_TEXT",
+            "if (!$$Quiet) {",
+            "}"
+        ],
+        "description": "Wraps an if quiet flag around commands",
+        "prefix": "_Quiet-If"
+    },
+    "Quiet-If-Class": {
+        "body": [
+            " ",
+            "$TM_SELECTED_TEXT",
+            "if (!$$this.Quiet) {",
+            "}"
+        ],
+        "description": "Wraps an if quiet flag around commands",
+        "prefix": "_Quiet-If-Class"
+    },
+    "Quiet-Param": {
+        "body": [
+            ",",
+            "[switch]$$Quiet"
+        ],
+        "description": "Inserts a Quiet parameter",
+        "prefix": "_Quiet-Param"
+    },
+    "Quiet-Param-PassOn": {
+        "body": " -Quiet:$$Quiet",
+        "description": "Sets Quiet parameter for subsequent calls",
+        "prefix": "_Quiet-Param-PassOn"
+    },
+    "Quiet-Prop-Class": {
+        "body": [
+            "    [bool]$$Quiet = $$true"
+        ],
+        "description": "Inserts a Quiet property",
+        "prefix": "_Quiet-Prop-Class"
+    },
+    "Region around Code": {
+        "body": [
+            "#region $1",
+            "$TM_SELECTED_TEXT",
+            "#endregion $1",
+        ],
+        "description": "Defines a region around a currently selected block",
+        "prefix": "Region Block"
+    },
+    "TODO Comment Block": {
+        "body": [
+            "<# TODO: $1 ($CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE @$CURRENT_HOUR:$CURRENT_MINUTE:$CURRENT_SECOND)",
+            "    $TM_SELECTED_TEXT",
+            "#>"
+        ],
+        "description": "Encapsulates the current highlighted or inserts a TODO: Comment",
+        "prefix": "TODO Comments"
+    },
+    "VerboseLog If Block (class)": {
+        "body": [
+            "",
+            "$TM_SELECTED_TEXT",
+            "if ($$this.VerboseLog) {",
+            "}"
+        ],
+        "description": "Encapsulates the current highlighted text in a if / endif testing $VerboseLog flag",
+        "prefix": "VerboseLog in Class"
+    },
+    "Transcript File Start / End to file": {
+        "description": "Starts / ends Transcript to file ",
+        "prefix": "tscriptToFile",
+        "body": [
+            "$$tmpAuditFile = New-TemporaryFile",
+            "Start-Transcript -Path $$tmpAuditFile",
+            "${TM_SELECTED_TEXT}",
+            "Stop-Transcript",
+            "$$auditFile = (Join-Path ($$PSCommandPath -replace '\\.ps1', '') ('{0}_Audit_{1}.log' -f $$env:COMPUTERNAME, (Get-Date -Format 'yyyy-MM-dd_hhmmss')))",
+            "Remove-Item $$auditFile -Force -ErrorAction SilentlyContinue",
+            "Get-Content $$tmpAuditFile | ForEach-Object {",
+            "    if (![string]::IsNullOrEmpty($$_.Trim())) {",
+            "        Add-Content $$auditFile -Value $$_",
+            "    }",
+            "}",
+            "Remove-Item $$tmpAuditFile -Force -ErrorAction SilentlyContinue"
+        ]
+    },
+    "Transcript Log Start Message": {
+        "description": "Outputs a start message for transcript log",
+        "prefix": "ts_LogStart",
+        "body": "Write-Host ('[{0}|{1}] --STARTED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log End Message": {
+        "description": "Outputs a End message for transcript log",
+        "prefix": "ts_LogEnd",
+        "body": "Write-Host ('[{0}|{1}] ----ENDED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log SepMessage": {
+        "description": "Outputs a message for transcript log",
+        "prefix": "ts_LogSep",
+        "body": "Write-Host ('[{0}|{1}] {2}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, ('-'*25))"
+    },
+    "Transcript Log Message": {
+        "description": "Outputs a message for transcript log",
+        "prefix": "ts_LogMsg",
+        "body": "Write-Host ('[{0}|{1}] ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log Start Message (Pester)": {
+        "description": "Outputs a start message for transcript log",
+        "prefix": "ts_pLogStart",
+        "body": "Write-Host ('[{0}|{1}] --STARTED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName) -ForegroundColor White -BackgroundColor Blue"
+    },
+    "Transcript Log End Message (Pester)": {
+        "description": "Outputs a End message for transcript log",
+        "prefix": "ts_pLogEnd",
+        "body": "Write-Host ('[{0}|{1}] ----ENDED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName) -ForegroundColor White -BackgroundColor Blue"
+    },
+    "Transcript Log Message (Pester)": {
+        "description": "Outputs a message for transcript log for pester",
+        "prefix": "ts_pLogMsg",
+        "body": "Write-Host ('[{0}|{1}] ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName) -ForegroundColor White -BackgroundColor Blue"
+    },
+    "Transcript Log Start Message (Verbose)": {
+        "description": "Outputs a VERBOSE start message for transcript log",
+        "prefix": "ts_vLogStart",
+        "body": "Write-Verbose ('[{0}|{1}] --STARTED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log End Message (Verbose)": {
+        "description": "Outputs a VERBOSE End message for transcript log",
+        "prefix": "ts_vLogEnd",
+        "body": "Write-Verbose ('[{0}|{1}] ----ENDED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log Message (Verbose)": {
+        "description": "Outputs a VERBOSE message for transcript log for pester",
+        "prefix": "ts_vLogMsg",
+        "body": "Write-Verbose ('[{0}|{1}] ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log Start Message (Warning)": {
+        "description": "Outputs a WARNING start message for transcript log",
+        "prefix": "ts_wLogStart",
+        "body": "Write-Warning ('[{0}|{1}] --STARTED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log End Message (Warning)": {
+        "description": "Outputs a WARNING End message for transcript log",
+        "prefix": "ts_wLogEnd",
+        "body": "Write-Warning ('[{0}|{1}] ----ENDED: ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "Transcript Log Message (Warning)": {
+        "description": "Outputs a WARNING message for transcript log for pester",
+        "prefix": "ts_wLogMsg",
+        "body": "Write-Warning ('[{0}|{1}] ${1:message-text}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)"
+    },
+    "ParamList": {
+        "description": "List local param names and values",
+        "prefix": "_ParamList",
+        "body": [
+            "Write-Host ('[{0}|{1}] {2}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, ('-'*25))",
+            "Write-Host ('[{0}|{1}] ** Passed Parameters **' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)",
+            "Write-Host ('[{0}|{1}] {2}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, ('-'*25))",
+            "(\\$PSCmdlet.MyInvocation.MyCommand.Parameters).Keys | ForEach-Object {",
+            "    if (\\$_ -eq 'Verbose') {",
+            "        break",
+            "    }",
+            "    \\$pValue = (Get-Variable -Name \\$_ -ValueOnly -ErrorAction SilentlyContinue)",
+            "    if (\\$null -eq \\$pValue) {",
+            "        \\$pValue = '<null/empty>'",
+            "    }",
+            "    Write-Host ('[{0}|{1}] -{2} {3}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Split-Path (Get-PSCallStack)[1].ScriptName -Leaf), \\$_, \\$pValue)",
+            "}",
+            "Write-Host ('[{0}|{1}] {2}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, ('-'*25))"
+        ]
+    }
+}
