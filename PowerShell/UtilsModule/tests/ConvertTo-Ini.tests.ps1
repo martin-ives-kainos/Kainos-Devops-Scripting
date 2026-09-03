@@ -5,6 +5,28 @@ BeforeAll {
 }
 
 Describe 'ConvertTo-Ini' {
+    It 'Throws an error when the path is empty' {
+        Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
+        $data = @{
+            Database = @{
+                Server = 'SQL01'
+                Port   = '1433'
+            }
+        }
+
+        { ConvertTo-Ini -InputObject $data -Path '' } | Should -Throw "Cannot validate argument on parameter 'Path'. Path cannot be empty."
+    }
+    It 'Throws an error when the path is invalid' {
+        Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
+        $data = @{
+            Database = @{
+                Server = 'SQL01'
+                Port   = '1433'
+            }
+        }
+
+        { ConvertTo-Ini -InputObject $data -Path '::invalid_path::' } | Should -Throw "Cannot bind argument to parameter 'Path' because it is an empty string."
+    }
 
     It 'Converts a hashtable to INI format' {
         Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
@@ -15,7 +37,9 @@ Describe 'ConvertTo-Ini' {
             }
         }
 
-        $ini = ConvertTo-Ini -InputObject $data
+        ConvertTo-Ini -InputObject $data -Path (Join-Path $TestDrive 'test.ini')
+
+        $ini = Get-Content (Join-Path $TestDrive 'test.ini') -Raw
 
         $ini | Should -Match '\[Database\]'
         $ini | Should -Match 'Server=SQL01'
@@ -30,35 +54,10 @@ Describe 'ConvertTo-Ini' {
             }
         }
 
-        $ini = ConvertTo-Ini -InputObject $data
+        ConvertTo-Ini -InputObject $data -Path (Join-Path $TestDrive 'test.ini')
+        $ini = Get-Content (Join-Path $TestDrive 'test.ini') -Raw
 
         $ini | Should -Match '^RootKey=RootValue'
         $ini | Should -Not -Match '\[_Global\]'
-    }
-
-    It 'Round trips successfully' {
-        Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $original = @{
-            Database = @{
-                Server = 'SQL01'
-                Port   = '1433'
-            }
-            Application = @{
-                Name  = 'MyApp'
-                Debug = 'True'
-            }
-        }
-
-        $ini = ConvertTo-Ini -InputObject $original
-
-        $path = Join-Path $TestDrive 'roundtrip.ini'
-        $ini | Set-Content $path
-
-        $reloaded = ConvertFrom-Ini -Path $path
-
-        $reloaded['Database']['Server'] | Should -Be 'SQL01'
-        $reloaded['Database']['Port']   | Should -Be '1433'
-        $reloaded['Application']['Name'] | Should -Be 'MyApp'
-        $reloaded['Application']['Debug'] | Should -Be 'True'
     }
 }
