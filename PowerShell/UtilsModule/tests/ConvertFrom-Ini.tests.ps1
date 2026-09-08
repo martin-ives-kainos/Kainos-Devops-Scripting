@@ -6,10 +6,6 @@ BeforeAll {
 
 Describe 'ConvertFrom-Ini' {
 
-    BeforeAll {
-        #        $testFile = New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve)
-    }
-
     It 'Parses sections and key/value pairs' {
 
         Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
