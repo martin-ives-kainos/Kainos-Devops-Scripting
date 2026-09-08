@@ -1,14 +1,27 @@
 function ConvertFrom-Ini {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Path')]
     param(
-        [Parameter(Mandatory)]
-        [string]$Path
+        [Parameter(Mandatory, ParameterSetName = 'Path')]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ Test-Path $_ -PathType Leaf })]
+        [string]$Path,
+        [Parameter(Mandatory, ParameterSetName = 'Content')]
+        [string[]]$Content
     )
 
     $ini = @{}
     $section = '_Global'
 
-    Get-Content $Path | ForEach-Object {
+    switch ($PSCmdlet.ParameterSetName) {
+        'Path' {
+            $lines = Get-Content $Path
+        }
+        'Content' {
+            $lines = $Content
+        }
+    }
+
+    $lines | ForEach-Object {
 
         $line = $_.Trim()
 
@@ -46,9 +59,12 @@ function ConvertFrom-Ini {
             }
 
             if ($value.Contains('|')) {
-                # Split the value on semi colons and create [System.Collections.Generic.List[string]]
-
-                $value = [System.Collections.Generic.List[string]]($value.Trim('|').Split('|'))
+                $list = @()
+                # Split the value on pipe characters and create [System.Collections.Generic.List[string]]
+                foreach ($item in $value.Trim('|').Split('|')) {
+                    $list += $item
+                }
+                $value = $list
             }
 
             $ini[$section][$key] = $value
