@@ -28,7 +28,7 @@ BeforeAll {
 
 Describe 'ConvertFrom-Ini' {
 
-    Context 'File and Content Parsing' -ForEach @(
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
         @{ P_Name = "File Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
         @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
     ) {
@@ -47,59 +47,93 @@ Describe 'ConvertFrom-Ini' {
         }
     }
 
-    It 'Ignores comments and blank lines' {
-
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_IgnoresCommentsBlankLines.ini' -Resolve))
-
-        $result['Test']['Key'] | Should -Be 'Value'
-        $result.Keys.Count | Should -Be 1
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_IgnoresCommentsBlankLines.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_IgnoresCommentsBlankLines.ini" }
+    ) {
+        BeforeEach {
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            Write-Verbose $result
+        }
+        It ('Ignores comments and blank lines {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
+            $result['Test']['Key'] | Should -Be 'Value'
+            $result.Keys.Count | Should -Be 1
+        }
     }
 
-    It 'Stores keys before a section in _Global' {
-
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_StoreKeysBeforeSections_global.ini' -Resolve))
-
-        $result['_Global']['RootKey'] | Should -Be 'RootValue'
-        $result['Section']['Key'] | Should -Be 'Value'
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_StoreKeysBeforeSections_global.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_StoreKeysBeforeSections_global.ini" }
+    ) {
+        BeforeEach {
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            Write-Verbose $result
+        }
+        It ('Stores keys before a section in _Global {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
+            $result['_Global']['RootKey'] | Should -Be 'RootValue'
+            $result['Section']['Key'] | Should -Be 'Value'
+        }
     }
 
-    It 'Trims whitespace around keys and values' {
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_TrimWhiteSpace.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_TrimWhiteSpace.ini" }
+    ) {
+        BeforeEach {
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            Write-Verbose $result
+        }
 
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_TrimWhiteSpace.ini' -Resolve))
-
-        $result['Test']['Key Name'] | Should -Be 'Some Value'
+        It ('Trims whitespace around keys and values {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
+            $result['Test']['Key Name'] | Should -Be 'Some Value'
+        }
+    }
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
+    ) {
+        BeforeEach {
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            Write-Verbose $result
+        }
+        It ('Parses values with embedded environment variables {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
+            $result['EnvVars']['UserName'] | Should -Be $env:USERNAME
+        }
     }
 
-    It 'Parses values with embedded environment variables' {
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_HandlesEmbededEqualsInValue.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_HandlesEmbededEqualsInValue.ini" }
+    ) {
+        BeforeEach {
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            Write-Verbose $result
+        }
+        It ('Handles values containing equal signs {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
 
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve))
-
-        $result['EnvVars']['UserName'] | Should -Be $env:USERNAME
+            $result['Test']['Connection'] |
+            Should -Be 'Server=db01;User=test=value'
+        }
     }
-
-
-    It 'Handles values containing equal signs' {
-
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_HandlesEmbededEqualsInValue.ini' -Resolve))
-
-        $result['Test']['Connection'] |
-        Should -Be 'Server=db01;User=test=value'
-    }
-
-    It 'Handles values of arrays' {
-
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValueArray.ini' -Resolve))
-
-        #        $result['SimpleArray']['TestServers'] | Should -BeOfType [array]
-        $result['SimpleArray']['TestServers'].Count | Should -Be 3
-        $result['SimpleArray']['TestServers'][0] | Should -Be 'SQL01'
-        $result['SimpleArray']['TestServers'][1] | Should -Be 'SQL02'
-        $result['SimpleArray']['TestServers'][2] | Should -Be 'SQL03'
+    Context 'File and Content Parsing - <P_FileName>' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_ParseSection_KeyValueArray.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValueArray.ini" }
+    ) {
+        BeforeEach {
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            Write-Verbose $result
+        }
+        It ('Handles array values {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
+            $result['SimpleArray']['TestServers'].Count | Should -Be 3
+            $result['SimpleArray']['TestServers'][0] | Should -Be 'SQL01'
+            $result['SimpleArray']['TestServers'][1] | Should -Be 'SQL02'
+            $result['SimpleArray']['TestServers'][2] | Should -Be 'SQL03'
+        }
     }
 }
