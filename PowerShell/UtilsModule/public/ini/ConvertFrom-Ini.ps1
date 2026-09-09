@@ -6,7 +6,7 @@ function ConvertFrom-Ini {
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$Path,
         [Parameter(Mandatory, ParameterSetName = 'Content')]
-        [string[]]$Content
+        [array]$Content
     )
 
     $ini = @{}

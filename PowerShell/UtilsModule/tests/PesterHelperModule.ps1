@@ -282,13 +282,18 @@ New-Module -Name "PesterHelper" -ScriptBlock {
     }
     function New-TestIniFile {
         param (
-            [string]$Path
+            [string]$Path,
+            [switch]$ContentOnly
         )
         if ($Path -notmatch '\.ini$') {
             $Path += '.ini'
         }
+        $content = Get-Content $Path
+        if ($ContentOnly) {
+            return $content
+        }
         $FullPath = Join-Path $TestDrive (Split-Path $Path -Leaf)
-        Get-Content $Path | Set-Content -Path $FullPath
+        $content | Set-Content -Path $FullPath
         return $FullPath
     }
 }

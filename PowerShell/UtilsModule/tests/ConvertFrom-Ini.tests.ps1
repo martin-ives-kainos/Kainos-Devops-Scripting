@@ -5,17 +5,41 @@ BeforeAll {
 }
 
 Describe 'ConvertFrom-Ini' {
+    <#
+It "Returns <expected> (<name>)" -ForEach @(
+        @{ Name = "cactus"; Expected = '🌵'}
+        @{ Name = "giraffe"; Expected = '🦒'}
+    ) {
+        Get-Emoji -Name $name | Should-Be $expected
+    }
 
-    It 'Parses sections and key/value pairs' {
+#>
 
-        Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValuePairs.ini' -Resolve))
+    Context 'File and Content Parsing' -ForEach @(
+        @{ P_Name = "File Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
+        @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
+    ) {
+        BeforeEach {
+            switch ($P_Name) {
+                "File Parsing" {
+                    $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot ('data\{0}' -f $P_FileName) -Resolve))
+                }
+                "Content Parsing" {
+                    $iniContent = New-TestIniFile -Path (Join-Path $PSScriptRoot  ('data\{0}' -f $P_FileName) -Resolve) -ContentOnly
+                    $result = ConvertFrom-Ini -Content $iniContent
+                }
+            }
+            Write-Verbose $result
+        }
+        It ('Parses sections and key/value pairs {0} from: {1}' -f $P_Name, $P_FileName) {
+            Write-Host ('[ConvertFrom-Ini.tests] {0} Sections: {1}' -f $____Pester.CurrentTest.Name, ($result.Keys -join ', ')) -BackgroundColor Green -ForegroundColor Black
 
-        $result['Database']['Server'] | Should -Be 'SQL01'
-        $result['Database']['Port'] | Should -Be '1433'
-        $result['Application']['Name'] | Should -Be 'MyApp'
-        $result['Application']['Debug'] | Should -Be 'True'
-        $result['EnvVars']['UserName'] | Should -Be $env:USERNAME
+            $result['Database']['Server'] | Should -Be 'SQL01'
+            $result['Database']['Port'] | Should -Be '1433'
+            $result['Application']['Name'] | Should -Be 'MyApp'
+            $result['Application']['Debug'] | Should -Be 'True'
+            $result['EnvVars']['UserName'] | Should -Be $env:USERNAME
+        }
     }
 
     It 'Ignores comments and blank lines' {
@@ -52,6 +76,7 @@ Describe 'ConvertFrom-Ini' {
         $result['EnvVars']['UserName'] | Should -Be $env:USERNAME
     }
 
+
     It 'Handles values containing equal signs' {
 
         Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
@@ -66,7 +91,7 @@ Describe 'ConvertFrom-Ini' {
         Write-Host ('[ConvertFrom-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot 'data\Test_ParseSection_KeyValueArray.ini' -Resolve))
 
-#        $result['SimpleArray']['TestServers'] | Should -BeOfType [array]
+        #        $result['SimpleArray']['TestServers'] | Should -BeOfType [array]
         $result['SimpleArray']['TestServers'].Count | Should -Be 3
         $result['SimpleArray']['TestServers'][0] | Should -Be 'SQL01'
         $result['SimpleArray']['TestServers'][1] | Should -Be 'SQL02'
