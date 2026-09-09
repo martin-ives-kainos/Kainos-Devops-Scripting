@@ -2,33 +2,38 @@ BeforeAll {
     # Import the module to load the function being tested
     Import-Module (Join-Path $PSScriptRoot '..\UtilsModule.psd1' -Resolve) -Force -PassThru | Out-Null
     . (Join-Path $PSScriptRoot 'PesterHelperModule.ps1' -Resolve)
+
+    function New-IniTestResults {
+        [CmdletBinding()]
+        [OutputType([hashtable])]
+        param (
+            [Parameter(Mandatory = $true)]
+            [ValidateSet("File Parsing", "Content Parsing")]
+            [string]$TestType,
+            [Parameter(Mandatory = $true)]
+            [string]$FileName
+        )
+        switch ($TestType) {
+            "File Parsing" {
+                $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot ('data\{0}' -f $FileName) -Resolve))
+            }
+            "Content Parsing" {
+                $iniContent = New-TestIniFile -Path (Join-Path $PSScriptRoot  ('data\{0}' -f $FileName) -Resolve) -ContentOnly
+                $result = ConvertFrom-Ini -Content $iniContent
+            }
+        }
+        return $result
+    }
 }
 
 Describe 'ConvertFrom-Ini' {
-    <#
-It "Returns <expected> (<name>)" -ForEach @(
-        @{ Name = "cactus"; Expected = '🌵'}
-        @{ Name = "giraffe"; Expected = '🦒'}
-    ) {
-        Get-Emoji -Name $name | Should-Be $expected
-    }
-
-#>
 
     Context 'File and Content Parsing' -ForEach @(
         @{ P_Name = "File Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
         @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
     ) {
         BeforeEach {
-            switch ($P_Name) {
-                "File Parsing" {
-                    $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot ('data\{0}' -f $P_FileName) -Resolve))
-                }
-                "Content Parsing" {
-                    $iniContent = New-TestIniFile -Path (Join-Path $PSScriptRoot  ('data\{0}' -f $P_FileName) -Resolve) -ContentOnly
-                    $result = ConvertFrom-Ini -Content $iniContent
-                }
-            }
+            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Parses sections and key/value pairs {0} from: {1}' -f $P_Name, $P_FileName) {
