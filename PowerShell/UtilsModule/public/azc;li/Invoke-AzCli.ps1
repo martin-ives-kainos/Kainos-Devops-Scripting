@@ -48,7 +48,7 @@ function Invoke-AzCli {
         [Parameter(Mandatory = $true, Position = 0)]
         [string[]]$Arguments,
 
-        [switch]$AsJson = $true,
+        [switch]$AsJson,
 
         [switch]$PassThruOnError
     )
@@ -63,8 +63,9 @@ function Invoke-AzCli {
 
     try {
         # Capture stdout and stderr separately, avoid throwing on non-terminating stream writes
-        $stdOut = & az @azArgs 2>&1
-        $exitCode = $LASTEXITCODE
+        $internalResult = Invoke-AzCliInternal -azArgs $azArgs
+        $stdOut = $internalResult.StdOut
+        $exitCode = $internalResult.ExitCode
 
         # Separate error records (from stderr) out of the combined stream
         $errorLines = $stdOut | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
