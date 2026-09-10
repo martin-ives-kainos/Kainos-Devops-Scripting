@@ -33,15 +33,36 @@
 
 # Invoke-AzCli.Tests.ps1
 
+function Invoke-MockAzCliInternalError {
+    param (
+        [Parameter(Mandatory)]
+        [ValidateRange(-1, 9)]
+        [int]$ExitCode,
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ErrorMessage
+    )
+    $global:LASTEXITCODE = $ExitCode
+    $result = @{
+        StdOut   = @($ErrorMessage)
+        ExitCode = $global:LASTEXITCODE
+    }
+    try {
+        Write-Host ('[Invoke-AzCli.tests] {0} ---Mocking Invoke-AzCliInternal--- {1}' -f $____Pester.CurrentTest.Name, $result.StdOut[0]) -BackgroundColor Blue -ForegroundColor White
+        throw $result.StdOut[0]
+    }
+    catch {
+        $result.StdOut += $_
+    }
+    return $result
+
+
+}
+
 BeforeAll {
     # Import the module to load the function being tested
     Import-Module (Join-Path $PSScriptRoot '..\UtilsModule.psd1' -Resolve) -Force -PassThru | Out-Null
     . (Join-Path $PSScriptRoot 'PesterHelperModule.ps1' -Resolve)
-
-    # Placeholder command required so Pester can mock Azure CLI calls
-    function az {
-        throw 'The az command should have been mocked.'
-    }
 }
 
 AfterAll {
@@ -61,9 +82,8 @@ Describe 'Invoke-AzCli' {
             $global:LASTEXITCODE = 0
             return @{
                 StdOut   = '{"name":"demo"}'
-                ExitCode = 0
+                ExitCode = $global:LASTEXITCODE
             }
-
         }
 
         $result = Invoke-AzCli -Arguments @('account', 'show') -AsJson
@@ -75,29 +95,35 @@ Describe 'Invoke-AzCli' {
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-    <#     It 'does not append JSON output arguments when an output option is supplied' {
+    It 'does not append JSON output arguments when an output option is supplied' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        Mock az {
-            $global:InvokeAzCliTestArguments = @($args)
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            $global:InvokeAzCliTestArguments = $args[1]
             $global:LASTEXITCODE = 0
-            'demo'
+            return @{
+                StdOut   = 'demo'
+                ExitCode = $global:LASTEXITCODE
+            }
         }
 
-        $result = Invoke-AzCli -Arguments @('account', 'show', '-o', 'table')
+        $result = Invoke-AzCli -Arguments @('account', 'show', '-o', 'table') -AsJson
 
         @($global:InvokeAzCliTestArguments) |
-            Should -BeExactly @('account', 'show', '-o', 'table')
+        Should -BeExactly @('account', 'show', '-o', 'table')
 
         $result | Should -Be 'demo'
-        Should -Invoke az -Times 1 -Exactly
-    } #>
+        Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
+    }
 
-    <#     It 'returns raw output when AsJson is disabled' {
+    It 'returns raw output when AsJson is disabled' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        Mock az {
-            $global:InvokeAzCliTestArguments = @($args)
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            $global:InvokeAzCliTestArguments = $args[1]
             $global:LASTEXITCODE = 0
-            '{"name":"demo"}'
+            return @{
+                StdOut   = '{"name":"demo"}'
+                ExitCode = $global:LASTEXITCODE
+            }
         }
 
         $result = Invoke-AzCli `
@@ -105,17 +131,16 @@ Describe 'Invoke-AzCli' {
             -AsJson:$false
 
         @($global:InvokeAzCliTestArguments) |
-            Should -BeExactly @('account', 'show')
+        Should -BeExactly @('account', 'show')
 
         $result | Should -Be '{"name":"demo"}'
-    } #>
+        Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
+    }
 
-    <#     It 'returns a successful result object with PassThruOnError' {
+    It 'returns a successful result object with PassThruOnError' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        Mock az {
-            $global:InvokeAzCliTestArguments = @($args)
-            $global:LASTEXITCODE = 0
-            '{"id":"123"}'
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            Invoke-MockAzCliInternalError -ExitCode 0 -ErrorMessage '123'
         }
 
         $result = Invoke-AzCli `
@@ -123,17 +148,17 @@ Describe 'Invoke-AzCli' {
             -PassThruOnError
 
         $result.Success | Should -BeTrue
-        $result.Output.id | Should -Be '123'
+        $result.Output | Should -Be '123'
         $result.Error | Should -BeNullOrEmpty
         $result.ExitCode | Should -Be 0
-    } #>
+        Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
+    }
 
-    <#     It 'returns a failure result when Azure CLI exits with a nonzero code' {
+    It 'returns a failure result when Azure CLI exits with a nonzero code' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        Mock az {
-            $global:InvokeAzCliTestArguments = @($args)
-            $global:LASTEXITCODE = 3
-            Write-Error 'Resource was not found'
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            Invoke-MockAzCliInternalError -ExitCode 3 -ErrorMessage 'Resource was not found'
+
         }
 
         $result = Invoke-AzCli `
@@ -144,44 +169,41 @@ Describe 'Invoke-AzCli' {
         $result.Output | Should -BeNullOrEmpty
         $result.Error | Should -Match 'Resource was not found'
         $result.ExitCode | Should -Be 3
-    } #>
+        Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
+    }
 
-    <#     It 'throws when Azure CLI exits with a nonzero code and PassThruOnError is not used' {
+    It 'throws when Azure CLI exits with a nonzero code and PassThruOnError is not used' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        Mock az {
-            $global:LASTEXITCODE = 7
-            Write-Error 'Azure CLI failure'
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            Invoke-MockAzCliInternalError -ExitCode 7 -ErrorMessage 'Azure CLI failure'
         }
 
         {
             Invoke-AzCli -Arguments @('account', 'show')
         } | Should -Throw '*Azure CLI command failed (exit code 7)*'
-    } #>
+    }
 
-    <#     It 'returns ExitCode -1 when command invocation throws' {
-        Mock az {
-            throw 'Azure CLI executable could not be started.'
+    It 'returns ExitCode -1 when command invocation throws' {
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            Invoke-MockAzCliInternalError -ExitCode -1 -ErrorMessage 'Azure CLI executable could not be started.'
         }
 
-        $result = Invoke-AzCli `
-            -Arguments @('account', 'show') `
-            -PassThruOnError
+        $result = Invoke-AzCli -Arguments @('account', 'show') -PassThruOnError
 
         $result.Success | Should -BeFalse
         $result.Output | Should -BeNullOrEmpty
         $result.Error | Should -Match 'Azure CLI executable could not be started'
         $result.ExitCode | Should -Be -1
-    } #>
+    }
 
-    <#     It 'returns raw output when successful output is not valid JSON' {
+    It 'returns raw output when successful output is not valid JSON' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
-        Mock az {
-            $global:LASTEXITCODE = 0
-            'not valid JSON'
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            Invoke-MockAzCliInternalError -ExitCode 0 -ErrorMessage 'not valid JSON'
         }
 
         $result = Invoke-AzCli -Arguments @('account', 'show')
 
         $result | Should -Be 'not valid JSON'
-    } #>
+    }
 }
