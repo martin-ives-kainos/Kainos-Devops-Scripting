@@ -6,30 +6,29 @@ function Set-AzDOCliDefaults {
         [String]$Project
     )
 
-    $cmd = Get-Command Set-AzDOCliDefaults
-
-    $ValidKeys = $PSBoundParameters.GetEnumerator().Keys | Sort-Object -Unique -ExpandProperty Key
-
-    foreach ($cmdParam in $cmd.Parameters.GetEnumerator()) {
-        if ($cmdParam.key -eq 'Verbose') {
-            break
+    # TODO: Consider adding validation or default values for the parameters before populating the hashtable.
+    $pTable = @{}
+    $ParameterList = (Get-Command -Name $MyInvocation.InvocationName).Parameters
+    foreach ($key in $ParameterList.keys) {
+        $var = Get-Variable -Name $key -ErrorAction SilentlyContinue
+        if ($var) {
+            $pTable.Add($var.name, $var.value)
         }
-        $ValidKeys += $cmdParam.Key
     }
 
-    $ValidKeys = $ValidKeys | Sort-Object -Unique
-
-    # Read the passed parameter values for all arguments
-    foreach ($parameter in $PSBoundParameters.GetEnumerator()) {
-        if ($ValidKeys -notcontains $parameter.Key) {
-            $cliArgs = @('devops', 'configure', '--defaults', ('{0}=''''' -f $parameter.Key.ToLower()))
+    foreach ($key in $pTable.Keys) {
+        if ([string]::IsNullOrEmpty($pTable[$key])) {
+            Write-Warning "Default setting $key will be reset to blank"
+            $cliArgs = @('devops', 'configure', '--defaults', ('{0}=''''' -f $key.ToLower()))
         }
         else {
-            $cliArgs = @('devops', 'configure', '--defaults', ('{0}={1}' -f $parameter.Key.ToLower(), $parameter.Value))
+            Write-Host "$key = $($pTable[$key])" -ForegroundColor Black -BackgroundColor DarkGreen
+            $cliArgs = @('devops', 'configure', '--defaults', ('{0}={1}' -f $key.ToLower(), $pTable[$key]))
         }
         Invoke-AzCli -Arguments $cliArgs
     }
     Write-Host "Azure DevOps CLI defaults have been set." -ForegroundColor Black -BackgroundColor DarkGreen
     Write-Host (Invoke-AzCli -Arguments @('devops', 'configure', '--list'))
-    Write-Host "-----------------------------------------" -ForegroundColor Black -BackgroundColor DarkGreen
+    Write-Host "-----------------------------------------" -ForegroundColor Black -BackgroundColor DarkGreen #>
 }
+
