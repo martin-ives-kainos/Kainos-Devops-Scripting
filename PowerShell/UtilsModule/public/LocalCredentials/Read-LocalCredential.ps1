@@ -17,12 +17,12 @@ function Read-LocalCredential {
     }
 
     $savedFile = (Join-Path $env:APPDATA ('LocalCred_{0}.xml' -f $AppName.Trim()))
-    if (Test-Path $savedFile -PathType Leaf) {
+    if ((Test-Path $savedFile -PathType Leaf) -and (-not $ForcePrompt)) {
         $credential = Import-Clixml -Path $savedFile
     }
     else {
         $credential = Get-Credential -UserName $UserName -Message "Enter credentials for $UserName"
-        $credential | Export-Clixml -Path $savedFile
+        $credential | Export-Clixml -Path $savedFile -Force
     }
     return $credential
 }
