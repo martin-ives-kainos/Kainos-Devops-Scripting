@@ -1,0 +1,176 @@
+name: UtilsModule CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'PowerShell/UtilsModule/**'
+      - '.github/workflows/utilsmodule-ci-cd.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'PowerShell/UtilsModule/**'
+      - '.github/workflows/utilsmodule-ci-cd.yml'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Version bump type for release'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+env:
+  MODULE_NAME: UtilsModule
+  MODULE_PATH: PowerShell/UtilsModule
+  MANIFEST_PATH: PowerShell/UtilsModule/UtilsModule.psd1
+
+jobs:
+  validate:
+    name: Validate (PSScriptAnalyzer)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path $env:MODULE_PATH -Recurse -Severity Error,Warning
+          $results | Format-Table -AutoSize | Out-String | Write-Host
+
+          $errors = $results | Where-Object Severity -eq 'Error'
+          if ($errors) {
+            Write-Host "::error::PSScriptAnalyzer found $($errors.Count) error(s)."
+            exit 1
+          }
+
+      - name: Validate module manifest
+        shell: pwsh
+        run: |
+          $manifest = Test-ModuleManifest -Path $env:MANIFEST_PATH
+          Write-Host "Manifest OK: $($manifest.Name) v$($manifest.Version)"
+
+  test:
+    name: Test (Pester)
+    needs: validate
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0.0
+
+          $config = New-PesterConfiguration
+          $config.Run.Path = Join-Path $env:MODULE_PATH 'tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = 'testResults.xml'
+          $config.TestResult.OutputFormat = 'NUnitXml'
+
+          Invoke-Pester -Configuration $config
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Pester Test Results
+          path: testResults.xml
+          reporter: dotnet-nunit
+          fail-on-error: false
+
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pester-test-results
+          path: testResults.xml
+
+  publish:
+    name: Version & Publish
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump module version
+        id: version
+        shell: pwsh
+        run: |
+          $manifest = Import-PowerShellDataFile -Path $env:MANIFEST_PATH
+          [version]$current = $manifest.ModuleVersion
+
+          switch ('${{ github.event.inputs.release_type }}') {
+            'major' { $new = [version]::new($current.Major + 1, 0, 0) }
+            'minor' { $new = [version]::new($current.Major, $current.Minor + 1, 0) }
+            default { $new = [version]::new($current.Major, $current.Minor, $current.Build + 1) }
+          }
+
+          Write-Host "Current version: $current"
+          Write-Host "New version: $new"
+
+          (Get-Content -Path $env:MANIFEST_PATH -Raw) `
+            -replace "ModuleVersion = '$current'", "ModuleVersion = '$new'" |
+            Set-Content -Path $env:MANIFEST_PATH -NoNewline
+
+          Test-ModuleManifest -Path $env:MANIFEST_PATH | Out-Null
+
+          "version=$new" >> $env:GITHUB_OUTPUT
+
+      - name: Commit and tag version bump
+        shell: pwsh
+        run: |
+          git add $env:MANIFEST_PATH
+          git commit -m "chore: bump $env:MODULE_NAME to v${{ steps.version.outputs.version }} [skip ci]"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin HEAD:main
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Package module
+        shell: pwsh
+        run: |
+          $zipPath = "$env:MODULE_NAME-${{ steps.version.outputs.version }}.zip"
+          Compress-Archive -Path (Join-Path $env:MODULE_PATH '*') -DestinationPath $zipPath
+          "zip_path=$zipPath" >> $env:GITHUB_ENV
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" "$env:zip_path" `
+            --title "$env:MODULE_NAME v${{ steps.version.outputs.version }}" `
+            --generate-notes
+
+      - name: Publish to PowerShell Gallery
+        shell: pwsh
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          Publish-Module -Path $env:MODULE_PATH -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery
