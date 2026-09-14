@@ -1,0 +1,77 @@
+# File: step-env-build-publish-DotNetCoreCli.yml@templates
+# --------------------------------------
+#   - template: step-env-build-publish-DotNetCoreCli.yml@templates
+#     parameters:
+#       ProjectFiles:
+#         - 'Lexacom.Panopticon.Web.csproj'
+#         - 'Lexacom.Panopticon.Factotum.csproj'
+#       ZipAfterPublish: false
+#       PublishWebProjects: false
+#       ModifyOutputPath: false
+#       PublishArguments: '-p:PublishProfile=FolderProfile'
+#       SolutionFileName: 'Lexacom.Panopticon.sln'
+#       RestoreSolution: false
+#       RunCliStep: true
+#       ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+parameters:
+- name: ProjectFiles
+  type: object
+- name: SolutionFileName
+  type: string
+- name: PublishArguments
+  type: string
+  default: '-p:PublishProfile=FolderProfile'
+- name: RunCliStep
+  type: boolean
+  default: true
+- name: RestoreSolution
+  type: boolean
+  default: false
+- name: PublishWebProjects
+  type: boolean
+  default: false
+- name: ModifyOutputPath
+  type: boolean
+  default: false
+- name: ZipAfterPublish
+  type: boolean
+  default: false
+- name: ShowParams
+  type: boolean
+  default: false
+
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-env-build-publish-DotNetCoreCli'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-env-build-publish-DotNetCoreCli-----'
+      Write-Host ' ModifyOutputPath  : ${{ parameters.ModifyOutputPath }}'
+      Write-Host ' ProjectFiles      : ${{ join(';',parameters.ProjectFiles) }}'
+      Write-Host ' PublishArguments  : ${{ parameters.PublishArguments }}'
+      Write-Host ' PublishWebProjects: ${{ parameters.PublishWebProjects }}'
+      Write-Host ' RestoreSolution   : ${{ parameters.RestoreSolution }}'
+      Write-Host ' RunCliStep        : ${{ parameters.RunCliStep }}'
+      Write-Host ' SolutionFileName  : ${{ parameters.SolutionFileName }}'
+      Write-Host ' ZipAfterPublish   : ${{ parameters.ZipAfterPublish }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- ${{ each projFile in parameters.ProjectFiles }}:
+  - template: step-env-build-project-DotNetCoreCLI.yml@templates
+    parameters:
+      ProjectFileName: '${{ projFile }}'
+      Command: 'publish'
+      ZipAfterPublish: ${{ parameters.ZipAfterPublish }}
+      PublishWebProjects: ${{ parameters.PublishWebProjects }}
+      PublishArguments: '${{ parameters.PublishArguments }}'
+      modifyOutputPath: ${{ parameters.ModifyOutputPath }}
+      SolutionFileName: '${{ parameters.SolutionFileName }}'
+      RestoreSolution: ${{ parameters.RestoreSolution }}
+      RunCliStep: ${{ parameters.RunCliStep }}
+      ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------

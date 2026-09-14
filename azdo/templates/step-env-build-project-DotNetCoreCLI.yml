@@ -1,0 +1,119 @@
+# File: step-env-build-project-DotNetCoreCLI.yml@templates
+# --------------------------------------
+#   - template: step-env-build-project-DotNetCoreCLI.yml@templates
+#     parameters:
+#       ProjectFileName: 'Lexacom.Core.Nightjar.csproj'
+#       Command: 'build'
+#-----if build
+#       Configuration: 'Debug'
+#-----if publish
+#       ZipAfterPublish: false
+#       PublishWebProjects: false
+#       ModifyOutputPath: false
+#       PublishArguments: '-p:PublishProfile=FolderProfile'
+#-----------
+#       SolutionFileName: 'Lexacom.Panopticon.sln'
+#       RestoreSolution: false
+#-----------
+#       RunCliStep: true
+#       ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+parameters:
+# ----------------------------------------------------------
+  - name: ProjectFileName
+    type: string
+  - name: SolutionFileName
+    type: string
+    default: 'Lexacom.Panopticon.sln'
+  - name: Command
+    type: string
+    default: 'build'
+    values:
+      - build
+      - publish
+  - name: Configuration
+    type: string
+    default: 'Debug'
+  - name: PublishArguments
+    type: string
+    default: '-p:PublishProfile=FolderProfile'
+  - name: RunCliStep
+    type: boolean
+    default: true
+  - name: RestoreSolution
+    type: boolean
+    default: false
+  - name: PublishWebProjects
+    type: boolean
+    default: false
+  - name: ModifyOutputPath
+    type: boolean
+    default: false
+  - name: ZipAfterPublish
+    type: boolean
+    default: false
+  - name: ShowParams
+    type: boolean
+    default: true
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-env-build-project-DotNetCoreCLI'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-env-build-project-DotNetCoreCLI-----'
+      Write-Host ' Command           : ${{ parameters.Command }}'
+      Write-Host ' Configuration     : ${{ parameters.Configuration }}'
+      Write-Host ' ModifyOutputPath  : ${{ parameters.ModifyOutputPath }}'
+      Write-Host ' ProjectFileName   : ${{ parameters.ProjectFileName }}'
+      Write-Host ' PublishArguments  : ${{ parameters.PublishArguments }}'
+      Write-Host ' PublishWebProjects: ${{ parameters.PublishWebProjects }}'
+      Write-Host ' RestoreSolution   : ${{ parameters.RestoreSolution }}'
+      Write-Host ' RunCliStep        : ${{ parameters.RunCliStep }}'
+      Write-Host ' SolutionFileName  : ${{ parameters.SolutionFileName }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: '${{ parameters.ProjectFileName }}'
+      VarName: 'ProjectFileName.File.Path'
+    - Name: '${{ parameters.SolutionFileName }}'
+      VarName: 'SolutionFileName.File.Path'
+    - Name: 'nuget.config'
+      VarName: 'nuget.config.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+- ${{ if eq(parameters.RestoreSolution, 'true') }}: # >>> RestoreSolution
+  - task: NuGetCommand@2
+    displayName: 'Restore ${{ parameters.SolutionFileName }}'
+    inputs:
+      command: 'restore'
+      feedsToUse: 'config'
+      nugetConfigPath: '$(nuget.config.File.Path)'
+      restoreSolution: '$(SolutionFileName.File.Path)'
+# --------------------------------------
+
+- ${{ if eq(parameters.Command, 'build') }}: # >>>     command: 'publish'
+  - task: DotNetCoreCLI@2
+    displayName: 'Build ${{ parameters.ProjectFileName }}'
+    inputs:
+      command: '${{ parameters.Command }}'
+      projects: '$(ProjectFileName.File.Path)'
+      configuration: '${{ parameters.Configuration }}'
+    enabled: ${{ parameters.RunCliStep }}
+- ${{ else }}: # >>>     command: 'publish'
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish ${{ parameters.ProjectFileName }} via DotNet'
+    inputs:
+      command: '${{ parameters.Command }}'
+      projects: '$(ProjectFileName.File.Path)'
+      modifyOutputPath: ${{ parameters.ModifyOutputPath }}
+      publishWebProjects: ${{ parameters.PublishWebProjects }}
+      zipAfterPublish: ${{ parameters.ZipAfterPublish }}
+      arguments: '${{ parameters.PublishArguments }}'
+    enabled: ${{ parameters.RunCliStep }}

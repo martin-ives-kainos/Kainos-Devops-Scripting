@@ -1,0 +1,57 @@
+# File: templates/step-Extract-AzResources.yml
+#  parameters:
+#   SubName: 'xxxxx'
+#   OutputPath: '$(Build.ArtifactStagingDirectory)'
+#   TenantId: '356a588b-3348-4e20-9918-6509064a9098'
+#   UserName: ''
+#   UserPass: ''
+##   azureSubscription: '${{ parameters.azureSubscription }}'
+##   commandType: 'cli'
+##   DataSetName: 'ResourceGroups'
+##   command: 'group'
+##   commandArgs: 'list'
+
+parameters:
+  - name: SubName
+    type: string
+  - name: OutputPath
+    type: string
+    default: "$(Build.ArtifactStagingDirectory)"
+  - name: TenantId
+    type: string
+    default: "356a588b-3348-4e20-9918-6509064a9098"
+  - name: UserName
+    type: string
+  - name: UserPass
+    type: string
+
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-Extract-AzResources'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-Extract-AzResources-----'
+      Write-Host 'SubName    : ${{ parameters.SubName }}'
+      Write-Host 'OutputPath : ${{ parameters.OutputPath }}'
+      Write-Host 'TenantId   : ${{ parameters.TenantId }}'
+      Write-Host 'UserName   : ${{ parameters.UserName }}'
+      Write-Host 'UserPass   : *******'
+    showWarnings: true
+    pwsh: true
+  enabled: true
+# ----------------------------------------------------------
+- template: step-SearchFilePath.yml
+  parameters:
+    FileName: "AzSubResourceData.ps1"
+    RootFolder: "$(Build.SourcesDirectory)"
+    varName: "Script.File.Path"
+    ReturnFullPath: true
+- task: PowerShell@2
+  displayName: "Extract ${{ parameters.SubName }} Az Resource Data"
+  inputs:
+    filePath: "$(Script.File.Path)"
+    arguments: -SubName '${{ parameters.SubName }}' -OutputPath '${{ parameters.OutputPath }} -TenantId '${{ parameters.TenantId }}' -SubscriptionName '${{ parameters.SubName }}' -UserName '${{ parameters.UserName }}' -UserPass '${{ parameters.UserPass }}'
+    pwsh: true
+  enabled: true

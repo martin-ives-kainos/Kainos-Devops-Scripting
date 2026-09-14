@@ -1,0 +1,27 @@
+# File: D:\src\LexacomDevops\.pipelines\
+#
+parameters:
+  - name: SourceFolder
+    type: string
+    default: $(Build.SourcesDirectory)
+  - name: TargetFolder
+    type: string
+    default: $(Build.ArtifactStagingDirectory)
+  - name: ArtifactName
+    type: string
+    default: DevopsScripting
+
+steps:
+- task: CopyFiles@2
+  displayName: 'Copy files: ${{ parameters.SourceFolder }} to ${{ parameters.TargetFolder }}'
+  inputs:
+    SourceFolder: '${{ parameters.SourceFolder }}'
+    Contents: '**'
+    TargetFolder: '${{ parameters.TargetFolder }}'
+    CleanTargetFolder: true
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish ${{ parameters.ArtifactName }}'
+  inputs:
+    PathtoPublish: '${{ parameters.TargetFolder }}'
+    ArtifactName: '${{ parameters.ArtifactName }}'
+    publishLocation: 'Container'

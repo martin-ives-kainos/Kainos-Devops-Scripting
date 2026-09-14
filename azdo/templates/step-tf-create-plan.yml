@@ -1,0 +1,196 @@
+# File: step-tf-create-plan.yml@templates
+# --------------------------------------
+#   - template: step-tf-create-plan.yml@templates
+#     parameters:
+#       ApplicationCode: '${{ lower(parameters.AppCode) }}'
+#       AzureLocation: '$(iac.env.location)'
+#       BuildNumber: '$(Build.BuildNumber)'
+#       ContainerName: '$(iac.tfstates.container.name)'
+#       EnvCode: '$(iac.env.prefix)'
+#       ResourceGroupName: '$(iac.tfstates.rg.name)'
+#       SaKey: '$(iac.tfstates.sa.key)'
+#       SaName: '$(iac.tfstates.sa.name)'
+#       ShowParams: true
+#       StateLockId: '93828b9a-2224-a2e4-242f-71785706a49f'
+#       StateUnlock: true
+#       SubId: '$(iac.env.subid)'
+#       SvcAccount: '$(iac.svc.connection)'
+#       TenantId: '$(iac.env.tenantid)'
+#       TfCommandInitOptions: ''
+#       TfCommandsFolder: 'terraform'
+# --------------------------------------
+parameters:
+- name: ApplicationCode
+  type: string
+  default: 'vnext'
+- name: AzureLocation
+  type: string
+- name: BuildNumber
+  type: string
+  default: '$(Build.BuildNumber)'
+- name: ContainerName
+  type: string
+- name: EnvCode
+  type: string
+- name: ResourceGroupName
+  type: string
+- name: SaKey
+  type: string
+- name: SaName
+  type: string
+- name: ShowParams
+  type: boolean
+- name: SubId
+  type: string
+- name: StateLockId
+  type: string
+  default: 'n/a'
+- name: StateUnlock
+  type: boolean
+  default: false
+- name: SvcAccount
+  type: string
+- name: TenantId
+  type: string
+- name: TfCommandsFolder
+  type: string
+  default: 'terraform'
+- name: TfCommandInitOptions
+  type: string
+  default: ''
+# --------------------------------------
+steps:
+- template: step-debug-show-template-params.yml
+  parameters:
+    TemplateName: 'step-tf-create-plan.yml'
+    enabled: ${{ parameters.ShowParams }}
+    SaveParamsToFile: false
+    paramValues:
+      ApplicationCode: '${{ parameters.ApplicationCode }}'
+      AzureLocation: '${{ parameters.AzureLocation }}'
+      BuildNumber: '${{ parameters.BuildNumber }}'
+      ContainerName: '${{ parameters.ContainerName }}'
+      EnvCode: '${{ parameters.EnvCode }}'
+      ResourceGroupName: '${{ parameters.ResourceGroupName }}'
+      SaKey: '${{ parameters.SaKey }}'
+      SaName: '${{ parameters.SaName }}'
+      StateLockId: '${{ parameters.StateLockId }}'
+      StateUnlock: '${{ parameters.StateUnlock }}'
+      SubId: '${{ parameters.SubId }}'
+      SvcAccount: '${{ parameters.SvcAccount }}'
+      TenantId: '${{ parameters.TenantId }}'
+      TfCommandInitOptions: '${{ parameters.TfCommandInitOptions }}'
+      TfCommandsFolder: '${{ parameters.TfCommandsFolder }}'
+# --------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'terraform.tfvars'
+      VarName: 'tfvars.autoload.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+- task: replacetokens@6
+  displayName: 'terraform.tfvars: Replace tokens'
+  inputs:
+    root: '$(System.DefaultWorkingDirectory)'
+    sources: '$(tfvars.autoload.File.Path)'
+    additionalVariables: |
+      - tf.var.env_app_code: '${{ parameters.ApplicationCode }}'
+      - tf.var.primary_location: '${{ parameters.AzureLocation }}'
+      - tf.var.env_prefix: '${{ parameters.EnvCode }}'
+      - tf.var.subscription_id: '${{ parameters.SubId }}'
+      - tf.var.tenant_id: '${{ parameters.TenantId }}'
+    tokenPattern: 'custom'
+    tokenPrefix: '{'
+    tokenSuffix: '}'
+    escape: 'off'
+    missingVarAction: 'replace'
+    ifNoFilesFound: 'error'
+# --------------------------------------
+- task: TerraformTaskV4@4
+  displayName: 'TF Init ${{ parameters.EnvCode }}'
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    backendServiceArm: '${{ parameters.SvcAccount }}'
+    backendAzureRmResourceGroupName: '${{ parameters.ResourceGroupName }}'
+    backendAzureRmStorageAccountName: '${{ parameters.SaName }}'
+    backendAzureRmContainerName: '${{ parameters.ContainerName }}'
+    backendAzureRmKey: '${{ parameters.SaKey }}'
+    workingDirectory: '$(Build.SourcesDirectory)\${{ parameters.TfCommandsFolder }}'
+    commandOptions: '${{ parameters.TfCommandInitOptions }} -no-color'
+    backendAzureRmUseEnvironmentVariablesForAuthentication: true
+    backendAzureRmUseEntraIdForAuthentication: false
+- task: TerraformTaskV4@4
+  displayName: 'TF Validate ${{ parameters.EnvCode }}'
+  inputs:
+    provider: 'azurerm'
+    command: 'validate'
+    backendServiceArm: '${{ parameters.SvcAccount }}'
+    backendAzureRmResourceGroupName: '${{ parameters.ResourceGroupName }}'
+    backendAzureRmStorageAccountName: '${{ parameters.SaName }}'
+    backendAzureRmContainerName: '${{ parameters.ContainerName }}'
+    backendAzureRmKey: '${{ parameters.SaKey }}'
+    workingDirectory: '$(Build.SourcesDirectory)\${{ parameters.TfCommandsFolder }}'
+    commandOptions: '-json -no-color'
+    backendAzureRmUseEnvironmentVariablesForAuthentication: true
+    backendAzureRmUseEntraIdForAuthentication: false
+# --------------------------------------
+- task: TerraformTaskV4@4
+  displayName: 'TF Format Check ${{ parameters.EnvCode }}'
+  inputs:
+    provider: 'azurerm'
+    command: 'fmt'
+    backendServiceArm: '${{ parameters.SvcAccount }}'
+    backendAzureRmResourceGroupName: '${{ parameters.ResourceGroupName }}'
+    backendAzureRmStorageAccountName: '${{ parameters.SaName }}'
+    backendAzureRmContainerName: '${{ parameters.ContainerName }}'
+    backendAzureRmKey: '${{ parameters.SaKey }}'
+    workingDirectory: '$(Build.SourcesDirectory)\${{ parameters.TfCommandsFolder }}'
+    commandOptions: '-check -recursive'
+    backendAzureRmUseEnvironmentVariablesForAuthentication: true
+    backendAzureRmUseEntraIdForAuthentication: false
+  enabled: false
+- task: TerraformTaskV4@4
+  displayName: TF Unlock State
+  inputs:
+    provider: 'azurerm'
+    command: 'custom'
+    outputTo: 'console'
+    customCommand: 'force-unlock -force ${{ parameters.StateLockId }}'
+    environmentServiceNameAzureRM: 'TF_UAE'
+  enabled: ${{ parameters.StateUnlock }}
+- task: TerraformTaskV4@4
+  displayName: 'TF Create Plan ${{ parameters.EnvCode }}'
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    workingDirectory: '$(Build.SourcesDirectory)\${{ parameters.TfCommandsFolder }}'
+    commandOptions: '-var-file=.\tfvars\terraform.tfvars -out=${{ parameters.EnvCode }}_${{ parameters.BuildNumber }}.plan'
+    environmentServiceNameAzureRM: '${{ parameters.SvcAccount }}'
+# --------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    CopyToFolder: true
+    FileNames:
+    - Name: '.terraform.lock.hcl'
+      VarName: 'tf.lock.hcl.File.Path'
+    - Name: 'backend.tf'
+      VarName: 'tf.backend.File.Path'
+    - Name: 'terraform.tfvars'
+      VarName: 'tf.tfvars.File.Path'
+    - Name: '${{ parameters.EnvCode }}_${{ parameters.BuildNumber }}.plan'
+      VarName: 'tf.plan.File.Path'
+    ReturnFullPath: false
+    RootFolder: $(Build.SourcesDirectory)
+    TargetFolder: $(build.artifactstagingdirectory)
+# --------------------------------------
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish files from $(Build.ArtifactStagingDirectory)'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'tf_${{ parameters.EnvCode }}_${{ parameters.BuildNumber }}'
+    publishLocation: 'Container'
+    StoreAsTar: false
+  enabled: true

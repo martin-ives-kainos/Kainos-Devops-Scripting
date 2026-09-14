@@ -1,0 +1,64 @@
+# File: step-build-env-start-stop-webslot.yml@templates
+# --------------------------------------
+#   - template: step-build-env-start-stop-webslot.yml@templates
+#     parameters:
+#       Action: 'Start' # 'Start/Stop'
+#       DeploySlot: '${{ parameters.DeploySlot }}'
+#       enabled: ${{ parameters.RunDeploy }}
+#       RgName: 'lexprd-uae-vnext'
+#       ShowParams: ${{ parameters.ShowParams }}
+#       SvcAccount: '$(cicd-serviceConnectionName)'
+#       WebAppName: '${{ parameters.WebAppName }}'
+# --------------------------------------
+parameters:
+- name: Action
+  type: string
+  values:
+    - Start
+    - Stop
+- name: DeploySlot
+  type: string
+  values:
+    - staging
+    - production
+- name: RgName
+  type: string
+- name: SvcAccount
+  type: string
+- name: WebAppName
+  type: string
+- name: enabled
+  type: boolean
+  default: true
+- name: ShowParams
+  type: boolean
+  default: false
+# ------------------------------------
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-build-env-start-stop-webslot'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-build-env-start-stop-webslot-----'
+      Write-Host ' Action     : ${{ parameters.Action }}'
+      Write-Host ' DeploySlot : ${{ parameters.DeploySlot }}'
+      Write-Host ' enabled    : ${{ parameters.enabled }}'
+      Write-Host ' RgName     : ${{ parameters.RgName}}'
+      Write-Host ' SvcAccount : ${{ parameters.SvcAccount }}'
+      Write-Host ' WebAppName : ${{ parameters.WebAppName }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- task: AzureAppServiceManage@0
+  displayName: '${{ parameters.Action }} ${{ parameters.WebAppName }} Slot:${{ parameters.DeploySlot }} '
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    Action: '${{ parameters.Action }} Azure App Service'
+    WebAppName: '${{ parameters.WebAppName }}'
+    SpecifySlotOrASE: true
+    ResourceGroupName: ${{ parameters.RgName }}
+    Slot: '${{ parameters.DeploySlot }}'
+  enabled: ${{ parameters.enabled }}

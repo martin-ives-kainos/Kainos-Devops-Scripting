@@ -1,0 +1,61 @@
+# File: step-env-build-yarn-install-restore.yml@templates
+# --------------------------------------
+#   - template: step-env-build-yarn-install-restore.yml@templates
+#     parameters:
+#       YarnVer: '1.22.19'
+#       SourceRoot: '$(Build.SourcesDirectory)/lexacom'
+#       WorkingDir:
+#         - subpath: '/js'
+#         - subpath: '/js/teamadminapp'
+#       ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+parameters:
+- name: YarnVer
+  type: string
+  default: '1.22.19'
+- name: SourceRoot
+  type: string
+  default: '$(Build.SourcesDirectory)/lexacom'
+- name: Mode
+  type: string
+  default: 'install'
+  values:
+    - install
+    - restore
+- name: WorkingDir
+  type: object
+  default:
+    - subpath: '/js'
+    - subpath: '/js/teamadminapp'
+- name: ShowParams
+  type: boolean
+  default: false
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-env-build-yarn-install-restore'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-env-build-yarn-install-restore-----'
+      Write-Host ' SourceRoot   : ${{ parameters.SourceRoot }}'
+      Write-Host ' YarnVer      : ${{ parameters.YarnVer }}'
+      Write-Host ' WorkingDir   : ${{ join(';',parameters.WorkingDir) }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- task: YarnInstaller@3
+  inputs:
+    versionSpec: '${{ parameters.YarnVer }}'
+    checkLatest: true
+# ----------------------------------------------------------
+- ${{ each wkdir in parameters.WorkingDir }}:
+  - ${{ if eq(lower(parameters.Mode), 'install') }}:
+    - task: CmdLine@2
+      displayName: yarn install ${{ wkdir.subPath }}
+      inputs:
+        script: 'yarn install'
+        workingDirectory: '${{ parameters.SourceRoot }}${{ wkdir.subPath }}'
+# TODO: (2024-05-21 @16:20:40): Implement publish / restore
+# ----------------------------------------------------------

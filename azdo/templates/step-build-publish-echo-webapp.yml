@@ -1,0 +1,418 @@
+# File: step-build-publish-webapp.yml@templates
+# --------------------------------------
+#   - template: step-build-publish-webapp.yml@templates
+#     parameters:
+#       AppAbbrev: '${{ parameters.AppAbbrev }}'
+#       AppReleaseVer: '${{ parameters.AppReleaseBranch }}'
+#       DeploySlot: '${{ parameters.DeploySlot }}'
+#       ProjectName: 'Cithaeron'
+#       ReleaseSourceDir: '$(Build.SourcesDirectory)/lexacom'
+#       RgName: 'lexprd-uae-vnext'
+#       ShowParams: ${{ parameters.ShowParams }}
+#       SvcAccount: '$(cicd-serviceConnectionName)'
+#       VNextRegion: '${{ parameters.VNextRegion}}'
+# --------------------------------------
+parameters:
+- name: VNextRegion
+  type: string
+  values:
+    - uae
+- name: AppAbbrev
+  type: string
+- name: AppReleaseVer
+  type: string
+- name: DeploySlot
+  type: string
+- name: RgName
+  type: string
+  default: 'lexprd-uae-vnext'
+- name: SvcAccount
+  type: string
+- name: ProjectName
+  type: string
+  default: 'Cithaeron'
+- name: ReleaseSourceDir
+  type: string
+  default: '$(Build.SourcesDirectory)/lexacom'
+- name: ShowParams
+  type: boolean
+  default: false
+
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-build-publish-component'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-build-publish-component-----'
+      Write-Host ' AppAbbrev       : ${{ parameters.AppAbbrev }}'
+      Write-Host ' AppReleaseVer   : ${{ parameters.AppReleaseVer }}'
+      Write-Host ' DeploySlot      : ${{ parameters.DeploySlot }}'
+      Write-Host ' ProjectName     : ${{ parameters.ProjectName }}'
+      Write-Host ' ReleaseSourceDir: ${{ parameters.ReleaseSourceDir }}'
+      Write-Host ' RgName          : ${{ parameters.RgName }}'
+      Write-Host ' SvcAccount      : ${{ parameters.SvcAccount }}'
+      Write-Host ' VNextRegion     : ${{ parameters.VNextRegion }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'Lexacom.Core.Nightjar.csproj'
+      VarName: 'Core.Nightjar.csproj.File.Path'
+    - Name: 'Lexacom.Cithaeron.Factotum.csproj'
+      VarName: 'Cithaeron.Factotum.csproj.File.Path'
+    - Name: 'Lexacom.Cithaeron.Web.csproj'
+      VarName: 'Cithaeron.Web.csproj.File.Path'
+    - Name: '${{ lower(parameters.ProjectName) }}_${{ lower(parameters.DeploySlot) }}_${{ lower(parameters.VNextRegion) }}_appservice_env_vars.json'
+      VarName: 'Appservice.Env.Vars.File.Path'
+    - Name: 'Stop-AzWebAppSlot.ps1'
+      VarName: 'Stop-AzWebAppSlot.File.Path'
+    - Name: 'build.all.solutions'
+      VarName: 'build.all.solutions.File.Path'
+    - Name: 'Lexacom.Cithaeron.Primary.csproj'
+      VarName: 'Cithaeron.Primary.csproj.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+- task: AzurePowerShell@5
+  displayName: Stop WebApp ${{ parameters.DeploySlot }} Deployment Slot
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Stop-AzWebAppSlot.File.Path)'
+    ScriptArguments:
+     -WebAppName '$(cicd-0-1-0-CithWebAppName)'
+     -SlotName '${{ parameters.DeploySlot }}'
+     -ResourceGroup '${{ lower(parameters.RgName) }}'
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
+    workingDirectory: '$(Build.SourcesDirectory)/lexacom'
+  enabled: true
+# --------------------------------------
+- template: step-nuget-install-restore.yml@templates
+  parameters:
+    versionSpec: "6.0.0"
+    forceReinstallCredentialProvider: true
+# ------------------------------------------------
+- task: AzurePowerShell@5
+  displayName: 'Allow WebApp to access KeyVault'
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    ScriptType: 'InlineScript'
+    Inline: |
+      Select-AzSubscription -SubscriptionId $(cicd-0-1-0-service-principal-subscription-id)
+      $webApp = Get-AzWebApp -ResourceGroupName ${{ parameters.RgName }} -Name  $(cicd-0-1-0-CithWebAppName)
+      $webAppPrincipalId = $webApp.Identity.PrincipalId
+      Select-AzSubscription -SubscriptionId $(cicd-0-1-0-kvSubscriptionId)
+      Set-AzKeyVaultAccessPolicy -VaultName $(cicd-0-1-0-KeyVaultName) -ObjectId $webAppPrincipalId -PermissionsToSecrets Get,List -BypassObjectIdValidation
+
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
+    workingDirectory: '$(Build.SourcesDirectory)'
+  enabled: true
+
+- task: AzurePowerShell@5
+  displayName: 'Allow WebApp to access MQ servers'
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    ScriptType: 'InlineScript'
+    Inline: |
+      Select-AzSubscription -SubscriptionId $(cicd-0-1-0-service-principal-subscription-id)
+      $webApp = Get-AzWebApp -ResourceGroupName ${{ parameters.RgName }} -Name $(cicd-0-1-0-cithWebAppName)
+      $webAppIPs = [array]($webApp.PossibleOutboundIpAddresses).split(",")
+      $nsg = Get-AzNetworkSecurityGroup -Name $(cicd-0-1-0-mqNsgName) -ResourceGroupName ${{ parameters.RgName }}
+      $rule =
+      If (!($nsg | Get-AzNetworkSecurityRuleConfig -Name Allow-WebApp-MQ -ErrorAction Continue)) {
+        $nsg | Add-AzNetworkSecurityRuleConfig -Name "Allow-WebApp-MQ" -Access Allow -Protocol * -Direction Inbound -Priority 160 -SourceAddressPrefix $webAppIPs -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 5671,5672
+        $nsg | Set-AzNetworkSecurityGroup
+      }
+      Else {
+        $nsg | Set-AzNetworkSecurityRuleConfig -Name "Allow-WebApp-MQ" -SourceAddressPrefix $webAppIPs -Access Allow -Protocol * -Direction Inbound -Priority 160 -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 5671,5672
+        $nsg | Set-AzNetworkSecurityGroup
+      }
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  enabled: false
+# ------------------------------------------------
+- task: NuGetCommand@2
+  displayName: 'Install dependencies for Nightjar and ElasticBand'
+  inputs:
+    command: 'restore'
+    feedsToUse: 'config'
+    nugetConfigPath: '${{ parameters.ReleaseSourceDir }}/nuget.config'
+    restoreSolution: '${{ parameters.ReleaseSourceDir }}/Lexacom.Core.sln'
+
+- task: MSBuild@1
+  displayName: 'Build Nightjar via MSBuild'
+  inputs:
+    solution: '$(Core.Nightjar.csproj.File.Path)'
+    configuration: 'debug'
+# ------------------------------------------------
+- template: step-env-build-logzio.yml@templates
+  parameters:
+    AppContentFile: '$(cicd-logzio-AppContentFile-name)'
+    DestinationFiles:
+      - '${{ parameters.ReleaseSourceDir }}/src/Cithaeron/Lexacom.Cithaeron.Web/log4net.config'
+      - '${{ parameters.ReleaseSourceDir }}/src/Cithaeron/Lexacom.Cithaeron.Factotum/log4net.config'
+    ShowParams: ${{ parameters.ShowParams }}
+# >>># --------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Cithaeron Factotum'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
+    arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+    projects: '$(Cithaeron.Factotum.csproj.File.Path)'
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Cithaeron Web'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
+    arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+    projects: '$(Cithaeron.Web.csproj.File.Path)'
+
+# --------------------------------------
+# Building Nightjar
+# --------------------------------------
+- task: NuGetAuthenticate@0
+  inputs:
+    forceReinstallCredentialProvider: true
+- task: DownloadSecureFile@1
+  displayName: 'Download Private Key'
+  name: pipelineagentkey
+  inputs:
+    secureFile: 'uae-vnext-mj-key.pem'
+  enabled: true
+# - task: DownloadSecureFile@1
+#   displayName: 'Download Private Key'
+#   name: pipelineAgentKey
+#   inputs:
+#     secureFile: '$(cicd-0-1-0-envPrefix)-pipelineagent.key'
+#   enabled: true
+- task: DotNetCoreCLI@2
+  displayName: 'Build Nightjar'
+  inputs:
+    command: 'build'
+    projects: '${{ parameters.ReleaseSourceDir }}\src\Core\Lexacom.Core.Nightjar\Lexacom.Core.Nightjar.csproj'
+    configuration: 'Debug'
+
+- task: CmdLine@2
+  displayName: 'Run Nightjar to migrate the database'
+  inputs:
+    workingDirectory: ${{ parameters.ReleaseSourceDir }}\src\Core\Lexacom.Core.Nightjar\bin\Debug\net6.0
+    script: 'nightjar.exe -p "${{ parameters.ReleaseSourceDir }}\src\Cithaeron\Lexacom.Cithaeron.Core" -c "Server=$(cicd-0-1-0-postgresServer);Database=stg_echo;User Id=$(cicd-0-1-0-postgresAdminUser);Password=''$(cicd-0-1-0-postgresAdminPass)'';SSL Mode=Require;Trust Server Certificate=true;" -d "postgres" --bastion "uae@$(cicd-0-1-0-bastionHost)" --sshkey "$(pipelineAgentKey.secureFilePath)" --all'
+  env:
+    NIGHTJAR_KEYPASS: $(cicd-0-1-0-sshKeyPass)
+  enabled: true
+
+
+# --------------------------------------
+- task: PowerShell@2
+  displayName: 'Create directory to be Zipped and Deployed'
+  inputs:
+    targetType: inline
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+    script: |
+      New-Item ".\TempApp\app_data\jobs\continuous\Lexacom-Cithaeron-Factotum" -ItemType "directory"
+      New-Item ".\TempApp\locales" -ItemType "directory"
+      Copy-Item ".\Lexacom.Cithaeron.Web\*" ".\TempApp\" -Recurse
+      Copy-Item ".\Lexacom.Cithaeron.Factotum\*" ".\TempApp\app_data\jobs\continuous\Lexacom-Cithaeron-Factotum" -Recurse
+- task: ArchiveFiles@2
+  displayName: 'Archive build to Zip for upload'
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TempApp/*'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'EchoWebService_${{ parameters.AppReleaseVer }}_$(Build.BuildNumber)'
+    publishLocation: 'Container'
+- task: AzureRmWebAppDeployment@4
+  displayName: 'Deploy the zip as a WebApp'
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    appType: 'webApp'
+    WebAppName: '$(cicd-0-1-0-CithWebAppName)'
+    deployToSlotOrASE: true
+    ResourceGroupName: '${{ lower(parameters.RgName) }}'
+    SlotName: '${{ parameters.DeploySlot }}'
+    packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    enableCustomDeployment: true
+    DeploymentType: 'zipDeploy'
+
+#- ${{ if eq(lower(parameters.DeploySlot), 'staging') }}:
+- task: AzureAppServiceSettings@1
+  displayName: 'Configure/Edit ${{ parameters.DeploySlot }} Web App'
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    appName: $(cicd-0-1-0-CithWebAppName)
+    ResourceGroupName: ${{ parameters.RgName }}
+    slotName: ${{ lower(parameters.DeploySlot) }}
+    appSettings: |
+      [
+        {
+          "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+          "value": "InstrumentationKey=0e545231-8bac-490f-860a-27c3821f05f6;IngestionEndpoint=https://uaenorth-0.in.applicationinsights.azure.com/;LiveEndpoint=https://uaenorth.livediagnostics.monitor.azure.com/",
+          "slotSetting": false
+        },
+        {
+          "name": "Auth__Authority",
+          "value": "$(echo-1-0-0-Auth--Authority)",
+          "slotSetting": false
+        },
+        {
+          "name": "Auth__ServiceClientId",
+          "value": "$(echo-1-0-0-Auth--ServiceClientId)",
+          "slotSetting": false
+        },
+        {
+          "name": "Auth__ServicePrefix",
+          "value": "echo",
+          "slotSetting": false
+        },
+        {
+          "name": "Auth__ServiceSecret",
+          "value": "$(echo-1-0-0-Auth--ServiceSecret)",
+          "slotSetting": false
+        },
+        {
+          "name": "ConnectionStrings__AzureStorage",
+          "value": "$(echo-1-0-0-ConnectionStrings--AzureStorage)",
+          "slotSetting": false
+        },
+        {
+          "name": "ConnectionStrings__CedatAdminUri",
+          "value": "$(echo-1-0-0-ConnectionStrings--CedatAdminUri)",
+          "slotSetting": false
+        },
+        {
+          "name": "ConnectionStrings__LiveSpeechUri",
+          "value": "$(echo-1-0-0-ConnectionStrings--LiveSpeechUri)",
+          "slotSetting": false
+        },
+        {
+          "name": "ConnectionStrings__Npgsql",
+          "value": "$(echo-1-0-0-ConnectionStrings--Npgsql)",
+          "slotSetting": false
+        },
+        {
+          "name": "ConnectionStrings__TranscriptionUri",
+          "value": "$(echo-1-0-0-ConnectionStrings--TranscriptionUri)",
+          "slotSetting": false
+        },
+        {
+          "name": "Cors__Origins",
+          "value": "$(echo-1-0-0-Cors--Origins)",
+          "slotSetting": false
+        },
+        {
+          "name": "Credentials__CedatPassword",
+          "value": "$(echo-1-0-0-Credentials--CedatPassword)",
+          "slotSetting": false
+        },
+        {
+          "name": "Credentials__CedatUsername",
+          "value": "$(echo-1-0-0-Credentials--CedatUsername)",
+          "slotSetting": false
+        },
+        {
+          "name": "CronJob__DeferredRecognition",
+          "value": "$(echo-1-0-0-CronJob--DeferredRecognition)",
+          "slotSetting": false
+        },
+        {
+          "name": "General__Environment",
+          "value": "Local",
+          "slotSetting": false
+        },
+        {
+          "name": "Logging__EnableNpgsql",
+          "value": "$(echo-1-0-0-Logging--EnableNpgsql)",
+          "slotSetting": false
+        },
+        {
+          "name": "Rabbitmq__Endpoints",
+          "value": "$(echo-1-0-0-Rabbitmq--Endpoints)",
+          "slotSetting": false
+        },
+        {
+          "name": "Rabbitmq__Password",
+          "value": "$(echo-1-0-0-Rabbitmq--Password)",
+          "slotSetting": false
+        },
+        {
+          "name": "Rabbitmq__Username",
+          "value": "$(echo-1-0-0-Rabbitmq--Username)",
+          "slotSetting": false
+        },
+        {
+          "name": "Rabbitmq__UseSsl",
+          "value": "$(echo-1-0-0-Rabbitmq--UseSsl)",
+          "slotSetting": false
+        },
+        {
+          "name": "Rabbitmq__Vhost",
+          "value": "$(echo-1-0-0-Rabbitmq--Vhost)",
+          "slotSetting": false
+        },
+        {
+          "name": "Ssl__RootCertPath",
+          "value": "$(echo-1-0-0-Ssl--RootCertPath)",
+          "slotSetting": false
+        },
+        {
+          "name": "Uris__Cithaeron",
+          "value": "$(echo-1-0-0-Uris--Cithaeron)",
+          "slotSetting": false
+        },
+        {
+          "name": "Uris__File",
+          "value": "$(echo-1-0-0-Uris--File)",
+          "slotSetting": false
+        },
+        {
+          "name": "WEBSITE_ENABLE_SYNC_UPDATE_SITE",
+          "value": "true",
+          "slotSetting": false
+        },
+        {
+          "name": "WEBSITE_LOAD_CERTIFICATES",
+          "value": "*",
+          "slotSetting": false
+        },
+        {
+          "name": "WEBSITE_NODE_DEFAULT_VERSION",
+          "value": "6.9.1",
+          "slotSetting": false
+        },
+        {
+          "name": "XDT_MicrosoftApplicationInsights_Java",
+          "value": "1",
+          "slotSetting": false
+        }
+      ]
+# ---------------------------------------
+
+- task: AzureAppServiceManage@0
+  displayName: 'Start $(cicd-0-1-0-CithWebAppName)  Slot:${{ parameters.DeploySlot }} '
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    Action: 'Start Azure App Service'
+    webAppName: $(cicd-0-1-0-CithWebAppName)
+    SpecifySlotOrASE: true
+    ResourceGroupName: ${{ parameters.RgName }}
+    Slot: '${{ parameters.DeploySlot }}'

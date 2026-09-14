@@ -1,0 +1,67 @@
+# File: step-Search-Files-Path.yml@templates
+# --------------------------------------
+#   - template: step-Search-Files-Path.yml@templates
+#     parameters:
+#       CopyToFolder: false
+#       FileNames:
+#       - Name: 'filename.xxx'
+#         VarName: 'filename.File.Path'
+#       ReturnFullPath: false
+#       RootFolder: $(Build.SourcesDirectory)
+#       TargetFolder: $(build.artifactstagingdirectory)
+# --------------------------------------
+parameters:
+  - name: CopyToFolder
+    type: boolean
+    default: false
+  - name: FileNames
+    type: object
+  - name: RootFolder
+    type: string
+    default: $(Build.SourcesDirectory)
+  - name: ReturnFullPath
+    type: boolean
+    default: true
+  - name: TargetFolder
+    type: string
+    default: $(build.artifactstagingdirectory)
+steps:
+  - task: PowerShell@2
+    ${{ if eq(parameters.CopyToFolder, 'true') }}:
+      displayName: "Copy/Search files in ${{ parameters.RootFolder }}"
+    ${{ elseif eq(parameters.ReturnFullPath, 'true') }}:
+      displayName: "Search file paths in ${{ parameters.RootFolder }}"
+    ${{ else }}:
+      displayName: "Search files in ${{ parameters.RootFolder }}"
+    inputs:
+      targetType: "inline"
+      script: |
+        $path = $env:STEP_SEARCH_PATH
+        $fileList = $env:STEP_SEARCH_FILELIST | ConvertFrom-Json
+        $fileList | ForEach-Object {
+            $fName = $_.Name
+            $varName = $_.varName
+            Write-Host "-----Search for $fName in $path-----"
+            $fItem = Get-ChildItem $path -Recurse -Filter $fName | Select-Object -First 1
+            if ($null -eq $fItem) {
+                Write-Host "##vso[task.setvariable variable=$varName;]error"
+                Write-Warning "Unable to find $fName in $Path, variable $varName set to 'error'"
+            } else {
+                if ('${{ parameters.ReturnFullPath }}' -eq 'true') {
+                    Write-Host ('File {0} found in {1} usage: $({2})' -f $fName, $fItem.FullName, $varName)
+                    Write-Host ('##vso[task.setvariable variable={1};]{0}' -f $fItem.FullName, $varName)
+                } else {
+                    Write-Host ('File {0} found in {1} usage: $({2})' -f $fName, $fItem.DirectoryName, $varName)
+                    Write-Host ('##vso[task.setvariable variable={1};]{0}' -f $fItem.DirectoryName, $varName)
+                    if ('${{ parameters.CopyToFolder }}' -eq 'true') {
+                      Write-Host ("     Copy {0} to ${{ parameters.TargetFolder }}" -f $fItem.FullName)
+                      Copy-Item $fItem -Destination "${{ parameters.TargetFolder }}" -Force
+                    }
+                }
+            }
+        }
+      showWarnings: true
+      pwsh: true
+    env:
+      STEP_SEARCH_FILELIST: ${{ convertToJson(parameters.FileNames) }}
+      STEP_SEARCH_PATH: ${{ parameters.RootFolder }}

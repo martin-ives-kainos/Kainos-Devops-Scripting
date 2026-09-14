@@ -1,0 +1,53 @@
+# File: step-env-build-logzio.yml@templates
+# --------------------------------------
+#   - template: step-env-build-logzio.yml@templates
+#     parameters:
+#       AppContentFile: '$(cicd-logzio-AppContentFile-name)'
+#       DestinationFiles:
+#         - '$(Build.SourcesDirectory)/lexacom/src/Panopticon/Lexacom.Panopticon.Web/log4net.config'
+#         - '$(Build.SourcesDirectory)/lexacom/src/Panopticon/Lexacom.Panopticon.Factotum/log4net.config'
+#       ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+parameters:
+- name: AppContentFile
+  type: string
+- name: DestinationFiles
+  type: object
+- name: ShowParams
+  type: boolean
+  default: false
+# -------------------------------------
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-env-build-logzio'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-env-build-logzio-----'
+      Write-Host ' AppContentFile   : ${{ parameters.AppContentFile }}'
+      Write-Host ' DestinationFiles : ${{ join(';', parameters.DestinationFiles) }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# --------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'Add-Logzio4NetAppender.ps1'
+      VarName: 'Add.Logzio4NetAppender.File.Path'
+    - Name: '${{ parameters.AppContentFile }}'
+      VarName: 'AppContentFile.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+- ${{ each destFile in parameters.DestinationFiles }}:
+  - task: PowerShell@2
+    displayName: 'Write logz.io appender to ${{ destFile }}'
+    inputs:
+      filePath: '$(Add.Logzio4NetAppender.File.Path)'
+      arguments: >
+        -DestinationFile "${{ destFile }}"
+        -AppenderConfigFile "$(AppContentFile.File.Path)"
+        -AppenderRefs LogzioAppender, AnsiColorTerminalAppender
+

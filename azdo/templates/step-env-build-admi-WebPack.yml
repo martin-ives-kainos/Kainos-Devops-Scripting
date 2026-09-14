@@ -1,0 +1,68 @@
+# File: step-env-build-admi-WebPack.yml@templates
+# --------------------------------------
+#   - template: step-env-build-admi-WebPack.yml@templates
+#     parameters:
+#       VNextRegion: '${{ parameters.VNextRegion}}'
+#       YarnVer: '1.22.19'
+#       ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+parameters:
+- name: VNextRegion
+  type: string
+  default: uae
+  values:
+    - uae
+- name: YarnVer
+  type: string
+  default: '1.22.19'
+- name: ShowParams
+  type: boolean
+  default: false
+# ----------------------------------------------------------
+steps:
+- task: PowerShell@2
+  displayName: '[debug]: step-env-build-admi-WebPack'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-env-build-admi-WebPack-----'
+      Write-Host ' VNextRegion  : ${{ parameters.VNextRegion }}'
+      Write-Host ' YarnVer      : ${{ parameters.YarnVer }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# --------------------------------------
+- template: step-env-build-yarn-install-restore.yml@templates
+  parameters:
+    YarnVer: '${{ parameters.YarnVer }}'
+    SourceRoot: '$(Build.SourcesDirectory)/lexacom'
+    WorkingDir:
+      - subpath: '/js'
+      - subpath: '/js/teamadminapp'
+    ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'Build-js-Webpack.ps1'
+      VarName: 'Build.Webpack.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+# >>>        bat "${env.ps_cmd} \"cd '${env.WORKSPACE}\\js' && .\\Build-Webpack.ps1 -Project admin -Script build -Csp \"\"${env.CSP}\"\" -EchoSvcId 13 -MahonSvcId 6 -Authority '${env.AUTHORITY}' -MahonUri '${env.MAHON}' -EchoUri '${env.ECHO}' -ClientId '${env.CLIENT_ID}'\""
+- task: PowerShell@2
+  displayName: '${{ parameters.VNextRegion }} Builds admi WebPack via PS'
+  inputs:
+    filePath: $(Build.Webpack.File.Path)
+    arguments: >
+      -Project "admin"
+      -Script "build"
+      -Csp "$(admi-csp)"
+      -ClientId "$(admi-ClientId)"
+      -Authority "$(admi-AuthorityUri)"
+      -MahonUri '$(admi-MahonUri)'
+      -EchoUri '$(admi-EchoUrl)'
+      -EchoSvcId 13
+      -MahonSvcId 6
+  env:
+    SOURCE_JS_PATH: '$(Build.SourcesDirectory)\lexacom\js'

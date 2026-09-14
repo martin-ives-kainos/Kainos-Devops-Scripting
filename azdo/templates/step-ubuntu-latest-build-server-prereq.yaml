@@ -1,0 +1,50 @@
+# File: step-ubuntu-latest-build-server-prereq.yaml@templates
+# --------------------------------------
+#   - template: step-ubuntu-latest-build-server-prereq.yaml@templates
+#     parameters:
+#       UpdateApt: false
+#       terraformVersion: '1.7.4'
+# --------------------------------------
+parameters:
+  - name: UpdateApt
+    type: boolean
+  - name: terraformVersion
+    type: string
+    default: '1.7.4'
+
+steps:
+  - template: step-Search-Files-Path.yml@templates
+    parameters:
+      FileNames:
+      - Name: 'testInstalled.sh'
+        VarName: 'ubuntu.testInstalled.File.Path'
+      RootFolder: $(Build.SourcesDirectory)
+      ReturnFullPath: true
+  - script: |
+      sudo apt update
+      sudo apt upgrade
+    displayName: "APT update and refresh"
+    enabled: ${{ parameters.UpdateApt }}
+  - task: Bash@3
+    displayName: "Test if powershell is installed"
+    inputs:
+      filePath: "$(ubuntu.testInstalled.File.Path)"
+      arguments: -b pwsh -a powershell
+  - task: TerraformInstaller@1
+    inputs:
+      terraformVersion: '${{ parameters.terraformVersion }}'
+  - task: Bash@3
+    displayName: "Test if tflint is installed"
+    inputs:
+      filePath: "$(ubuntu.testInstalled.File.Path)"
+      arguments: -b tflint -f
+  - task: Bash@3
+    displayName: "Test if pipx is installed"
+    inputs:
+      filePath: "$(ubuntu.testInstalled.File.Path)"
+      arguments: -b pipx
+  - task: Bash@3
+    displayName: "Test if ansible is installed"
+    inputs:
+      filePath: "$(ubuntu.testInstalled.File.Path)"
+      arguments: -b ansible

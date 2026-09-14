@@ -1,0 +1,48 @@
+# File: D:\src\LexacomDevops\.pipelines\templates/step-SetSubscriptionDetails.yml
+# parameters:
+#   SubKeyName: xxxxxx
+#   RootFolder: $(Build.SourcesDirectory)
+#   varNamePrefix: 'Selected.Sub.'
+#   jsonFile: .pipelines/AzPipelinesSettings.json
+parameters:
+  - name: SubKeyName
+    type: string
+  - name: RootFolder
+    type: string
+    default: $(Build.SourcesDirectory)
+  - name: varNamePrefix
+    type: string
+    default: 'Search.File.Path'
+  - name: jsonFile
+    type: string
+    default: .pipelines/AzPipelinesSettings.json
+steps:
+  - task: oneLuckiDevJson2Variable@1
+    displayName: Load Pipeline Settings
+    inputs:
+      jsonFile: '${{ parameters.RootFolder }}/${{ parameters.jsonFile }}'
+      shouldPrefixVariables: true
+      variablePrefix: 'pset'
+  - task: PowerShell@2
+    displayName: "Find path ${{ parameters.SubKeyName }}"
+    inputs:
+      targetType: "inline"
+      script: |
+        $fName = '${{ parameters.SubKeyName }}'
+        $path = '${{ parameters.RootFolder }}'
+        Write-Host "-----Search for $fName in $path-----"
+        $fItem = Get-ChildItem $path -Recurse -Filter $fName | Select-Object -First 1
+        if ($null -eq $fItem) {
+          Write-Host "##vso[task.setvariable variable=${{ parameters.varNamePrefix }};]error"
+          Write-Warning "Unable to find $fName found in $Path, variable ${{ parameters.varNamePrefix }} set to 'error'"
+        } else {
+          if ('${{ parameters.jsonFile }}' -eq 'true') {
+            Write-Host ('File {0} found in {1} usage: $(${{ parameters.varNamePrefix }})' -f $fName, $fItem.FullName)
+            Write-Host ('##vso[task.setvariable variable=${{ parameters.varNamePrefix }};]{0}' -f $fItem.FullName)
+          } else {
+            Write-Host ('File {0} found in {1} usage: $(${{ parameters.varNamePrefix }})' -f $fName, $fItem.DirectoryName)
+            Write-Host ('##vso[task.setvariable variable=${{ parameters.varNamePrefix }};]{0}' -f $fItem.DirectoryName)
+          }
+        }
+      showWarnings: true
+      pwsh: true

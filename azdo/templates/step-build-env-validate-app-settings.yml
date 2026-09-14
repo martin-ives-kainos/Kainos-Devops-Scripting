@@ -1,0 +1,65 @@
+# File: step-build-env-validate-app-settings.yml@templates
+# --------------------------------------
+#   - template: step-build-env-validate-app-settings.yml@templates
+#     parameters:
+#       DeploySlot: '${{ parameters.DeploySlot }}'
+#       KeyVaultNameKey: 'cicd-0-1-0-KeyVaultName'
+#       ShowParams: '${{ parameters.ShowParams}}'
+#       SvcAccount: '${{ parameters.SvcAccount }}'
+#       VNextRegion: '${{ parameters.VNextRegion }}'
+# --------------------------------------
+parameters:
+- name: VNextRegion
+  type: string
+- name: DeploySlot
+  type: string
+  values:
+    - production
+    - staging
+- name: KeyVaultNameKey
+  type: string
+- name: SvcAccount
+  type: string
+- name: ShowParams
+  type: boolean
+  default: true
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-build-env-validate-app-settings'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-build-env-validate-app-settings-----'
+      Write-Host ' DeploySlot     : ${{ parameters.DeploySlot }}'
+      Write-Host ' KeyVaultNameKey: ${{ parameters.KeyVaultNameKey }}'
+      Write-Host ' SvcAccount     : ${{ parameters.SvcAccount }}'
+      Write-Host ' VNextRegion    : ${{ parameters.VNextRegion }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# --------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'ValidatePipelineVarSettings.ps1'
+      VarName: 'Validate.Script.File.Path'
+    - Name: 'var-${{ lower(parameters.VNextRegion) }}-app-settings-${{ lower(parameters.DeploySlot) }}.yml'
+      VarName: 'Var.Template.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+- task: AzurePowerShell@5
+  displayName: 'Validate var-${{ lower(parameters.VNextRegion) }}-app-settings-${{ lower(parameters.DeploySlot) }}.yml'
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Validate.Script.File.Path)'
+    ScriptArguments:
+      -ModuleName 'DevopsUtils'
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    VNEXT_VAR_TEMPLATE_FILE: '$(Var.Template.File.Path)'
+    VNEXT_VAR_TEMPLATE_KEYVAULT_KEY: '${{ parameters.KeyVaultNameKey }}'

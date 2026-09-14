@@ -1,0 +1,37 @@
+# File: step-az-update-kv-firewall.yaml@templates
+# --------------------------------------
+#   - template: step-az-update-kv-firewall.yaml@templates
+#     parameters:
+#       azureSubscription: 'p_value'
+#       KeyVaultName: 'p_value'
+#       Remove: false
+# --------------------------------------
+parameters:
+  - name: azureSubscription
+    type: string
+  - name: KeyVaultName
+    type: string
+  - name: Remove
+    type: boolean
+    default: false
+
+steps:
+  - template: step-Search-Files-Path.yml@templates
+    parameters:
+      FileNames:
+        - Name: 'WhiteListAgentForKeyVault.ps1'
+          VarName: 'WhiteListScript.File.Path'
+      RootFolder: $(Build.SourcesDirectory)
+      ReturnFullPath: true
+  - task: AzureCLI@2
+    displayName: "Update Keyvault ${{ parameters.KeyVaultName }} Remove=${{ parameters.Remove }}"
+    inputs:
+      azureSubscription: "${{ parameters.azureSubscription }}"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      scriptPath: "$(WhiteListScript.File.Path)"
+      arguments: '-Name "${{ parameters.KeyVaultName }}" -Remove "${{ parameters.Remove }}"'
+      addSpnToEnvironment: true
+      useGlobalConfig: true
+
+

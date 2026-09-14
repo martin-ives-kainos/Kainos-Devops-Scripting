@@ -1,0 +1,266 @@
+# File: step-build-publish-webapp.yml@templates
+# --------------------------------------
+#   - template: step-build-publish-webapp.yml@templates
+#     parameters:
+#       AppAbbrev: '${{ parameters.AppAbbrev }}'
+#       AppReleaseVer: '${{ parameters.AppReleaseBranch }}'
+#       DeploySlot: '${{ parameters.DeploySlot }}'
+#       ProjectName: 'Panopticon'
+#       RgName: 'lexprd-uae-vnext'
+#       ShowParams: ${{ parameters.ShowParams }}
+#       SvcAccount: '$(cicd-serviceConnectionName)'
+#       VNextRegion: '${{ parameters.VNextRegion}}'
+# --------------------------------------
+parameters:
+- name: VNextRegion
+  type: string
+- name: AppAbbrev
+  type: string
+- name: AppReleaseVer
+  type: string
+- name: DeploySlot
+  type: string
+- name: RgName
+  type: string
+  default: 'lexprd-uae-vnext'
+- name: SvcAccount
+  type: string
+- name: ProjectName
+  type: string
+  default: 'Panopticon'
+- name: ShowParams
+  type: boolean
+  default: false
+
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-build-publish-component'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-build-publish-component-----'
+      Write-Host ' AppAbbrev    : ${{ parameters.AppAbbrev }}'
+      Write-Host ' AppReleaseVer: ${{ parameters.AppReleaseVer }}'
+      Write-Host ' DeploySlot   : ${{ parameters.DeploySlot }}'
+      Write-Host ' ProjectName  : ${{ parameters.ProjectName }}'
+      Write-Host ' RgName       : ${{ parameters.RgName }}'
+      Write-Host ' SvcAccount   : ${{ parameters.SvcAccount }}'
+      Write-Host ' VNextRegion  : ${{ parameters.VNextRegion }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'Stop-AzWebAppSlot.ps1'
+      VarName: 'Stop-AzWebAppSlot.File.Path'
+    - Name: 'build.all.solutions'
+      VarName: 'build.all.solutions.File.Path'
+    - Name: 'Lexacom.Panopticon.Primary.csproj'
+      VarName: 'Panopticon.Primary.csproj.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# --------------------------------------
+- task: AzurePowerShell@5
+  displayName: Stop WebApp Deployment Slot
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Stop-AzWebAppSlot.File.Path)'
+    ScriptArguments:
+     -WebAppName '${{ lower(parameters.RgName) }}-${{ lower(parameters.ProjectName) }}'
+     -SlotName '${{ parameters.DeploySlot }}'
+     -ResourceGroup '${{ lower(parameters.RgName) }}'
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
+    workingDirectory: '$(Build.SourcesDirectory)/lexacom'
+  enabled: true
+# --------------------------------------
+- template: step-nuget-install-restore.yml@templates
+  parameters:
+    versionSpec: "6.0.0"
+    forceReinstallCredentialProvider: true
+- ${{ if eq(lower(parameters.AppAbbrev), 'pano') }}:
+  - template: step-Search-Files-Path.yml@templates
+    parameters:
+      FileNames:
+      - Name: 'Lexacom.Panopticon.Primary.csproj'
+        VarName: 'Panopticon.Primary.csproj.File.Path'
+      - Name: 'Lexacom.Panopticon.Factotum.csproj'
+        VarName: 'Panopticon.Factotum.csproj.File.Path'
+      - Name: 'Lexacom.Panopticon.Web.csproj'
+        VarName: 'Panopticon.Web.csproj.File.Path'
+      RootFolder: $(Build.SourcesDirectory)
+      ReturnFullPath: true
+  - template: step-env-build-logzio.yml@templates
+    parameters:
+      AppContentFile: '$(cicd-logzio-AppContentFile-name)'
+      DestinationFiles:
+        - '$(Build.SourcesDirectory)/lexacom/src/Panopticon/Lexacom.Panopticon.Web/log4net.config'
+        - '$(Build.SourcesDirectory)/lexacom/src/Panopticon/Lexacom.Panopticon.Factotum/log4net.config'
+      ShowParams: ${{ parameters.ShowParams }}
+  # --------------------------------------
+  - template: step-env-build-WebPack.yml@templates
+    parameters:
+      VNextRegion: '${{ parameters.VNextRegion}}'
+      AppAbbrev: 'pano'
+      WebpackCsp: "img-src 'self' www.lexacom.co.uk data:; frame-src 'self'; child-src 'self'; script-src 'self' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'"
+      AuthorityUri: '$(pano-AuthorityUri)'
+      SourceJsPath: '$(Build.SourcesDirectory)\lexacom\js'
+      YarnVer: '1.22.19'
+      LoginClientId: '${pano-ClientId}'
+  # --------------------------------------
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish Panopticon Primary'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      modifyOutputPath: true
+      zipAfterPublish: false
+      arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+      projects: '$(Panopticon.Primary.csproj.File.Path)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish Panopticon Factotum'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      modifyOutputPath: true
+      zipAfterPublish: false
+      arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+      projects: '$(Panopticon.Factotum.csproj.File.Path)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish Panopticon Web'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      modifyOutputPath: true
+      zipAfterPublish: false
+      arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+      projects: '$(Panopticon.Web.csproj.File.Path)'
+  # --------------------------------------
+  - task: PowerShell@2
+    displayName: 'Create directory to be Zipped and Deployed'
+    inputs:
+      targetType: inline
+      workingDirectory: $(Build.ArtifactStagingDirectory)
+      script: |
+        New-Item ".\TempApp\app_data\jobs\continuous\Lexacom-Panopticon-Factotum" -ItemType "directory"
+        Copy-Item ".\Lexacom.Panopticon.Web\*" ".\TempApp\" -Recurse
+        Copy-Item ".\Lexacom.Panopticon.Primary\Lexacom.Panopticon.Primary.dll" ".\TempApp\"
+        Copy-Item ".\Lexacom.Panopticon.Factotum\*" ".\TempApp\app_data\jobs\continuous\Lexacom-Panopticon-Factotum" -Recurse
+  - task: ArchiveFiles@2
+    displayName: 'Archive build to Zip for upload'
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TempApp/*'
+      includeRootFolder: true
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      replaceExistingArchive: true
+  - task: AzureRmWebAppDeployment@4
+    displayName: 'Deploy the zip as a WebApp'
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: '${{ parameters.SvcAccount }}'
+      appType: 'webApp'
+      WebAppName: '${{ lower(parameters.RgName) }}-${{ lower(parameters.ProjectName) }}'
+      deployToSlotOrASE: true
+      ResourceGroupName: '${{ lower(parameters.RgName) }}'
+      SlotName: '${{ parameters.DeploySlot }}'
+      packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      enableCustomDeployment: true
+      DeploymentType: 'zipDeploy'
+  - task: AzureAppServiceSettings@1
+    displayName: 'Configure/Edit Web App'
+    inputs:
+      azureSubscription: '${{ parameters.SvcAccount }}'
+      appName: ${{ lower(parameters.RgName) }}-${{ lower(parameters.ProjectName) }}
+      ResourceGroupName: ${{ parameters.RgName }}
+      appSettings: |
+        [
+          {
+            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+            "value": "01687da8-3e09-4fd7-a24e-6801078a071b",
+            "slotSetting": true
+          },
+          {
+            "name": "APPINSIGHTS_PROFILERFEATURE_VERSION",
+            "value": "1.0.0",
+            "slotSetting": true
+          },
+          {
+            "name": "APPINSIGHTS_SNAPSHOTFEATURE_VERSION",
+            "value": "1.0.0",
+            "slotSetting": true
+          },
+          {
+            "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+            "value": "~2",
+            "slotSetting": true
+          },
+          {
+            "name": "Auth__ServicePrefix",
+            "value": "${{ lower(parameters.AppAbbrev) }}",
+            "slotSetting": true
+          },
+          {
+            "name": "DiagnosticServices_EXTENSION_VERSION",
+            "value": "~3",
+            "slotSetting": true
+          },
+          {
+            "name": "General__Environment",
+            "value": "Azure",
+            "slotSetting": false
+          },
+          {
+            "name": "General__KeyVaultName",
+            "value": "lexprd-uae-vnext-cicd",
+            "slotSetting": false
+          },
+          {
+            "name": "InstrumentationEngine_EXTENSION_VERSION",
+            "value": "disabled",
+            "slotSetting": true
+          },
+          {
+            "name": "SnapshotDebugger_EXTENSION_VERSION",
+            "value": "disabled",
+            "slotSetting": true
+          },
+          {
+            "name": "WEBSITE_LOAD_CERTIFICATES",
+            "value": "*",
+            "slotSetting": false
+          },
+          {
+            "name": "XDT_MicrosoftApplicationInsights_BaseExtensions",
+            "value": "disabled",
+            "slotSetting": true
+          },
+          {
+            "name": "XDT_MicrosoftApplicationInsights_Mode",
+            "value": "recommended",
+            "slotSetting": true
+          },
+          {
+            "name": "XDT_MicrosoftApplicationInsights_NodeJS",
+            "value": "1",
+            "slotSetting": true
+          },
+          {
+            "name": "XDT_MicrosoftApplicationInsights_PreemptSdk",
+            "value": "disabled",
+            "slotSetting": true
+          }
+        ]
+  - task: AzureAppServiceManage@0
+    displayName: 'Start ${{ lower(parameters.RgName) }}-${{ lower(parameters.ProjectName) }} Slot:${{ parameters.DeploySlot }} '
+    inputs:
+      azureSubscription: '${{ parameters.SvcAccount }}'
+      Action: 'Start Azure App Service'
+      webAppName: ${{ lower(parameters.RgName) }}-${{ lower(parameters.ProjectName) }}
+      SpecifySlotOrASE: true
+      ResourceGroupName: ${{ parameters.RgName }}
+      Slot: '${{ parameters.DeploySlot }}'

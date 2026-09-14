@@ -1,0 +1,46 @@
+# File: step-SearchFilePath.yml@templates
+# --------------------------------------
+#   - template: step-SearchFilePath.yml@templates
+#     parameters:
+#       FileName: xxxxxx
+#       RootFolder: $(Build.SourcesDirectory)
+#       varName: 'Search.File.Path'
+#       ReturnFullPath: true
+# --------------------------------------
+parameters:
+  - name: FileName
+    type: string
+  - name: RootFolder
+    type: string
+    default: $(Build.SourcesDirectory)
+  - name: varName
+    type: string
+    default: 'Search.File.Path'
+  - name: ReturnFullPath
+    type: boolean
+    default: true
+steps:
+  - task: PowerShell@2
+    displayName: "Find path ${{ parameters.FileName }}"
+    inputs:
+      targetType: "inline"
+      script: |
+        Write-Warning "Template: step-SearchFilePath has been deprecated, please use step-Search-Files-Path"
+        $fName = '${{ parameters.FileName }}'
+        $path = '${{ parameters.RootFolder }}'
+        Write-Host "-----Search for $fName in $path-----"
+        $fItem = Get-ChildItem $path -Recurse -Filter $fName | Select-Object -First 1
+        if ($null -eq $fItem) {
+          Write-Host "##vso[task.setvariable variable=${{ parameters.varName }};]error"
+          Write-Warning "Unable to find $fName found in $Path, variable ${{ parameters.varName }} set to 'error'"
+        } else {
+          if ('${{ parameters.ReturnFullPath }}' -eq 'true') {
+            Write-Host ('File {0} found in {1} usage: $(${{ parameters.varName }})' -f $fName, $fItem.FullName)
+            Write-Host ('##vso[task.setvariable variable=${{ parameters.varName }};]{0}' -f $fItem.FullName)
+          } else {
+            Write-Host ('File {0} found in {1} usage: $(${{ parameters.varName }})' -f $fName, $fItem.DirectoryName)
+            Write-Host ('##vso[task.setvariable variable=${{ parameters.varName }};]{0}' -f $fItem.DirectoryName)
+          }
+        }
+      showWarnings: true
+      pwsh: true
