@@ -1,0 +1,56 @@
+# File: templates/step-Extract-AzResources.yml
+#  parameters:
+#   SubName: 'xxxxx'
+#   OutputPath: '$(Build.ArtifactStagingDirectory)'
+#   TenantId: '356a588b-3348-4e20-9918-6509064a9098'
+#   SvcConnection: '${{ parameters.SvcConnection }}'
+##   commandType: 'cli'
+##   DataSetName: 'ResourceGroups'
+##   command: 'group'
+##   commandArgs: 'list'
+
+parameters:
+  - name: SubName
+    type: string
+  - name: OutputPath
+    type: string
+    default: "$(Build.ArtifactStagingDirectory)"
+  - name: TenantId
+    type: string
+    default: "356a588b-3348-4e20-9918-6509064a9098"
+  - name: SvcConnection
+    type: string
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-Extract-AzResources'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-Extract-AzResources-----'
+      Write-Host 'SubName       : ${{ parameters.SubName }}'
+      Write-Host 'OutputPath    : ${{ parameters.OutputPath }}'
+      Write-Host 'TenantId      : ${{ parameters.TenantId }}'
+      Write-Host 'SvcConnection : ${{ parameters.SvcConnection }}'
+    showWarnings: true
+    pwsh: true
+  enabled: true
+# ----------------------------------------------------------
+- template: step-SearchFilePath.yml
+  parameters:
+    FileName: "AzSubResourceData.ps1"
+    RootFolder: "$(Build.SourcesDirectory)"
+    varName: "Script.File.Path"
+    ReturnFullPath: true
+- task: AzureCLI@2
+  inputs:
+    displayName: 'AzSubResourceData'
+    azureSubscription: '${{ parameters.SvcConnection }}'
+    scriptType: 'pscore'
+    scriptLocation: 'scriptPath'
+    scriptPath: '$(Script.File.Path)'
+    arguments: -SubName @('${{ parameters.SubName }}') -OutputPath '${{ parameters.OutputPath }} -TenantId '${{ parameters.TenantId }}' -SubscriptionName '${{ parameters.SubName }}'
+    useGlobalConfig: true
+  enabled: true
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)

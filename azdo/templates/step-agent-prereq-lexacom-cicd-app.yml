@@ -1,0 +1,178 @@
+# File: step-agent-prereq-lexacom-cicd-app.yml@templates
+# --------------------------------------
+#   - template: step-agent-prereq-lexacom-cicd-app.yml@templates
+#     parameters:
+#       ChocoConfigFile: 'env.build.servers.config'
+#       InstallAzModules: false
+#       InstallIIS: true
+#       OsImage: 'windows'
+#       SelfHostedAgent: true
+#       ShowParams: false
+#       TerraformVer: '1.9.1'
+#       UpgradeTerraform: false
+# --------------------------------------
+
+parameters:
+- name: OsImage
+  type: string
+  default: windows
+  values:
+    - windows
+# TODO:  (2024-05-16 @12:09:25): Handle Linux OS
+- name: ChocoConfigFile
+  type: string
+  default: 'env.build.servers.config'
+- name: SelfHostedAgent
+  type: boolean
+  default: true
+- name: InstallAzModules
+  type: boolean
+  default: false
+- name: InstallIIS
+  type: boolean
+  default: true
+- name: TerraformVer
+  type: string
+  default: '1.9.1'
+- name: UpgradeTerraform
+  type: boolean
+  default: false
+- name: ShowParams
+  type: boolean
+  default: false
+
+steps:
+# ----------------------------------------------------------
+- template: step-debug-show-template-params.yml
+  parameters:
+    TemplateName: 'step-agent-prereq-lexacom-cicd-app.yml'
+    enabled: ${{ parameters.ShowParams }}
+    SaveParamsToFile: false
+    paramValues:
+      OsImage: '${{ parameters.OsImage }}'
+      ChocoConfigFile: '${{ parameters.ChocoConfigFile }}'
+      InstallAzModules: '${{ parameters.InstallAzModules }}'
+      InstallIIS: '${{ parameters.InstallIIS }}'
+      SelfHostedAgent: '${{ parameters.SelfHostedAgent }}'
+      TerraformVer: '${{ parameters.TerraformVer }}'
+      UpgradeTerraform: '${{ parameters.UpgradeTerraform }}'
+# ----------------------------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: '${{ parameters.ChocoConfigFile }}'
+      VarName: 'choco.packages.File.Path'
+    - Name: 'Install-AzModule.ps1'
+      VarName: 'Install.AzModule.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+
+- ${{ if eq(parameters.SelfHostedAgent, 'true') }}:
+  # --------------------------------------
+  - ${{ if eq(parameters.OsImage, 'windows') }}:
+  # --------------------------------------
+    - task: PowerShell@2
+      displayName: 'Install Choco Packages from ${{ parameters.ChocoConfigFile }}'
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host 'Install Choco Packages from $(choco.packages.File.Path)'
+          choco install '$(choco.packages.File.Path)' --no-progress /y
+          Write-Host 'Install netfx-4.7.2-devpac not from config FolderProfile'
+          choco install netfx-4.7.2-devpack --pre /y
+      enabled: true
+    - task: PowerShell@2
+      displayName: 'Upgrade Choco Packages Already installed'
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host 'Upgrade Choco Packages'
+          choco upgrade all --except=terraform,nodejs,nodejs.install --exitwhenrebootdetected --no-progress /y
+      enabled: true
+    - task: PowerShell@2
+      displayName: 'Install IIS WebServer if required'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $iisFeat = Get-WindowsFeature -Name Web-Sever
+          if ($iisFeat.Installed) {
+            Write-Host 'IIS Already installed'
+          } else {
+            Write-Host "Installing IIS"
+            Install-WindowsFeature -name Web-Server -IncludeManagementTools
+          }
+      enabled: ${{ parameters.InstallIIS }}
+    # --------------------------------------
+    - task: PowerShell@2
+      displayName: 'Upgrade Terraform to v${{ parameters.TerraformVer }}'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $aList = choco search $env:CHOCO_PKG_NAME -e
+          if ($aList.Count -lt 3) {
+              throw ('[Package {0}] Unable to packaged app to upgrade' -f $env:CHOCO_PKG_NAME)
+          }
+
+          $iList = choco list $env:CHOCO_PKG_NAME -e
+          if ($ilist.Count -lt 3) {
+              Write-Warning ('[Package {0}] Unable to find installed app' -f $env:CHOCO_PKG_NAME)
+          } else {
+              [version]$availVer = ($aList[1].Split(' '))[1]
+              [version]$iVer = ($ilist[1].Split(' '))[1]
+              [version]$reqdVer = $env:CHOCO_PKG_VER
+              if (($availVer -ne $reqdVer)) {
+                  throw ('[Package {0}] Required v{1} not the latest (v{2})' -f $env:CHOCO_PKG_NAME, $reqdVer.ToString(), $availVer.ToString())
+              }
+              if ($iVer -eq $reqdVer) {
+                  Write-Host ('[Package {0}] v{1} Already installed' -f $env:CHOCO_PKG_NAME, $reqdVer.ToString())
+              } elseif ($iVer -gt $reqdVer) {
+                  Write-Host ('[Package {0}] v{1} Already at v{2}' -f $env:CHOCO_PKG_NAME, $reqdVer.ToString(), $iVer.ToString())
+              } else {
+                  Write-Host ('[Package {0}] Upgrading v{1} to v{2}' -f $env:CHOCO_PKG_NAME, $reqdVer.ToString(), $iVer.ToString())
+                  choco upgrade $env:CHOCO_PKG_NAME -e /Y
+              }
+          }
+        showWarnings: true
+        pwsh: true
+      enabled: ${{ parameters.UpgradeTerraform }}
+      env:
+        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        CHOCO_PKG_NAME: 'terraform'
+        CHOCO_PKG_VER: '${{ parameters.TerraformVer }}'
+  - ${{ else }}:
+    - script: Non-Windows needs to be added
+
+# -----------------------------
+- ${{ else }}:
+# ---Windows MS Agent---------------
+  - task: PowerShell@2
+    displayName: 'Install Choco Packages MS Hosted Agent'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Write-Host 'Install netfx-4.7.2-devpac'
+        choco install netfx-4.7.2-devpack --no-progress --pre /y
+    enabled: true
+
+- task: PowerShell@2
+  displayName: 'Install Az Modules to MS Hosted Agent'
+  inputs:
+    errorActionPreference: Stop
+    targetType: filePath
+    filePath: $(Install.AzModule.File.Path)
+    arguments: >
+      -PostgreSql
+      -Websites
+      -KeyVault
+      -Network
+  enabled: ${{ parameters.InstallAzModules }}
+# ----------------------------------------------------------
+- template: step-install-pwsh-gallery-modules.yml@templates
+  parameters:
+    moduleNames:
+      - name: psdocs
+      - name: importexcel
+      - name: psyml
+    psRepoName: 'LexacomPSGallery'
+    OrgName: 'lexacom'
+    FeedName: 'LexacomPowerShellGallery'

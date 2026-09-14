@@ -1,0 +1,104 @@
+# File: step-lexacom-cicd-bastion-steps.yml@templates
+# --------------------------------------
+#   - template: step-lexacom-cicd-bastion-steps.yml@templates
+#     parameters:
+#       VNextRegion: '${{ parameters.VNextRegion}}'
+#       AppAbbrev: 'Pano'
+#       ProjectName: 'Panopticon'
+#       DeploySlot: '${{ parameters.DeploySlot}}'
+#       AzDoSvcConn: 'Aprobrium UAE'
+# --------------------------------------
+parameters:
+  - name: VNextRegion
+    type: string
+    default: uae
+    values:
+      - uae
+  - name: AppAbbrev
+    type: string
+    default: pano
+  - name: ProjectName
+    type: string
+    default: Panopticon
+  - name: DeploySlot
+    type: string
+    default: stg
+    values:
+      - stg
+      - prd
+  - name: AzDoSvcConn
+    type: string
+    default: 'Aprobrium UAE'
+
+steps:
+# --------------------------------------
+  - template: step-Search-Files-Path.yml@templates
+    parameters:
+      FileNames:
+        - Name: 'Setup-SSH.ps1'
+          VarName: 'Setup-SSH.File.Path'
+        - Name: 'Setup-SSH-AzCli.ps1'
+          VarName: 'Setup-SSH-AzCli.File.Path'
+      RootFolder: $(Build.SourcesDirectory)
+      ReturnFullPath: true
+# --------------------------------------
+  - task: PowerShell@2
+    displayName: "Setup SSH Configuration + NSG rule for Bastion"
+    inputs:
+      filePath: '$(Setup-SSH.File.Path)'
+      arguments: >
+        -privateKeyPath "$env:privateKeyPath"
+        -pipelineAgentConfig "$env:pipelineAgentConfigContent"
+        -pipelineAgentKnownHosts "$env:pipelineAgentKnown"
+        -key "$env:key"
+        -clientId "$env:clientId"
+        -tenantId "$env:tenantId"
+        -subscriptionId "$env:subscriptionId"
+        -nsgName "$env:nsgName"
+        -nsgRgName "$env:nsgRgName"
+        -ruleName: "$env:ruleName"
+    env:
+      nsgName: "lexprd-${{ parameters.VNextRegion}}-vnext-nsg-bastion"
+      nsgRgName: "lexprd-${{ parameters.VNextRegion}}-vnext"
+      ruleName: "Allow-${{ parameters.AppAbbrev }}AzPipeline-SSH"
+      privateKeyPath: $(pipelineagentkey.secureFilePath)
+      pipelineAgentConfigContent: $(cicd-0-1-0-pipelineAgentConfig)
+      pipelineAgentKnown: $(cicd-0-1-0-pipelineAgentKnownHosts)
+      key: $(cicd-0-1-0-service-principal-key)
+      clientId: $(cicd-0-1-0-service-principal-un)
+      tenantId: $(cicd-0-1-0-service-principal-tenant-id)
+      subscriptionId: $(cicd-0-1-0-service-principal-subscription-id)
+    enabled: false
+# ---------------------
+  - task: AzureCLI@2
+    displayName: Setup SSH Configuration + NSG rule for Bastion
+    inputs:
+      azureSubscription: ${{ parameters.AzDoSvcConn }}
+      scriptType: 'pscore'
+      scriptLocation: 'scriptPath'
+      scriptPath: '$(Setup-SSH-AzCli.File.Path)'
+      arguments: >
+        -privateKeyPath "$env:privateKeyPath"
+        -pipelineAgentConfig "$env:pipelineAgentConfigContent"
+        -pipelineAgentKnownHosts "$env:pipelineAgentKnown"
+        -key "$env:key"
+        -clientId "$env:clientId"
+        -tenantId "$env:tenantId"
+        -subscriptionId "$env:subscriptionId"
+        -nsgName "$env:nsgName"
+        -nsgRgName "$env:nsgRgName"
+        -ruleName: "$env:ruleName"
+      useGlobalConfig: true
+    enabled: true
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      nsgName: "lexprd-${{ parameters.VNextRegion}}-vnext-nsg-bastion"
+      nsgRgName: "lexprd-${{ parameters.VNextRegion}}-vnext"
+      ruleName: "Allow-${{ parameters.AppAbbrev }}AzPipeline-SSH"
+      privateKeyPath: $(pipelineagentkey.secureFilePath)
+      pipelineAgentConfigContent: $(cicd-0-1-0-pipelineAgentConfig)
+      pipelineAgentKnown: $(cicd-0-1-0-pipelineAgentKnownHosts)
+      key: $(cicd-0-1-0-service-principal-key)
+      clientId: $(cicd-0-1-0-service-principal-un)
+      tenantId: $(cicd-0-1-0-service-principal-tenant-id)
+      subscriptionId: $(cicd-0-1-0-service-principal-subscription-id)

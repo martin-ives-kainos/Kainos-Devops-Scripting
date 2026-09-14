@@ -1,0 +1,67 @@
+# File: templates/step-debug-show-template-params.yml
+# --------------------------------------
+#   - template: step-debug-show-template-params.yml
+#     parameters:
+#       TemplateName: 'step-debug-show-template-params'
+#       enabled: true
+#       SaveParamsToFile: false
+#       paramValues:
+#         p_name1: p_value1
+#         p_name2: p_value2
+# --------------------------------------
+parameters:
+- name: TemplateName
+  type: string
+- name: paramValues
+  type: object
+  default:
+      p_name1: p_value1
+      p_name2: p_value2
+- name: enabled
+  type: boolean
+- name: SaveParamsToFile
+  type: boolean
+  default: false
+# ----------------------------------------------------------
+steps:
+- task: PowerShell@2
+  displayName: '[debug]: ${{ parameters.TemplateName }}'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template:  ${{ parameters.TemplateName }}-----'
+      $pValFile = New-TemporaryFile
+      Set-Content $pValFile -Value '${{ convertToJson(parameters.paramValues) }}' -Force
+      $pData = ConvertFrom-Json -InputObject (Get-Content -Path $pValFile -Raw)
+      Remove-Item $pValFile -Force
+      $nLength = 0
+      ($pData | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | Sort-Object) | ForEach-Object {
+          if ($_.Length -gt $nLength) {
+              $nLength = $_.Length
+          }
+      }
+      foreach ($pName in ($pData | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name)) {
+          $pValue = $pData.$($pName)
+          $pType = $pValue.GetType().Name
+
+          switch ($pType) {
+              "object[]" {
+                  Write-Host ('{0}{1}: [{2}] {3}' -f $pName, (' '*($nLength-$pName.Length)), $pType, ($pValue -join ', '))
+              }
+              Default {
+                  Write-Host ('{0}{1}: [{2}] {3}' -f $pName, (' '*($nLength-$pName.Length)), $pType, $pValue)
+              }
+          }
+      }
+
+      if ('${{ parameters.SaveParamsToFile }}' -eq 'true') {
+        $tmpFile = (Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY "${{ parameters.TemplateName }}_ParamDebug.json")
+        Write-Host "Saving param data to $tmpFile"
+        Set-Content $tmpFile -Value '${{ convertToJson(parameters.paramValues) }}' -Force
+      }
+    showWarnings: true
+    pwsh: true
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  enabled: ${{ parameters.enabled }}
+# ----------------------------------------------------------

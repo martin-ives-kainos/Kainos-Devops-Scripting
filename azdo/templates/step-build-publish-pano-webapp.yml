@@ -1,0 +1,376 @@
+# File: step-build-publish-pano-webapp.yml@templates
+# --------------------------------------
+#   - template: step-build-publish-webapp.yml@templates
+#     parameters:
+#       AppAbbrev: 'pano'
+#       AppReleaseVer: '${{ parameters.AppReleaseBranch }}'
+#       AuthorityUri: '$(cicd-0-1-0-AuthorityUri)' (pano)
+#       DeploySlot: '${{ parameters.DeploySlot }}'
+#       LoginClientId: '$(cicd-0-1-0-panoClientId)'
+#       LogzioAppContentFilename: '$(cicd-0-1-0-logzio-AppContentFile-name)'
+#       NugetVerSpec: '6.0.0'
+#       ReleaseSourceDir: '$(Build.SourcesDirectory)/lexacom'
+#       RgName: '$(cicd-0-1-0-panoWebAppRg)'
+#       RunDeploy: false
+#       ShowParams: ${{ parameters.ShowParams }}
+#       SvcAccount: '$(cicd-serviceConnectionName)'
+#       VNextRegion: '${{ parameters.VNextRegion}}'
+#       WebAppName: '$(cicd-0-1-0-panoWebAppName)'
+#       WebpackCsp: '$(cicd-0-1-0-xxxxxCsp)' pano/sardis/teamAdmin
+# --------------------------------------
+parameters:
+- name: AppAbbrev
+  type: string
+- name: AppReleaseVer
+  type: string
+- name: AuthorityUri
+  type: string
+- name: DeploySlot
+  type: string
+- name: LoginClientId
+  type: string
+- name: LogzioAppContentFilename
+  type: string
+- name: NugetVerSpec
+  type: string
+  default: '6.0.0'
+- name: ReleaseSourceDir
+  type: string
+  default: '$(Build.SourcesDirectory)/lexacom'
+- name: RgName
+  type: string
+- name: RunDeploy
+  type: boolean
+  default: false
+- name: ShowParams
+  type: boolean
+  default: true
+- name: SvcAccount
+  type: string
+- name: VNextRegion
+  type: string
+- name: WebAppName
+  type: string
+  default: '$(cicd-0-1-0-panoWebAppName)'
+- name: WebpackCsp
+  type: string
+  default: '$(cicd-0-1-0-panoCSP)'
+
+steps:
+# ----------------------------------------------------------
+- task: PowerShell@2
+  displayName: '[debug]: step-build-publish-component'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Write-Host '-----Template: step-build-publish-component-----'
+      Write-Host ' AppAbbrev                : ${{ parameters.AppAbbrev }}'
+      Write-Host ' AppReleaseVer            : ${{ parameters.AppReleaseVer }}'
+      Write-Host ' AuthorityUri             : ${{ parameters.AuthorityUri }}'
+      Write-Host ' DeploySlot               : ${{ parameters.DeploySlot }}'
+      Write-Host ' LoginClientId            : ${{ parameters.LoginClientId }}'
+      Write-Host ' LogzioAppContentFilename : ${{ parameters.LogzioAppContentFilename }}'
+      Write-Host ' NugetVerSpec             : ${{ parameters.NugetVerSpec }}'
+      Write-Host ' ReleaseSourceDir         : ${{ parameters.ReleaseSourceDir }}'
+      Write-Host ' RgName                   : ${{ parameters.RgName }}'
+      Write-Host ' RunDeploy                : ${{ parameters.RunDeploy }}'
+      Write-Host ' SvcAccount               : ${{ parameters.SvcAccount }}'
+      Write-Host ' VNextRegion              : ${{ parameters.VNextRegion }}'
+      Write-Host ' WebAppName               : ${{ parameters.WebAppName }}'
+      Write-Host ' WebpackCsp               : ${{ parameters.WebpackCsp }}'
+    showWarnings: true
+    pwsh: true
+  enabled: ${{ parameters.ShowParams }}
+# ----------------------------------------------------------
+- template: step-nuget-install-restore.yml@templates
+  parameters:
+    versionSpec: "${{ parameters.NugetVerSpec }}"
+    forceReinstallCredentialProvider: true
+# ---------------------------------
+# TODO: Unable to retrieve the pfx secure file (uae)
+- template: step-env-opensearch-certchain.yml@templates
+  parameters:
+    ESClientCertSecureFile: 'admin.pfx'
+    ESAdminPassword: '$(cicd-0-1-0-elasticAdminPass)'
+    DownloadSecureFile: true
+    ShowParams: ${{ parameters.ShowParams }}
+# ---------------------------------
+- task: NuGetAuthenticate@0
+  inputs:
+    forceReinstallCredentialProvider: true
+- task: DownloadSecureFile@1
+  displayName: 'Download Private Key'
+  name: pipelineagentkey
+  inputs:
+    secureFile: 'mj-demo-key.pem'
+  enabled: true
+# - task: DownloadSecureFile@1
+#   displayName: 'Download Private Key'
+#   name: pipelineAgentKey
+#   inputs:
+#     secureFile: '$(cicd-0-1-0-envPrefix)-pipelineagent.key'
+#   enabled: true
+# ----------------------------------------------------------
+- template: step-Search-Files-Path.yml@templates
+  parameters:
+    FileNames:
+    - Name: 'Lexacom.Panopticon.Primary.csproj'
+      VarName: 'Panopticon.Primary.csproj.File.Path'
+    - Name: 'Lexacom.Panopticon.Factotum.csproj'
+      VarName: 'Panopticon.Factotum.csproj.File.Path'
+    - Name: 'Lexacom.Panopticon.Web.csproj'
+      VarName: 'Panopticon.Web.csproj.File.Path'
+    - Name: 'Lexacom.Panopticon.Core.csproj'
+      VarName: 'Panopticon.Core.csproj.File.Path'
+    RootFolder: $(Build.SourcesDirectory)
+    ReturnFullPath: true
+# ----------------------------------------------------------
+- template: step-env-build-logzio.yml@templates
+  parameters:
+    AppContentFile: '${{ parameters.LogzioAppContentFilename }}'
+    DestinationFiles:
+      - '${{ parameters.ReleaseSourceDir }}/src/Panopticon/Lexacom.Panopticon.Web/log4net.config'
+      - '${{ parameters.ReleaseSourceDir }}/src/Panopticon/Lexacom.Panopticon.Factotum/log4net.config'
+    ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+- template: step-env-build-WebPack.yml@templates
+  parameters:
+    VNextRegion: '${{ parameters.VNextRegion}}'
+    AppAbbrev: 'pano'
+    WebpackCsp: '${{ parameters.WebpackCsp }}'
+    AuthorityUri: '${{ parameters.AuthorityUri }}'
+    ReleaseSourceDir: '${{ parameters.ReleaseSourceDir }}'
+    SourceJsPath: '${{ parameters.ReleaseSourceDir }}\js'
+    YarnVer: '1.22.19'
+    LoginClientId: '${{ parameters.LoginClientId }}'
+# --------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Panopticon Primary'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
+    arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+    projects: '$(Panopticon.Primary.csproj.File.Path)'
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Panopticon Factotum'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
+    arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+    projects: '$(Panopticon.Factotum.csproj.File.Path)'
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Panopticon Core'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
+    arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+    projects: '$(Panopticon.Core.csproj.File.Path)'
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Panopticon Web'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
+    arguments: '--output $(Build.ArtifactStagingDirectory) --configuration Release'
+    projects: '$(Panopticon.Web.csproj.File.Path)'
+
+# --------------------------------------
+# Creates/updates all Panopticon elastic indices
+# --------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: 'Publish ElasticBand via DotNet'
+  inputs: 
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/src/Core/Lexacom.Core.ElasticBand/Lexacom.Core.ElasticBand.csproj'
+    arguments: '-p:PublishProfile=FolderProfile -v n'
+# Note: 'create' command exits without changes if the index already exists. 
+- task: PowerShell@2
+  displayName: 'Update Elastic indices'
+  inputs:
+    errorActionPreference: Stop
+    targetType: inline
+    script: |
+      # Including sleep command here because getting repeating connection failures
+      Start-Sleep -Seconds 30
+      $elasticBandExe = "$(Build.SourcesDirectory)\lexacom\src\Core\Lexacom.Core.ElasticBand\bin\Release\net6.0\win-x64\eb.exe"
+      $sharedVars = '-u "$(cicd-0-1-0-elasticUri)" -a "$(Build.SourcesDirectory)\lexacom\src\Panopticon\Lexacom.Panopticon.Core\bin\Release\net6.0\Lexacom.Panopticon.Core.dll" -t "Lexacom.Panopticon.Core.Autofac.ElasticModule" --bastion "uae@$(cicd-0-1-0-bastionHost)" --sshkey "$(pipelineAgentKey.secureFilePath)" -c "StoreName=My;StoreLocation=LocalMachine;Thumbprint=$(cicd-0-1-0-elasticAdminThumbprint)"'
+      $sharedVars = $sharedVars.Split(" ")
+      & $elasticBandExe $sharedVars --command delete --arg1 stg_panopticon_users
+      & $elasticBandExe $sharedVars --command reindex --arg1 panopticon_users --arg2 stg_panopticon_users --arg3 panopticon_users
+  env:
+    ELASTICBAND_KEYPASS: $(cicd-0-1-0-sshKeyPass)
+
+# --------------------------------------
+# Building Nightjar
+# --------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: 'Build Nightjar'
+  inputs:
+    command: 'build'
+    projects: '${{ parameters.ReleaseSourceDir }}\src\Core\Lexacom.Core.Nightjar\Lexacom.Core.Nightjar.csproj'
+    configuration: 'Debug'
+
+- task: CmdLine@2
+  displayName: 'Run Nightjar to migrate the database'
+  inputs:
+    workingDirectory: ${{ parameters.ReleaseSourceDir }}\src\Core\Lexacom.Core.Nightjar\bin\Debug\net6.0
+    script: 'nightjar.exe -p "${{ parameters.ReleaseSourceDir }}\src\Panopticon\Lexacom.Panopticon.Core" -c "Server=$(cicd-0-1-0-postgresServer);Database=stg_panopticon;User Id=$(cicd-0-1-0-postgresAdminUser);Password=''$(cicd-0-1-0-postgresAdminPass)'';SSL Mode=Require;Trust Server Certificate=true;" -d "postgres" --bastion "uae@$(cicd-0-1-0-bastionHost)" --sshkey "$(pipelineAgentKey.secureFilePath)" --all'
+  env:
+    NIGHTJAR_KEYPASS: $(cicd-0-1-0-sshKeyPass)
+  enabled: true
+
+# --------------------------------------
+- task: PowerShell@2
+  displayName: 'Create directory to be Zipped and Deployed'
+  inputs:
+    targetType: inline
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+    script: |
+      New-Item ".\TempApp\app_data\jobs\continuous\Lexacom-Panopticon-Factotum" -ItemType "directory"
+      Copy-Item ".\Lexacom.Panopticon.Web\*" ".\TempApp\" -Recurse
+      Copy-Item ".\Lexacom.Panopticon.Primary\Lexacom.Panopticon.Primary.dll" ".\TempApp\"
+      Copy-Item ".\Lexacom.Panopticon.Factotum\*" ".\TempApp\app_data\jobs\continuous\Lexacom-Panopticon-Factotum" -Recurse
+- task: ArchiveFiles@2
+  displayName: 'Archive build to Zip for upload'
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/TempApp/*'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'PanoWebService_${{ parameters.AppReleaseVer }}_$(Build.BuildNumber)'
+    publishLocation: 'Container'
+# --------------------------------------
+- template: step-build-env-start-stop-webslot.yml@templates
+  parameters:
+    Action: 'Stop' # 'Start/Stop'
+    DeploySlot: '${{ parameters.DeploySlot }}'
+    enabled: ${{ parameters.RunDeploy }}
+    RgName: '${{ parameters.RgName }}'
+    ShowParams: ${{ parameters.ShowParams }}
+    SvcAccount: '${{ parameters.SvcAccount }}'
+    WebAppName: '${{ parameters.WebAppName }}'
+# --------------------------------------
+- task: AzureRmWebAppDeployment@4
+  displayName: 'Deploy the zip as a WebApp'
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    appType: 'webApp'
+    WebAppName: '${{ parameters.WebAppName }}'
+    deployToSlotOrASE: true
+    ResourceGroupName: '${{ lower(parameters.RgName) }}'
+    SlotName: '${{ parameters.DeploySlot }}'
+    packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    enableCustomDeployment: true
+    DeploymentType: 'zipDeploy'
+  enabled: ${{ parameters.RunDeploy }}
+- task: AzureAppServiceSettings@1
+  displayName: 'Configure/Edit Web App'
+  inputs:
+    azureSubscription: '${{ parameters.SvcAccount }}'
+    appName: ${{ parameters.WebAppName }}
+    ResourceGroupName: ${{ parameters.RgName }}
+    slotName: ${{ lower(parameters.DeploySlot) }}
+    appSettings: |
+      [
+        {
+          "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-APPINSIGHTS_INSTRUMENTATIONKEY)",
+          "slotSetting": true
+        },
+        {
+          "name": "APPINSIGHTS_PROFILERFEATURE_VERSION",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-APPINSIGHTS_PROFILERFEATURE_VERSION)",
+          "slotSetting": true
+        },
+        {
+          "name": "APPINSIGHTS_SNAPSHOTFEATURE_VERSION",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-APPINSIGHTS_SNAPSHOTFEATURE_VERSION)",
+          "slotSetting": true
+        },
+        {
+          "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-ApplicationInsightsAgent_EXTENSION_VERSION)",
+          "slotSetting": true
+        },
+        {
+          "name": "Auth__ServicePrefix",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-Auth__ServicePrefix)",
+          "slotSetting": true
+        },
+        {
+          "name": "DiagnosticServices_EXTENSION_VERSION",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-DiagnosticServices_EXTENSION_VERSION)",
+          "slotSetting": true
+        },
+        {
+          "name": "General__Environment",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-General__Environment)",
+          "slotSetting": false
+        },
+        {
+          "name": "General__KeyVaultName",
+          "value": "$(cicd-0-1-0-KeyVaultName)",
+          "slotSetting": true
+        },
+        {
+          "name": "InstrumentationEngine_EXTENSION_VERSION",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-InstrumentationEngine_EXTENSION_VERSION)",
+          "slotSetting": true
+        },
+        {
+          "name": "SnapshotDebugger_EXTENSION_VERSION",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-SnapshotDebugger_EXTENSION_VERSION)",
+          "slotSetting": true
+        },
+        {
+          "name": "WEBSITE_LOAD_CERTIFICATES",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-WEBSITE_LOAD_CERTIFICATES)",
+          "slotSetting": false
+        },
+        {
+          "name": "XDT_MicrosoftApplicationInsights_BaseExtensions",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-XDT_MicrosoftApplicationInsights_BaseExtensions)",
+          "slotSetting": true
+        },
+        {
+          "name": "XDT_MicrosoftApplicationInsights_Mode",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-XDT_MicrosoftApplicationInsights_Mode)",
+          "slotSetting": true
+        },
+        {
+          "name": "XDT_MicrosoftApplicationInsights_NodeJS",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-XDT_MicrosoftApplicationInsights_NodeJS)",
+          "slotSetting": true
+        },
+        {
+          "name": "XDT_MicrosoftApplicationInsights_PreemptSdk",
+          "value": "$(cicd-1-0-0-pano-WebApp-EnvVar-XDT_MicrosoftApplicationInsights_PreemptSdk)",
+          "slotSetting": true
+        }
+      ]
+  enabled: ${{ parameters.RunDeploy }}
+# --------------------------------------
+
+- template: step-build-env-start-stop-webslot.yml@templates
+  parameters:
+    Action: 'Start' # 'Start/Stop'
+    DeploySlot: '${{ parameters.DeploySlot }}'
+    enabled: ${{ parameters.RunDeploy }}
+    RgName: '${{ parameters.RgName }}'
+    ShowParams: ${{ parameters.ShowParams }}
+    SvcAccount: '${{ parameters.SvcAccount }}'
+    WebAppName: '${{ parameters.WebAppName }}'
+# --------------------------------------

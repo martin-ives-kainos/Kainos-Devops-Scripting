@@ -1,0 +1,66 @@
+# File: step-build-App-Tools.yml@templates
+# --------------------------------------
+#   - template: step-build-App-Tools.yml@templates
+#     parameters:
+#       ReleaseSourceDir: '$(Build.SourcesDirectory)/lexacom'
+#       enabled: ${{ parameters.ShowParams }}
+#       ShowParams: ${{ parameters.ShowParams }}
+# --------------------------------------
+parameters:
+- name: ReleaseSourceDir
+  type: string
+  default: '$(Build.SourcesDirectory)/lexacom'
+- name: enabled
+  type: boolean
+  default: true
+- name: ShowParams
+  type: boolean
+  default: false
+
+steps:
+# ----------------------------------------------------------
+- ${{ if eq(parameters.enabled, 'true') }}:
+  - task: PowerShell@2
+    displayName: '[debug]: step-build-App-Tools'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Write-Host '-----Template: step-build-App-Tools-----'
+        Write-Host ' ReleaseSourceDir: ${{ parameters.ReleaseSourceDir }}'
+        Write-Host ' enabled         : ${{ parameters.enabled }}'
+      showWarnings: true
+      pwsh: true
+    enabled: ${{ parameters.ShowParams }}
+  # ----------------------------------------------------------
+  - template: step-Search-Files-Path.yml@templates
+    parameters:
+      FileNames:
+      - Name: 'Lexacom.Core.sln'
+        VarName: 'Lexacom.Core.sln.File.Path'
+      - Name: 'Lexacom.Core.Nightjar.csproj'
+        VarName: 'Core.Nightjar.csproj.File.Path'
+      - Name: 'Lexacom.Core.ElasticBand.csproj'
+        VarName: 'Core.ElasticBand.csproj.File.Path'
+      RootFolder: $(Build.SourcesDirectory)
+      ReturnFullPath: true
+  # --------------------------------------
+  - task: NuGetCommand@2
+    displayName: 'Install dependencies for Nightjar and ElasticBand'
+    inputs:
+      command: 'restore'
+      feedsToUse: 'config'
+      nugetConfigPath: '${{ parameters.ReleaseSourceDir }}/nuget.config'
+      restoreSolution: '$(Lexacom.Core.sln.File.Path)'
+  - task: MSBuild@1
+    displayName: 'Build Nightjar via MSBuild'
+    inputs:
+      solution: '$(Core.Nightjar.csproj.File.Path)'
+      configuration: 'debug'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish ElasticBand via DotNet'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      projects: '$(Core.ElasticBand.csproj.File.Path)'
+      arguments: '-p:PublishProfile=FolderProfile'
