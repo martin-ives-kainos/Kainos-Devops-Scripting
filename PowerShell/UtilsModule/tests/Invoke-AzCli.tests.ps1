@@ -88,12 +88,32 @@ Describe 'Invoke-AzCli' {
 
         $result = Invoke-AzCli -Arguments @('account', 'show') -AsJson
 
-        @($global:InvokeAzCliTestArguments) |
-        Should -BeExactly @('account', 'show', '--output', 'json')
+        @($global:InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '--output', 'json')
 
         $result.name | Should -Be 'demo'
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
+
+    It 'appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified' {
+        Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
+        Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
+            $global:InvokeAzCliTestArguments = $args[1]
+            $global:LASTEXITCODE = 0
+            return @{
+                StdOut   = '{"name":"demo"}'
+                ExitCode = $global:LASTEXITCODE
+            }
+        }
+        $dataFilePath = "TestDrive:\datafiles\test.json"
+        $result = Invoke-AzCli -Arguments @('account', 'show') -AsJson -DataFilePath $dataFilePath
+
+        (Test-Path $dataFilePath -PathType Leaf) | Should-BeTrue
+        @($global:InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '--output', 'json')
+
+        $result.name | Should -Be 'demo'
+        Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
+    }
+
 
     It 'does not append JSON output arguments when an output option is supplied' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
