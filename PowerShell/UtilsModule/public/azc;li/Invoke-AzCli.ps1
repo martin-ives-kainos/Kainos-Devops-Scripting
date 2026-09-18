@@ -47,9 +47,8 @@ function Invoke-AzCli {
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [string[]]$Arguments,
-
+        [string]$DataFilePath,
         [switch]$AsJson,
-
         [switch]$PassThruOnError
     )
 
@@ -84,7 +83,8 @@ function Invoke-AzCli {
                     Error    = $errorMessage
                     ExitCode = $exitCode
                 }
-            } else {
+            }
+            else {
                 throw "Azure CLI command failed (exit code $exitCode): $errorMessage"
             }
         }
@@ -93,7 +93,16 @@ function Invoke-AzCli {
         if ($AsJson -and $rawOutput) {
             try {
                 $parsedOutput = $rawOutput | ConvertFrom-Json -ErrorAction Stop
-            } catch {
+
+                if (![string]::IsNullOrEmpty($DataFilePath)) {
+                    $parentDir = Split-Path $DataFilePath -Parent
+                    if (-not (Test-Path $parentDir -PathType Container)) {
+                        New-Item -ItemType Directory -Path $parentDir | Out-Null
+                    }
+                    $parsedOutput | ConvertTo-Json -Depth 99 | Set-Content -Path $DataFilePath -Force
+                }
+            }
+            catch {
                 Write-Verbose "Output was not valid JSON, returning raw string. $_"
             }
         }
@@ -108,7 +117,8 @@ function Invoke-AzCli {
         }
 
         return $parsedOutput
-    } catch {
+    }
+    catch {
         if ($PassThruOnError) {
             return [pscustomobject]@{
                 Success  = $false
@@ -116,7 +126,8 @@ function Invoke-AzCli {
                 Error    = $_.Exception.Message
                 ExitCode = -1
             }
-        } else {
+        }
+        else {
             throw
         }
     }

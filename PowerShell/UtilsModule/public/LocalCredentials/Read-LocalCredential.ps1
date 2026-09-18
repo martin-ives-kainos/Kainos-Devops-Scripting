@@ -21,6 +21,7 @@ function Read-LocalCredential {
         $credential = Import-Clixml -Path $savedFile
     }
     else {
+        Write-Warning "Enter credential for $AppName ($UserName) to save to $savedFile"
         $credential = Get-Credential -UserName $UserName -Message "Enter credentials for $UserName"
         $credential | Export-Clixml -Path $savedFile -Force
     }
