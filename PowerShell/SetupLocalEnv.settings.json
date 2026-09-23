@@ -18,7 +18,8 @@
     "%OneDrive%\\Documents\\WindowsPowerShell\\Modules"
   ],
   "reqdModules": [
-    "PSIni;0",
+    "PSWriteOffice;3.0.7",
+    "powershell-yaml;0",
     "Pester;6.1.0",
     "PSDocs",
     "PSDocs.Azure"

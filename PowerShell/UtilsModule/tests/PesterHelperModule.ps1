@@ -108,7 +108,8 @@ New-Module -Name "PesterHelper" -ScriptBlock {
             foreach ($key in $CustomErrors) {
                 if ($stdErrors.ContainsKey($key)) {
                     $stdErrors[$key] = $CustomErrors[$key]
-                } else {
+                }
+                else {
                     $stdErrors.Add($key, $CustomErrors[$key])
                 }
             }
@@ -165,14 +166,16 @@ New-Module -Name "PesterHelper" -ScriptBlock {
 
                 <# Return the array but don't enumerate it because the object may be pretty complex #>
                 Write-Output -NoEnumerate $collection
-            } elseif ($InputObject -is [psobject]) {
+            }
+            elseif ($InputObject -is [psobject]) {
                 <#  If the object has properties that need enumeration Convert it to its own hash table and return it #>
                 $hash = @{}
                 foreach ($property in $InputObject.PSObject.Properties) {
                     $hash[$property.Name] = ConvertTo-Hashtable -InputObject $property.Value
                 }
                 return $hash
-            } else {
+            }
+            else {
                 <#  If the object isn't an array, collection, or other object, it's already a hash table
                     So just return it. #>
                 $InputObject
@@ -193,8 +196,8 @@ New-Module -Name "PesterHelper" -ScriptBlock {
         New-Item $Path -ItemType File -Force | Out-Null
         for ($gindex = 0; $gindex -lt $GroupCount; $gindex++) {
             for ($index = 0; $index -lt $Count; $index++) {
-                $validToken = ("{1}{0:000}" -f $index,$TokenText)
-                $invalidToken = ("<In{1}{0:000}>" -f $index,$TokenText)
+                $validToken = ("{1}{0:000}" -f $index, $TokenText)
+                $invalidToken = ("<In{1}{0:000}>" -f $index, $TokenText)
                 Add-Content $Path -Value "Test token named $validToken should be found and replaced with: '{$validToken}'"
                 Add-Content $Path -Value "Test other delimited token '$invalidToken' should not found or replaced"
             }
@@ -255,6 +258,44 @@ New-Module -Name "PesterHelper" -ScriptBlock {
         Set-Content $Path -Value (ConvertTo-Json -Depth 99 -InputObject $configObj)
     }
 
+    function Find-FileInTree {
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [string]$RootPath,
+
+            [Parameter(Mandatory)]
+            [string]$FileName,
+
+            [int]$MaxDepth = 5
+        )
+        $depth = 0
+        $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        while ($null -eq $foundFile -and $depth -lt $MaxDepth) {
+            $RootPath = Join-Path $RootPath '..' -Resolve
+            $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $depth++
+        }
+        return $foundFile.FullName
+    }
+
+    function Import-TestableModuleFile {
+        param (
+            [Parameter(Mandatory)]
+            [ValidateNotNullOrEmpty()]
+            [ValidateScript({ $_.ToLower().Trim().EndsWith('.psd1') -or $_.ToLower().Trim().EndsWith('.psm1') })]
+            [string]$ModuleName,
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [string]$ModulePath
+        )
+        $foundModule = Find-FileInTree -RootPath $ModulePath -FileName $ModuleName
+        if ($null -eq $foundModule) {
+            throw "Module file '$ModuleName' not found in path '$ModulePath' or its parent directories."
+        }
+        Import-Module $foundModule -Force -Verbose
+    }
+
     function GetScriptFileNames {
         [CmdletBinding()]
         [OutputType([string[]])]
@@ -272,12 +313,12 @@ New-Module -Name "PesterHelper" -ScriptBlock {
         [CmdletBinding()]
         [OutputType([array])]
         param (
-<#             [Parameter()]
+            <#             [Parameter()]
             [TypeName]
             $ParameterName #>
         )
         return @(
-            @{ Name = "Name1"; Value = 'Value1'}
+            @{ Name = "Name1"; Value = 'Value1' }
         )
     }
     function New-TestIniFile {

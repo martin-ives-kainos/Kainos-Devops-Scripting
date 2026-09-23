@@ -6,7 +6,8 @@ function ConvertFrom-Ini {
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$Path,
         [Parameter(Mandatory, ParameterSetName = 'Content')]
-        [array]$Content
+        [array]$Content,
+        [string]$ArrayDelimiter = '|'
     )
 
     $ini = @{}
@@ -58,10 +59,10 @@ function ConvertFrom-Ini {
                 }
             }
 
-            if ($value.Contains('|')) {
+            if ($value.Contains($ArrayDelimiter)) {
                 $list = @()
-                # Split the value on pipe characters and create [System.Collections.Generic.List[string]]
-                foreach ($item in $value.Trim('|').Split('|')) {
+                # Split the value on the specified array delimiter and create [System.Collections.Generic.List[string]]
+                foreach ($item in $value.Trim($ArrayDelimiter).Split($ArrayDelimiter)) {
                     $list += $item
                 }
                 $value = $list
