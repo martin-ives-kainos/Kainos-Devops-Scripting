@@ -7,30 +7,9 @@ BeforeAll {
     # Import the module to load the function being tested
     #    Import-TestableModuleFile -ModuleName 'UtilsModule.psd1' -ModulePath $PSScriptRoot
     . (Find-FileInTree -RootPath $PSScriptRoot -FileName ((Split-Path $PSCommandPath -Leaf) -replace '\.Tests\.ps1$', '.ps1'))
-
-    <#     function New-IniTestResults {
-        [CmdletBinding()]
-        [OutputType([hashtable])]
-        param (
-            [Parameter(Mandatory = $true)]
-            [ValidateSet("File Parsing", "Content Parsing")]
-            [string]$TestType,
-            [Parameter(Mandatory = $true)]
-            [string]$FileName
-        )
-        switch ($TestType) {
-            "File Parsing" {
-                $result = ConvertFrom-Ini -Path (New-TestIniFile -Path (Join-Path $PSScriptRoot ('data\{0}' -f $FileName) -Resolve))
-            }
-            "Content Parsing" {
-                $iniContent = New-TestIniFile -Path (Join-Path $PSScriptRoot  ('data\{0}' -f $FileName) -Resolve) -ContentOnly
-                $result = ConvertFrom-Ini -Content $iniContent
-            }
-        }
-        return $result
-    }
- #>}
-
+    $modFile = (Find-FileInTree -RootPath $PSScriptRoot -FileName "PowerShell\UtilsModule\UtilsModule.psd1")
+    Import-Module -Name $modFile -Force
+}
 
 Describe "Read-IniConfig Tests" {
 
@@ -47,6 +26,7 @@ Describe "Read-IniConfig Tests" {
             @{tc_section = "Database"; tc_key = "Port"; tc_expected = "1433" }
             @{tc_section = "Application"; tc_key = "Name"; tc_expected = "MyApp" }
             @{tc_section = "Application"; tc_key = "Debug"; tc_expected = $true }
+            @{tc_section = "EnvVars"; tc_key = "UserName"; tc_expected = "$env:USERNAME" }
         ) {
             param ($tc_section, $tc_key, $tc_expected)
             Write-Host ('[Read-IniConfig.Tests] {0}. {1} {2}' -f $____Pester.CurrentTest.Name, $tc_section, $tc_key) -BackgroundColor Green -ForegroundColor Black
@@ -54,17 +34,25 @@ Describe "Read-IniConfig Tests" {
         }
     }
 
-    Context "When the INI file does not exist but DefaultData is provided" -Skip {
+    Context "When the INI file does not exist but DefaultData is provided" {
         BeforeEach {
-            if (Test-Path $TestIniFile) {
+            $TestIniFile = (Join-Path 'TestDrive:\' 'Test_DefaultData.ini')
+            if (Test-Path $TestIniFile -PathType Leaf) {
                 Remove-Item -Path $TestIniFile -Force
             }
+            $DefaultData = @{
+                General = @{
+                    Key1 = 'Value1'
+                    Key2 = 'Value2'
+                }
+            }
+            Write-Verbose ('[Read-IniConfig.Tests] DefaultData prepared: {0}' -f ($DefaultData | Out-String))
         }
 
-
-        It "Should create the INI file with DefaultData" {
+        It "Created INI file successfully contains the DefaultData" {
+            Write-Host ('[Read-IniConfig.Tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
             Read-IniConfig -ConfigFile $TestIniFile -DefaultData $DefaultData | Out-Null
-            Test-Path $TestIniFile | Should -Be $true
+            Test-Path $TestIniFile -PathType Leaf | Should -Be $true
             $content = Get-Content -Path $TestIniFile -Raw
             $content | Should -Match "\[General\]"
             $content | Should -Match "Key1=Value1"
@@ -72,14 +60,13 @@ Describe "Read-IniConfig Tests" {
         }
     }
 
-
-    Context "When the INI file does not exist and no DefaultData is provided" -Skip {
+    Context "When the INI file does not exist and no DefaultData is provided" {
         BeforeEach {
-            if (Test-Path $TestIniFile) {
+            $TestIniFile = (Join-Path 'TestDrive:\' 'Test_DefaultData.ini')
+            if (Test-Path $TestIniFile -PathType Leaf) {
                 Remove-Item -Path $TestIniFile -Force
             }
         }
-
 
         It "Should throw an error" {
             { Read-IniConfig -ConfigFile $TestIniFile } | Should -Throw
