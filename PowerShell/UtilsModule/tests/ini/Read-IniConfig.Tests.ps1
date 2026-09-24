@@ -21,13 +21,15 @@ Describe "Read-IniConfig Tests" {
             Write-Verbose ('[Read-IniConfig.Tests] Read-IniConfig result: {0}' -f ($result | Out-String))
         }
 
-        It "Test section is valid and found" -ForEach @(
+        $tc_array = @(
             @{tc_section = "Database"; tc_key = "Server"; tc_expected = "SQL01" }
             @{tc_section = "Database"; tc_key = "Port"; tc_expected = "1433" }
             @{tc_section = "Application"; tc_key = "Name"; tc_expected = "MyApp" }
             @{tc_section = "Application"; tc_key = "Debug"; tc_expected = $true }
             @{tc_section = "EnvVars"; tc_key = "UserName"; tc_expected = "$env:USERNAME" }
-        ) {
+        )
+
+        It "Test section is valid and found" -ForEach $tc_array {
             param ($tc_section, $tc_key, $tc_expected)
             Write-Host ('[Read-IniConfig.Tests] {0}. {1} {2}' -f $____Pester.CurrentTest.Name, $tc_section, $tc_key) -BackgroundColor Green -ForegroundColor Black
             $result.$tc_section.$tc_key | Should -Be $tc_expected
