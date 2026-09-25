@@ -26,7 +26,7 @@ function Save-IniConfig {
         foreach ($section in $Data.Keys) {
             $iniContent += "[$section]"
             foreach ($key in $Data[$section].Keys) {
-                $value = $Data[$section][$key]
+                $value = (ConvertTo-IniValue $Data[$section][$key])
                 $iniContent += ("{0}={1}" -f $key, $value)
             }
         }
