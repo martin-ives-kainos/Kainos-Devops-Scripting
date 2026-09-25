@@ -1,14 +1,28 @@
-BeforeAll {
+BeforeDiscovery {
     $helperPath = $PSScriptRoot
     while (-not (Test-Path (Join-Path $helperPath 'PesterHelperModule.ps1'))) {
         $helperPath = Join-Path $helperPath '..' -Resolve
     }
     . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
+    $global:pester_temp_RunDate = Get-Date
+
+    SetUpGlobalTestCases -VarName 'pester_temp_iniValueTestCases' -TestCaseArray @(
+            @{tc_section = "Database"; tc_key = "Server"; tc_expected = "SQL02" }
+            @{tc_section = "Database"; tc_key = "Port"; tc_expected = "9999" }
+            @{tc_section = "Application"; tc_key = "Name"; tc_expected = "MyApp2" }
+            @{tc_section = "Application"; tc_key = "Debug"; tc_expected = $false }
+            #            @{tc_section = "EnvVars"; tc_key = "UserName"; tc_expected = "$env:USERNAME" }
+    )
+}
+BeforeAll {
     . (Find-FileInTree -RootPath $PSScriptRoot -FileName ((Split-Path $PSCommandPath -Leaf) -replace '\.Tests\.ps1$', '.ps1'))
-    $modFile = (Find-FileInTree -RootPath $PSScriptRoot -FileName "PowerShell\UtilsModule\UtilsModule.psd1")##
+    $modFile = (Find-FileInTree -RootPath $PSScriptRoot -FileName "UtilsModule\UtilsModule.psd1")
     Import-Module -Name $modFile -Force
 }
-
+AfterAll {
+    # Cleanup code if needed
+    CleanUpTemporaryGlobalVariables -VarPrefix 'pester_temp_'
+}
 Describe "Save-IniConfig Tests" {
 
     Context "When the INI file exists" {
@@ -29,13 +43,7 @@ Describe "Save-IniConfig Tests" {
             Write-Verbose ('[Save-IniConfig.Tests] New Read-IniConfig result: {0}' -f ($newResult | Out-String))
         }
 
-        It "Test section is valid and found" -ForEach @(
-            @{tc_section = "Database"; tc_key = "Server"; tc_expected = "SQL02" }
-            @{tc_section = "Database"; tc_key = "Port"; tc_expected = "9999" }
-            @{tc_section = "Application"; tc_key = "Name"; tc_expected = "MyApp2" }
-            @{tc_section = "Application"; tc_key = "Debug"; tc_expected = $false }
-            #            @{tc_section = "EnvVars"; tc_key = "UserName"; tc_expected = "$env:USERNAME" }
-        ) {
+        It "Test section is valid and found" -ForEach $global:pester_temp_iniValueTestCases {
             param ($tc_section, $tc_key, $tc_expected)
             Write-Host ('[Save-IniConfig.Tests] {0}. {1} {2}' -f $____Pester.CurrentTest.Name, $tc_section, $tc_key) -BackgroundColor Green -ForegroundColor Black
             $newResult.$tc_section.$tc_key | Should -Be $tc_expected
