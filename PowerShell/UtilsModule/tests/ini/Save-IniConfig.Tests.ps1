@@ -67,4 +67,19 @@ Describe "Save-IniConfig Tests" {
             $content | Should -Match "Key2=Value2"
         }
     }
+
+    Context "Test saving specific data types" -Skip {
+        It "Throw an error saving an object as a value" {
+            $TestIniFile = (Join-Path 'TestDrive:\' 'Test_ObjectValue.ini')
+            if (Test-Path $TestIniFile -PathType Leaf) {
+                Remove-Item -Path $TestIniFile -Force
+            }
+            $InvalidData = @{
+                General = @{
+                    Key1 = @{ SubKey = 'SubValue' }
+                }
+            }
+            { Save-IniConfig -ConfigFile $TestIniFile -Data $InvalidData | Out-Null } | Should -Throw
+        }
+    }
 }
