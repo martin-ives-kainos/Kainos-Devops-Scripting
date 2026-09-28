@@ -12,6 +12,7 @@ BeforeDiscovery {
         @{tc_key = "StartDate"; tc_expected = $global:pester_temp_RunDate.ToString('o') }
         @{tc_key = "Servers"; tc_expected = "web01|web02" }
         @{tc_key = "Settings"; tc_expected = '{"Retry":3,"Timeout":30}' }
+
     )
 }
 BeforeAll {
@@ -53,7 +54,17 @@ Describe "ConvertTo-IniValue Tests" {
             param ($tc_key, $tc_expected)
             Write-Host ('[ConvertTo-IniValue.Tests] {0}. {1}' -f $____Pester.CurrentTest.Name, $tc_key) -BackgroundColor Green -ForegroundColor Black
             $iniValue = ConvertTo-IniValue -Value $inputTable[$tc_key]
-            $iniValue | Should -Be $tc_expected
+            switch ($tc_key) {
+                "Settings" {
+                    # expected to contain the JSON representation of the settings
+                    (ConvertFrom-Json $iniValue).Retry | Should -BeExactly 3
+                    (ConvertFrom-Json $iniValue).Timeout | Should -BeExactly 30
+                }
+                default {
+                    $iniValue | Should -Be $tc_expected
+                }
+            }
+
         }
     }
 

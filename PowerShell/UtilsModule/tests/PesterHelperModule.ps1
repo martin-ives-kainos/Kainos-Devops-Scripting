@@ -309,17 +309,32 @@ New-Module -Name "PesterHelper" -ScriptBlock {
         return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
     }
 
-    function GetTestCases {
+
+    function CleanUpTemporaryGlobalVariables {
         [CmdletBinding()]
         [OutputType([array])]
         param (
-            <#             [Parameter()]
-            [TypeName]
-            $ParameterName #>
+            [string]$VarPrefix = 'pester_temp_'
         )
-        return @(
-            @{ Name = "Name1"; Value = 'Value1' }
+        foreach ($varName in (Get-Variable -Scope Global | Select-Object -ExpandProperty Name | Where-Object { $_.StartsWith('pester_temp_' ) }) ) {
+            Write-Host "[ConvertTo-IniValue.Tests] Removing global variable: $varName"
+            Remove-Variable -Name $varName -Scope Global -ErrorAction SilentlyContinue
+        }
+    }
+    function SetUpGlobalTestCases {
+        [CmdletBinding()]
+        [OutputType([array])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ $_.Trim().ToLower().StartsWith('pester_temp_') })]
+            [string]$VarName,
+            [Parameter(Mandatory)]
+            [ValidateNotNullOrEmpty()]
+            [array]$TestCaseArray
         )
+        if (-not (Get-Variable -Scope Global -Name $VarName -ErrorAction SilentlyContinue)) {
+            New-Variable -Name $VarName -Scope Global -Value $TestCaseArray -Force
+        }
     }
     function New-TestIniFile {
         param (
