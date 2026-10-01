@@ -61,8 +61,8 @@ function Invoke-MockAzCliInternalError {
 
 BeforeAll {
     # Import the module to load the function being tested
-    Import-Module (Join-Path $PSScriptRoot '..\UtilsModule.psd1' -Resolve) -Force -PassThru | Out-Null
-    . (Join-Path $PSScriptRoot 'PesterHelperModule.ps1' -Resolve)
+    Import-Module (Join-Path $PSScriptRoot '..\..\UtilsModule.psd1' -Resolve) -Force -PassThru | Out-Null
+    . (Join-Path $PSScriptRoot '..\PesterHelperModule.ps1' -Resolve)
 }
 
 AfterAll {
