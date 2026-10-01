@@ -52,21 +52,22 @@ function Invoke-AzCli {
         [switch]$PassThruOnError
     )
 
+    $diagFuncName = (Get-PSCallStack)[0].FunctionName
     $azArgs = $Arguments
 
     if ($AsJson -and ($azArgs -notcontains '--output') -and ($azArgs -notcontains '-o')) {
         $azArgs += @('--output', 'json')
     }
 
-    Write-Verbose "Running: az $($azArgs -join ' ')"
+    Write-Host "[${diagFuncName}] Running: az $($azArgs -join ' ')"
 
     try {
-        # Capture stdout and stderr separately, avoid throwing on non-terminating stream writes
+        Write-Host "[${diagFuncName}]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes"
         $internalResult = Invoke-AzCliInternal -azArgs $azArgs
         $stdOut = $internalResult.StdOut
         $exitCode = $internalResult.ExitCode
 
-        # Separate error records (from stderr) out of the combined stream
+        Write-Host "[${diagFuncName}]...Separate error records (from stderr) out of the combined stream"
         $errorLines = $stdOut | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
         $outputLines = $stdOut | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
 
@@ -74,9 +75,11 @@ function Invoke-AzCli {
         $rawError = ($errorLines | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
 
         if ($exitCode -ne 0) {
+            Write-Host "...Azure CLI command failed with exit code $exitCode"
             $errorMessage = if ($rawError) { $rawError } else { $rawOutput }
 
             if ($PassThruOnError) {
+                Write-Host "...Returning error object due to PassThruOnError"
                 return [pscustomobject]@{
                     Success  = $false
                     Output   = $null
@@ -85,25 +88,28 @@ function Invoke-AzCli {
                 }
             }
             else {
-                throw "Azure CLI command failed (exit code $exitCode): $errorMessage"
+                throw "[${diagFuncName}] Azure CLI command failed (exit code $exitCode): $errorMessage"
             }
         }
 
         $parsedOutput = $rawOutput
         if ($AsJson -and $rawOutput) {
             try {
+                Write-Host "[${diagFuncName}] ...Parsing raw output as JSON"
                 $parsedOutput = $rawOutput | ConvertFrom-Json -ErrorAction Stop
 
                 if (![string]::IsNullOrEmpty($DataFilePath)) {
+                    Write-Host "[${diagFuncName}] ...Ensure parent directory exists for data file"
                     $parentDir = Split-Path $DataFilePath -Parent
                     if (-not (Test-Path $parentDir -PathType Container)) {
                         New-Item -ItemType Directory -Path $parentDir | Out-Null
                     }
+                    Write-Host "[${diagFuncName}] ...Writing parsed output to data file: $DataFilePath"
                     $parsedOutput | ConvertTo-Json -Depth 99 | Set-Content -Path $DataFilePath -Force
                 }
             }
             catch {
-                Write-Verbose "Output was not valid JSON, returning raw string. $_"
+                Write-Warning "[${diagFuncName}] Output was not valid JSON, returning raw string. $_"
             }
         }
 
