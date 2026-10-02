@@ -16,8 +16,7 @@ function ConvertTo-Ini {
                throw '$_ is not a valid path.'
             }
         })]
-        [string]$Path,
-        [string]$ArrayDelimiter = '|'
+        [string]$Path
     )
 
     $sb = [System.Text.StringBuilder]::new()
@@ -30,9 +29,6 @@ function ConvertTo-Ini {
 
         foreach ($key in $InputObject[$section].Keys) {
             $value = $InputObject[$section][$key]
-            if ($value -is [System.Collections.IEnumerable] -and -not ($value -is [string])) {
-                $value = ($value -join $ArrayDelimiter)
-            }
             [void]$sb.AppendLine("$key=$value")
         }
 
