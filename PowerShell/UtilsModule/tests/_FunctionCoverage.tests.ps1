@@ -49,7 +49,7 @@ Describe "Function coverage for UtilsModule" {
                 Set-ItResult -Inconclusive -Because "Manual check required for script file '$_'" -Verbose
             }
             else {
-                Write-Host ('[_FunctionCoverage.tests] Check script files, {0}' -f $t_scriptFile) -ForegroundColor Blue
+                # Write-Host ('[_FunctionCoverage.tests] Check script files, {0}' -f $t_scriptFile) -ForegroundColor Blue
                 (Test-Path -Path $TestFile -PathType Leaf) | Should -Be $true
                 $Global:pester_temp_TestCounter.TestFilesFound += 1
             }
