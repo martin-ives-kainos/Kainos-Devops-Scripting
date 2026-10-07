@@ -262,6 +262,9 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [string]$RootPath,
 
             [Parameter(Mandatory)]
+            [Alias('Name')]
+            [Alias('Path')]
+            [ValidateNotNullOrEmpty()]
             [string]$FileName,
 
             [int]$MaxDepth = 5
@@ -306,7 +309,6 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
     }
 
-
     function CleanUpTemporaryGlobalVariables {
         [CmdletBinding()]
         param (
@@ -325,20 +327,98 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             Remove-Variable -Name $varName -Scope Global -ErrorAction SilentlyContinue
         }
     }
+
+    Function Get-ModuleTestableFolders {
+        [CmdletBinding()]
+        [OutputType([string[]])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [Alias('Root')]
+            [Alias('Path')]
+            [string]$ModulePath,
+			[switch]$SkipRoot
+        )
+		$folderList = @{}
+        if (!$SkipRoot) {
+		    $folderList.Add("Root", $ModulePath)
+        }
+		Get-ChildItem -Path (Join-Path $PSScriptRoot '..' -Resolve) -Directory | ForEach-Object {
+			$folderList.Add($_.Name, $_.FullName)
+		}
+
+        return $folderList
+    }
+
+    function Get-ModuleTestableScripts {
+        [CmdletBinding()]
+        [OutputType([hashtable[]])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [string]$ModulePath,
+            [ValidateSet('Root', 'ScriptFolder')]
+            [string]$PathType = 'ScriptFolder',
+            [string]$Filter = '*.ps1',
+            [string]$Exclude = '*.tests.ps1',
+            [System.ObsoleteAttribute("The -Recurse parameter is deprecated. Use -PathType 'ScriptFolder' instead.")]
+            [switch]$Recurse
+        )
+
+        $scriptFiles = @()
+
+        $p_GetFiles = @{
+            Path = $ModulePath
+            Filter = $Filter
+            Exclude = $Exclude
+        }
+
+        $subFolderName = $null
+
+        switch ($PathType) {
+            'Root' {
+                $subFolderName = "Root"
+            }
+            'ScriptFolder' {
+                $subFolderName = (Split-Path $ModulePath -Leaf)
+                $p_GetFiles.Add('Recurse', $true)
+            }
+        }
+
+        foreach ($scriptFile in (Get-ChildItem @p_GetFiles | Select-Object -ExpandProperty FullName)) {
+            $newItem = @{
+                tcf_ScriptFile = $scriptFile
+                tcf_TestFile = (Split-Path $scriptFile -Leaf) -replace '\.ps1$', '.Tests.ps1'
+                tcf_FolderPath = $ModulePath
+                tcf_FolderName = $subFolderName
+                tcf_TestExists = $false
+            }
+            $testFile = Find-FileInTree -RootPath $ModulePath -Name $newItem.tcf_TestFile
+            if ($null -ne $testFile) {
+                $newItem.tcf_TestExists = $true
+            }
+            $scriptFiles += $newItem
+        }
+        return $scriptFiles
+    }
+
     function SetUpGlobalTestCases {
         [CmdletBinding()]
         [OutputType([array])]
         param (
             [Parameter(Mandatory)]
             [ValidateScript({ $_.Trim().ToLower().StartsWith('pester_temp_') })]
+			[Alias('Name')]
             [string]$VarName,
             [Parameter(Mandatory)]
             [ValidateNotNullOrEmpty()]
             [Alias('TestCases')]
-            [array]$TestCaseArray
+            [Alias('TestCaseArray')]
+            [object]$VarValue,
+            [switch]$Force
         )
-        if (-not (Get-Variable -Scope Global -Name $VarName -ErrorAction SilentlyContinue)) {
-            New-Variable -Name $VarName -Scope Global -Value $TestCaseArray -Force
+        if (-not (Get-Variable -Scope Global -Name $VarName -ErrorAction SilentlyContinue) -or $Force) {
+            New-Variable -Name $VarName -Scope Global -Value $VarValue -Force
         }
     }
     function New-TestIniFile {
