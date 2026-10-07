@@ -1,0 +1,1 @@
+$result = Invoke-Pester -Path .\PowerShell\UtilsModule\tests\Get-UserShellPath.tests.ps1 -PassThru; $result.Failed | Format-List * -Force
