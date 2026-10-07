@@ -8,7 +8,7 @@ function New-WpfSimpleListSelect {
 
     # Demonstration of loading a list of required modules for local installation, by passing Admin privileges
 
-    [xml]$xaml = (Get-Content -Path (Join-Path $PSScriptRoot "LocalSetup_SelectModuleForm.xml") -Raw)
+    [xml]$xaml = (Get-Content -Path (Join-Path $PSScriptRoot "New-WpfSimpleListSelect.xml") -Raw)
     $reader = New-Object System.Xml.XmlNodeReader $xaml
     $window = [Windows.Markup.XamlReader]::Load($reader)
 
