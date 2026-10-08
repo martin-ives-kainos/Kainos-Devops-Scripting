@@ -23,7 +23,7 @@ BeforeAll {
 
     . (Join-Path (Split-Path -Parent  $PSCommandPath) "PesterHelperModule.ps1" -Resolve)
 }
-Describe "Passed Parameter Validation" -Tag "Unit" {
+Describe -tag 'Unit' "Passed Parameter Validation" -Tag "Unit" {
     BeforeAll {
         $ErrMsg = @{
             "NullOrEmpty" = "Cannot validate argument on parameter '{0}'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again."
@@ -74,7 +74,7 @@ Describe "Passed Parameter Validation" -Tag "Unit" {
     }
 }
 
-Describe "Function Save-ObjectToFile" -Tag Unit {
+Describe -tag 'Unit' "Function Save-ObjectToFile" -Tag Unit {
     BeforeAll {
         $tObject = (New-TestTempObject 5)
         $testFile = "TestDrive:\Test.json"

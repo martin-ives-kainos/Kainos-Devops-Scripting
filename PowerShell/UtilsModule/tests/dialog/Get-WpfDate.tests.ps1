@@ -94,7 +94,7 @@ AfterAll {
     }
 }
 
-Describe 'Get-WpfDate' {
+Describe -tag 'Unit' 'Get-WpfDate' {
     It 'returns the selected date and initializes the picker with the default date' {
         if (-not $script:WpfDateTestSupported) {
             Set-ItResult -Skipped -Because 'WPF dialog tests require Windows and an STA runspace.'

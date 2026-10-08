@@ -26,7 +26,7 @@ AfterAll {
     CleanUpTemporaryGlobalVariables -TestName 'New-FolderNamesByMonth.tests'
 }
 
-Describe 'New-FolderNamesByMonth' {
+Describe -tag 'Unit' 'New-FolderNamesByMonth' {
     Context 'Folder Names By Month No Path/RootPath' {
         BeforeAll {
             Write-Host ('[New-FolderNamesByMonth.tests] {0} BeforeAll Context: {1}' -f $____Pester.CurrentTest.Name, $____Pester.CurrentContext.Name) -BackgroundColor Green -ForegroundColor Black

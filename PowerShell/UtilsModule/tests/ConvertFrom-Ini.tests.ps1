@@ -26,7 +26,7 @@ BeforeAll {
     }
 }
 
-Describe 'ConvertFrom-Ini' {
+Describe -tag 'Unit' 'ConvertFrom-Ini' {
 
     Context 'File and Content Parsing - <P_FileName>' -ForEach @(
         @{ P_Name = "File Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }

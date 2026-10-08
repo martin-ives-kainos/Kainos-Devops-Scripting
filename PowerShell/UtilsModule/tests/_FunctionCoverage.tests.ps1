@@ -28,7 +28,7 @@ AfterAll {
     CleanUpTemporaryGlobalVariables
 }
 
-Describe "Function coverage for UtilsModule" {
+Describe -tag 'Unit' "Function coverage for UtilsModule" {
     Context "Test the root folder, no scripts requiring tests should be there" {
         It "Should not have any scripts requiring tests in the root folder" {
             $rootScripts = Get-ModuleTestableScripts -ModulePath $global:pester_temp_ModuleRootPath  -PathType "Root"
@@ -57,7 +57,7 @@ Describe "Function coverage for UtilsModule" {
     }
 }
 
-Describe "Validate Function Coverage" {
+Describe -tag 'Unit' "Validate Function Coverage" {
     BeforeAll {
         Write-Host "*---------------------------------------------------------"
         Write-Host "* Validating function coverage for UtilsModule:"

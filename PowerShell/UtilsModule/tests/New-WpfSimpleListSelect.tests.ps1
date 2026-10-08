@@ -3,7 +3,7 @@ BeforeAll {
     [xml]$xaml = Get-Content -Path $xamlPath -Raw
 }
 
-Describe 'New-WpfSimpleListSelect XAML' {
+Describe -tag 'Unit' 'New-WpfSimpleListSelect XAML' {
     It 'contains the named controls required by the selection function' {
         $expectedControls = @{
             PickList    = 'ComboBox'

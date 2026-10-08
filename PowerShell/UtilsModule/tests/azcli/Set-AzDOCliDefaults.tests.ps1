@@ -9,7 +9,7 @@ BeforeAll {
     }
 }
 
-Describe 'Set-AzDOCliDefaults' {
+Describe -tag 'Unit' 'Set-AzDOCliDefaults' {
     BeforeEach {
         $script:AzCliDefaultTestCalls = @()
     }

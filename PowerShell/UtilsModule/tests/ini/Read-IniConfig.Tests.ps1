@@ -11,7 +11,7 @@ BeforeAll {
     Import-Module -Name $modFile -Force
 }
 
-Describe "Read-IniConfig Tests" {
+Describe -tag 'Unit' "Read-IniConfig Tests" {
 
     Context "When the INI file exists" {
         BeforeEach {

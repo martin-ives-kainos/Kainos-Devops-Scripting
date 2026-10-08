@@ -41,7 +41,7 @@ AfterAll {
     }
 }
 
-Describe "ConvertTo-IniValue Tests" {
+Describe -tag 'Unit' "ConvertTo-IniValue Tests" {
 
     Context "Test a set of expected INI values" {
         BeforeEach {

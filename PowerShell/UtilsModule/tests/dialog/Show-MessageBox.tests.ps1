@@ -2,7 +2,7 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '..\..\public\dialog\Show-MessageBox.ps1' -Resolve)
 }
 
-Describe 'Show-MessageBox console fallback' {
+Describe -tag 'Unit' 'Show-MessageBox console fallback' {
     BeforeEach {
         $script:MessageBoxTestResponse = ''
 

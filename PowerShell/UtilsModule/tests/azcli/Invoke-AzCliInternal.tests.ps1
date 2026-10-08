@@ -3,7 +3,7 @@ BeforeAll {
     function az { }
 }
 
-Describe 'Invoke-AzCliInternal' {
+Describe -tag 'Unit' 'Invoke-AzCliInternal' {
     BeforeEach {
         $global:InvokeAzCliInternalTestArguments = @()
         $global:InvokeAzCliInternalTestOutput = @()

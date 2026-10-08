@@ -23,7 +23,7 @@ AfterAll {
     # Cleanup code if needed
     CleanUpTemporaryGlobalVariables -VarPrefix 'pester_temp_'
 }
-Describe "Save-IniConfig Tests" {
+Describe -tag 'Unit' "Save-IniConfig Tests" {
 
     Context "When the INI file exists" {
         BeforeEach {

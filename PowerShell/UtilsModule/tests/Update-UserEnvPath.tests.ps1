@@ -3,7 +3,7 @@ BeforeAll {
     . (Join-Path $PSScriptRoot ("..\public\{0}.ps1" -f ($MyInvocation.MyCommand.Name -replace '\.Tests\.ps1$', '')))
 }
 
-Describe "Update-UserEnvPath" {
+Describe -tag 'Unit' "Update-UserEnvPath" {
     BeforeEach {
         $script:originalPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
         $script:originalPSModulePath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User)

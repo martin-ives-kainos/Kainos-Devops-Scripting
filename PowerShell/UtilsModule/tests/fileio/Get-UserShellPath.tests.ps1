@@ -2,7 +2,7 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '..\..\public\fileio\Get-UserShellPath.ps1')
 }
 
-Describe "Get-UserShellPath" {
+Describe -tag 'Unit' "Get-UserShellPath" {
     BeforeEach {
         Mock Get-Item {
             [pscustomobject]@{ Property = @('Desktop', 'Personal') }

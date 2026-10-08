@@ -70,7 +70,7 @@ AfterAll {
 }
 
 # For Windows-users: curl used in sample requires Windows 10 1803 / Windows Server 2019 or later
-Describe 'Invoke-AzCli' {
+Describe -tag 'Unit' 'Invoke-AzCli' {
     BeforeEach {
         $global:InvokeAzCliTestArguments = @()
         $global:LASTEXITCODE = 0

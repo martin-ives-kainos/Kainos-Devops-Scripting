@@ -4,7 +4,7 @@ BeforeAll {
     . (Join-Path $PSScriptRoot 'PesterHelperModule.ps1' -Resolve)
 }
 
-Describe 'ConvertTo-Ini' {
+Describe -tag 'Unit' 'ConvertTo-Ini' {
     It 'Throws an error when the path is empty' {
         Write-Host ('[ConvertTo-Ini.tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $data = @{
