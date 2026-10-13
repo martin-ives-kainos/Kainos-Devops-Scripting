@@ -6,7 +6,7 @@ BeforeDiscovery {
     . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
     $global:pester_temp_RunDate = Get-Date
 
-    SetUpGlobalTestCases -VarName 'pester_temp_iniValueTestCases' -TestCaseArray @(
+    SetUpGlobalTestVariables -VarName 'pester_temp_iniValueTestCases' -TestCaseArray @(
             @{tc_section = "Database"; tc_key = "Server"; tc_expected = "SQL02" }
             @{tc_section = "Database"; tc_key = "Port"; tc_expected = "9999" }
             @{tc_section = "Application"; tc_key = "Name"; tc_expected = "MyApp2" }

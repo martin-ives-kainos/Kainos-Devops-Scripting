@@ -15,7 +15,7 @@ BeforeDiscovery {
             PropertyNames    = "FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false"
         }
     }
-    SetUpGlobalTestCases -VarName 'pester_temp_DatesNoPath' -TestCases $t_TestCases
+    SetUpGlobalTestVariables -VarName 'pester_temp_DatesNoPath' -TestCases $t_TestCases
 }
 BeforeAll {
     . (Find-FileInTree -RootPath $PSScriptRoot -FileName 'Get-MonthDays.ps1')

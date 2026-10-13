@@ -402,7 +402,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return $scriptFiles
     }
 
-    function SetUpGlobalTestCases {
+    function SetUpGlobalTestVariables {
         [CmdletBinding()]
         [OutputType([array])]
         param (

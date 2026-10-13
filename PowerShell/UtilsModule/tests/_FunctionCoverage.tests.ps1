@@ -9,10 +9,10 @@ BeforeDiscovery {
         $helperPath = Join-Path $helperPath '..' -Resolve
     }
     . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
-    SetUpGlobalTestCases -VarName 'pester_temp_RunDate' -VarValue (Get-Date)
-    SetUpGlobalTestCases -VarName 'pester_temp_ModuleRootPath' -VarValue (Join-Path $PSScriptRoot '..' -Resolve)
-    SetUpGlobalTestCases -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolders -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
-    SetUpGlobalTestCases -VarName 'pester_temp_TestCounter' -VarValue @{TestatableFiles = 0; TestFilesFound = 0 }
+    SetUpGlobalTestVariables -VarName 'pester_temp_RunDate' -VarValue (Get-Date)
+    SetUpGlobalTestVariables -VarName 'pester_temp_ModuleRootPath' -VarValue (Join-Path $PSScriptRoot '..' -Resolve)
+    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolders -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
+    SetUpGlobalTestVariables -VarName 'pester_temp_TestCounter' -VarValue @{TestatableFiles = 0; TestFilesFound = 0 }
 
     $tc_ScriptFiles = @{}
     foreach ($scriptPath in $Global:pester_temp_ScriptPaths.Keys) {
@@ -21,7 +21,7 @@ BeforeDiscovery {
             $tc_ScriptFiles[$scriptPath] += $scriptFile
         }
     }
-    SetUpGlobalTestCases -VarName 'pester_temp_ScriptFiles' -VarValue $tc_ScriptFiles
+    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptFiles' -VarValue $tc_ScriptFiles
 }
 
 AfterAll {
