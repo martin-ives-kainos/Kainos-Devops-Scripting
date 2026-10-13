@@ -5,10 +5,10 @@ function Show-MessageBox {
 
         [string]$Title = "Information",
 
-        [ValidateSet("OK","OKCancel","YesNo","YesNoCancel")]
+        [ValidateSet("OK", "OKCancel", "YesNo", "YesNoCancel")]
         [string]$Buttons = "OK",
 
-        [ValidateSet("OK","Cancel","Yes","No")]
+        [ValidateSet("OK", "Cancel", "Yes", "No")]
         [string]$Default,
 
         [ValidateRange(1, 4294967)]
@@ -35,6 +35,7 @@ function Show-MessageBox {
     }
     $effectiveTimeoutSeconds = if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds } else { $null }
 
+    Write-Host "Waiting for message box response..." -ForegroundColor Green
     if ($IsWindows) {
         try {
             Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
@@ -47,7 +48,6 @@ function Show-MessageBox {
                     Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-
 namespace UtilsModule {
     public static class NativeMessageBox {
         [DllImport("user32.dll", EntryPoint = "MessageBoxTimeoutW", CharSet = CharSet.Unicode)]
