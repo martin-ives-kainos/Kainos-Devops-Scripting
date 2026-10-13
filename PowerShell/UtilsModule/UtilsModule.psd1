@@ -137,6 +137,9 @@
         RequiredModules     = @(
             'PSDocs', 'Pester', 'PSDocs.Azure', 'ImportExcel'
         )
+
+        TestFolders         = @('tests')
+        TestTags            = @('Unit', 'Integration', 'Functional', 'Smoke', 'Debug', 'All')
     } # End of PrivateData hashtable
 
     # HelpInfo URI of this module

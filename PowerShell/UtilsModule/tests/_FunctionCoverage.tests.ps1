@@ -15,7 +15,7 @@ BeforeDiscovery {
     SetUpGlobalTestVariables -VarName 'pester_temp_TestCounter' -VarValue @{TestatableFiles = 0; TestFilesFound = 0 }
 
     $tc_ScriptFiles = @{}
-    foreach ($scriptPath in $Global:pester_temp_ScriptPaths.Keys) {
+    foreach ($scriptPath in $Global:pester_temp_ScriptPaths.Keys | Sort-Object) {
         $tc_ScriptFiles.Add($scriptPath, @())
         foreach ($scriptFile in Get-ModuleTestableScripts -ModulePath $Global:pester_temp_ScriptPaths[$scriptPath] -PathType "ScriptFolder" | Select-Object -ExpandProperty tcf_ScriptFile) {
             $tc_ScriptFiles[$scriptPath] += $scriptFile

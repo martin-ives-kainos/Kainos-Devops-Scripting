@@ -31,32 +31,17 @@
     - Verify invalid JSON is returned as a raw string rather than causing failure.
 #>
 
-# Invoke-AzCli.Tests.ps1
-
-function Invoke-MockAzCliInternalError {
-    param (
-        [Parameter(Mandatory)]
-        [ValidateRange(-1, 9)]
-        [int]$ExitCode,
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ErrorMessage
-    )
-    $global:LASTEXITCODE = $ExitCode
-    $result = @{
-        StdOut   = @($ErrorMessage)
-        ExitCode = $global:LASTEXITCODE
+BeforeDiscovery {
+    $helperPath = $PSScriptRoot
+    while (-not (Test-Path (Join-Path $helperPath 'PesterHelperModule.ps1'))) {
+        $helperPath = Join-Path $helperPath '..' -Resolve
     }
-    try {
-        Write-Host ('[Invoke-AzCli.tests] {0} ---Mocking Invoke-AzCliInternal--- {1}' -f $____Pester.CurrentTest.Name, $result.StdOut[0]) -BackgroundColor Blue -ForegroundColor White
-        throw $result.StdOut[0]
-    }
-    catch {
-        $result.StdOut += $_
-    }
-    return $result
+    . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
+    SetUpGlobalTestVariables -VarName 'pester_temp_InvokeAzCliTestArguments' -VarValue @('Dummy')
+}
 
-
+AfterAll {
+    CleanUpTemporaryGlobalVariables
 }
 
 BeforeAll {
@@ -65,20 +50,16 @@ BeforeAll {
     . (Join-Path $PSScriptRoot 'PesterHelperModule.ps1' -Resolve)
 }
 
-AfterAll {
-    Remove-Variable -Name InvokeAzCliTestArguments -Scope Global -ErrorAction SilentlyContinue
-}
-
 # For Windows-users: curl used in sample requires Windows 10 1803 / Windows Server 2019 or later
-Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
+Describe -Tag 'Unit','Debug' 'Invoke-AzCli' {
     BeforeEach {
-        $global:InvokeAzCliTestArguments = @()
+        $global:Pester_temp_InvokeAzCliTestArguments = @()
         $global:LASTEXITCODE = 0
     }
     It 'appends JSON output arguments and parses JSON output by default' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
-            $global:InvokeAzCliTestArguments = $args[1]
+            $global:Pester_temp_InvokeAzCliTestArguments = $args[1]
             $global:LASTEXITCODE = 0
             return @{
                 StdOut   = '{"name":"demo"}'
@@ -88,7 +69,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
 
         $result = Invoke-AzCli -Arguments @('account', 'show') -AsJson
 
-        @($global:InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '--output', 'json')
+        @($global:Pester_temp_InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '--output', 'json')
 
         $result.name | Should -Be 'demo'
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
@@ -97,7 +78,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
     It 'appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
-            $global:InvokeAzCliTestArguments = $args[1]
+            $global:Pester_temp_InvokeAzCliTestArguments = $args[1]
             $global:LASTEXITCODE = 0
             return @{
                 StdOut   = '{"name":"demo"}'
@@ -108,7 +89,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
         $result = Invoke-AzCli -Arguments @('account', 'show') -AsJson -DataFilePath $dataFilePath
 
         (Test-Path $dataFilePath -PathType Leaf) | Should-BeTrue
-        @($global:InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '--output', 'json')
+        @($global:Pester_temp_InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '--output', 'json')
 
         $result.name | Should -Be 'demo'
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
@@ -118,7 +99,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
     It 'does not append JSON output arguments when an output option is supplied' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
-            $global:InvokeAzCliTestArguments = $args[1]
+            $global:Pester_temp_InvokeAzCliTestArguments = $args[1]
             $global:LASTEXITCODE = 0
             return @{
                 StdOut   = 'demo'
@@ -128,7 +109,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
 
         $result = Invoke-AzCli -Arguments @('account', 'show', '-o', 'table') -AsJson
 
-        @($global:InvokeAzCliTestArguments) |
+        @($global:Pester_temp_InvokeAzCliTestArguments) |
         Should -BeExactly @('account', 'show', '-o', 'table')
 
         $result | Should -Be 'demo'
@@ -138,7 +119,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
     It 'returns raw output when AsJson is disabled' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
-            $global:InvokeAzCliTestArguments = $args[1]
+            $global:Pester_temp_InvokeAzCliTestArguments = $args[1]
             $global:LASTEXITCODE = 0
             return @{
                 StdOut   = '{"name":"demo"}'
@@ -150,7 +131,7 @@ Describe -tag 'Unit,Debug' 'Invoke-AzCli' {
             -Arguments @('account', 'show') `
             -AsJson:$false
 
-        @($global:InvokeAzCliTestArguments) |
+        @($global:Pester_temp_InvokeAzCliTestArguments) |
         Should -BeExactly @('account', 'show')
 
         $result | Should -Be '{"name":"demo"}'

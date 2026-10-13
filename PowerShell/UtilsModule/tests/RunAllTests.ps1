@@ -5,6 +5,10 @@ $ErrorActionPreference = "Stop"
 $moduleRoot = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) -ChildPath ".." -Resolve)
 
 Import-Module (Join-Path $moduleRoot "UtilsModule.psd1")
+$manifestData = (Read-PsdManifest -Path (Join-Path $moduleRoot "UtilsModule.psd1")).PrivateData
+
+
+
 $filterTags = @('Unit')
 
 $isBuildPipeline = (-not [string]::IsNullOrEmpty($env:TF_BUILD))
@@ -12,7 +16,7 @@ $isBuildPipeline = (-not [string]::IsNullOrEmpty($env:TF_BUILD))
 if (-not $isBuildPipeline) {
     $env:BUILD_ARTIFACTSTAGINGDIRECTORY = Join-Path -Path $moduleRoot -ChildPath ".temp"
     if ($IsWindows) {
-        $filterTags = (New-WpfSimpleListSelect -Title "Select Test Tags" -Items @('Unit','Integration','Functional','Smoke','Debug'))
+        $filterTags = (New-WpfSimpleListSelect -Title "Select Test Tags" -Items $manifestData.TestTags)
     }
 }
 if (-not (Test-Path -Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY)) {
@@ -26,8 +30,7 @@ $testConfig = New-PesterConfiguration
 $testConfig.Output.Verbosity = 'Detailed'
 $testConfig.Should.ErrorAction = 'Stop'
 $testConfig.Filter.Tag = $filterTags
-$testConfig.Run.Path = "$moduleRoot\*"
-$testConfig.Run.ExcludePath = @("_*.tests.ps1")
+$testConfig.Run.Path = (Get-ChildItem (Join-Path $moduleRoot 'tests' -Resolve) -Recurse -File "*.tests.ps1" -Exclude "_*.tests.ps1" | Select-Object -ExpandProperty FullName)
 $testConfig.Run.PassThru = $true
 $testConfig.Run.Throw = $true
 $testConfig.TestResult.Enabled = $true
@@ -35,7 +38,7 @@ $testConfig.TestResult.OutputFormat = 'NUnitXml'
 $testConfig.TestResult.OutputPath = (Join-Path $testResultOutputPath "ModuleFunctions.xml")
 
 if (-not $isBuildPipeline) {
-    $runAllTests = Show-MessageBox -Message "Do you want to run all tests?" -Title "Run All Tests" -Buttons "YesNo" -Default "Yes"
+    $runAllTests = Show-MessageBox -Message "Do you want to run $($filterTags -join ', ') tests?" -Title "Run $($filterTags -join ', ') Tests" -Buttons "YesNo" -Default "Yes"
 }
 else {
     $runAllTests = "Yes"
@@ -63,7 +66,7 @@ finally {
 
     if ($runFTCoverage -eq "Yes") {
         $testConfig.TestResult.OutputPath = (Join-Path $testResultOutputPath "ModuleFunctionTestCoverage.xml")
-        $testConfig.Run.Path = @("_*.tests.ps1")
+        $testConfig.Run.Path = (Get-ChildItem $moduleRoot -Recurse -File "_*.tests.ps1" | Select-Object -ExpandProperty FullName)
         $testConfig.Run.ExcludePath = $null
 
         Invoke-Pester -Configuration $testConfig

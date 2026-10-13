@@ -108,7 +108,8 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             foreach ($key in $CustomErrors) {
                 if ($stdErrors.ContainsKey($key)) {
                     $stdErrors[$key] = $CustomErrors[$key]
-                } else {
+                }
+                else {
                     $stdErrors.Add($key, $CustomErrors[$key])
                 }
             }
@@ -165,14 +166,16 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
 
                 <# Return the array but don't enumerate it because the object may be pretty complex #>
                 Write-Output -NoEnumerate $collection
-            } elseif ($InputObject -is [psobject]) {
+            }
+            elseif ($InputObject -is [psobject]) {
                 <#  If the object has properties that need enumeration Convert it to its own hash table and return it #>
                 $hash = @{}
                 foreach ($property in $InputObject.PSObject.Properties) {
                     $hash[$property.Name] = ConvertTo-Hashtable -InputObject $property.Value
                 }
                 return $hash
-            } else {
+            }
+            else {
                 <#  If the object isn't an array, collection, or other object, it's already a hash table
                     So just return it. #>
                 $InputObject
@@ -309,6 +312,30 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
     }
 
+    function Invoke-MockAzCliInternalError {
+        param (
+            [Parameter(Mandatory)]
+            [ValidateRange(-1, 9)]
+            [int]$ExitCode,
+            [Parameter(Mandatory)]
+            [ValidateNotNullOrEmpty()]
+            [string]$ErrorMessage
+        )
+        $global:LASTEXITCODE = $ExitCode
+        $result = @{
+            StdOut   = @($ErrorMessage)
+            ExitCode = $global:LASTEXITCODE
+        }
+        try {
+            Write-Host ('[Invoke-AzCli.tests] {0} ---Mocking Invoke-AzCliInternal--- {1}' -f $____Pester.CurrentTest.Name, $result.StdOut[0]) -BackgroundColor Blue -ForegroundColor White
+            throw $result.StdOut[0]
+        }
+        catch {
+            $result.StdOut += $_
+        }
+        return $result
+    }
+
     function CleanUpTemporaryGlobalVariables {
         [CmdletBinding()]
         param (
@@ -328,7 +355,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
-    Function Get-ModuleTestableFolders {
+    function Get-ModuleTestableFolders {
         [CmdletBinding()]
         [OutputType([string[]])]
         param (
@@ -337,15 +364,15 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [Alias('Root')]
             [Alias('Path')]
             [string]$ModulePath,
-			[switch]$SkipRoot
+            [switch]$SkipRoot
         )
-		$folderList = @{}
+        $folderList = @{}
         if (!$SkipRoot) {
-		    $folderList.Add("Root", $ModulePath)
+            $folderList.Add("Root", $ModulePath)
         }
-		Get-ChildItem -Path (Join-Path $PSScriptRoot '..' -Resolve) -Directory | ForEach-Object {
-			$folderList.Add($_.Name, $_.FullName)
-		}
+        Get-ChildItem -Path (Join-Path $PSScriptRoot '..' -Resolve) -Directory -Exclude '.*' | ForEach-Object {
+            $folderList.Add($_.Name, $_.FullName)
+        }
 
         return $folderList
     }
@@ -368,8 +395,8 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         $scriptFiles = @()
 
         $p_GetFiles = @{
-            Path = $ModulePath
-            Filter = $Filter
+            Path    = $ModulePath
+            Filter  = $Filter
             Exclude = $Exclude
         }
 
@@ -388,7 +415,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         foreach ($scriptFile in (Get-ChildItem @p_GetFiles | Select-Object -ExpandProperty FullName)) {
             $newItem = @{
                 tcf_ScriptFile = $scriptFile
-                tcf_TestFile = (Split-Path $scriptFile -Leaf) -replace '\.ps1$', '.Tests.ps1'
+                tcf_TestFile   = (Split-Path $scriptFile -Leaf) -replace '\.ps1$', '.Tests.ps1'
                 tcf_FolderPath = $ModulePath
                 tcf_FolderName = $subFolderName
                 tcf_TestExists = $false
@@ -402,13 +429,29 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return $scriptFiles
     }
 
+    function New-UniqueTestKey {
+        [CmdletBinding()]
+        [OutputType([string])]
+        param ()
+
+        $callingScript = Get-PSCallStack | Select-Object -Skip 1 | Where-Object { $_.ScriptName } | Select-Object -First 1
+        $scriptName = if ($callingScript) {
+            [System.IO.Path]::GetFileNameWithoutExtension($callingScript.ScriptName)
+        }
+        else {
+            'Interactive'
+        }
+
+        return ('{0}_{1}' -f $scriptName, [guid]::NewGuid().ToString('N'))
+    }
+
     function SetUpGlobalTestVariables {
         [CmdletBinding()]
         [OutputType([array])]
         param (
             [Parameter(Mandatory)]
             [ValidateScript({ $_.Trim().ToLower().StartsWith('pester_temp_') })]
-			[Alias('Name')]
+            [Alias('Name')]
             [string]$VarName,
             [Parameter(Mandatory)]
             [ValidateNotNullOrEmpty()]
