@@ -5,21 +5,27 @@ $ErrorActionPreference = "Stop"
 $moduleRoot = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) -ChildPath ".." -Resolve)
 
 Import-Module (Join-Path $moduleRoot "UtilsModule.psd1")
+$filterTags = @('Unit')
 
 $isBuildPipeline = (-not [string]::IsNullOrEmpty($env:TF_BUILD))
 
 if (-not $isBuildPipeline) {
     $env:BUILD_ARTIFACTSTAGINGDIRECTORY = Join-Path -Path $moduleRoot -ChildPath ".temp"
+    if ($IsWindows) {
+        $filterTags = (New-WpfSimpleListSelect -Title "Select Test Tags" -Items @('Unit','Integration','Functional','Smoke','Debug'))
+    }
 }
 if (-not (Test-Path -Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY)) {
     New-Item -ItemType Directory -Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY
 }
 $testResultOutputPath = (Join-Path -Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY -ChildPath "TestResults")
 
+
+
 $testConfig = New-PesterConfiguration
 $testConfig.Output.Verbosity = 'Detailed'
 $testConfig.Should.ErrorAction = 'Stop'
-$testConfig.Filter.Tag = 'Unit'
+$testConfig.Filter.Tag = $filterTags
 $testConfig.Run.Path = "$moduleRoot\*"
 $testConfig.Run.ExcludePath = @("_*.tests.ps1")
 $testConfig.Run.PassThru = $true
