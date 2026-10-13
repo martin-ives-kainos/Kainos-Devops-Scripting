@@ -33,6 +33,7 @@ function New-WpfSimpleListSelect {
             $window.Close()
         })
 
+    Write-Host "Showing dialog...waiting for response" -ForegroundColor Yellow
     $result = $window.ShowDialog()
 
     if ($result -eq $true) {
