@@ -4,6 +4,7 @@
 #>
 
 BeforeDiscovery {
+
     $helperPath = $PSScriptRoot
     while (-not (Test-Path (Join-Path $helperPath 'PesterHelperModule.ps1'))) {
         $helperPath = Join-Path $helperPath '..' -Resolve
@@ -28,7 +29,29 @@ AfterAll {
     CleanUpTemporaryGlobalVariables
 }
 
-Describe -tag 'TestCoverage' "Function coverage for UtilsModule" {
+BeforeAll {
+    Write-Host "Starting function coverage tests for UtilsModule..." -ForegroundColor Cyan
+    function New-ShouldBeTested {
+        [CmdletBinding()]
+        [Alias('Should-BeTested')]
+        param (
+            [Parameter(ValueFromPipeline)] $Actual,
+            [Parameter(Position = 0)]      $Expected = $True,
+            [string] $Because
+        )
+        end {
+            $assert = New-ShouldAssertion -Caller $PSCmdlet -Actual $Actual -Buffer $Input
+            $Actual = $assert.Actual()
+
+            if ($Actual -ne $Expected) {
+                $assert.Fail('<because>.', @{ Expected = $Expected; Because = $Because })
+            }
+        }
+    }
+
+}
+
+Describe -Tag 'TestCoverage' "Function coverage for UtilsModule" {
     Context "Test the root folder, no scripts requiring tests should be there" {
         It "Should not have any scripts requiring tests in the root folder" {
             $rootScripts = Get-ModuleTestableScripts -ModulePath $global:pester_temp_ModuleRootPath  -PathType "Root"
@@ -43,21 +66,20 @@ Describe -tag 'TestCoverage' "Function coverage for UtilsModule" {
         $Global:pester_temp_TestCounter.TestatableFiles += $Global:pester_temp_ScriptFiles[$_].Count
         It "Should have corresponding tests for all scripts in the folder '$_'" -ForEach $Global:pester_temp_ScriptFiles[$_] {
             $t_scriptFile = $_
-            $TestFile = (Find-FileInTree -FileName ((Split-Path -Leaf $t_scriptFile) -replace '\.ps1$', '.Tests.ps1') -RootPath (Split-Path -Parent $t_scriptFile))
-            if (-not $TestFile) {
-                Write-Host ('[_FunctionCoverage.tests]  Test not found for script file, {0}' -f $t_scriptFile) -ForegroundColor Yellow
-                Set-ItResult -Inconclusive -Because "Manual check required for script file '$_'" -Verbose
-            }
-            else {
-                # Write-Host ('[_FunctionCoverage.tests] Check script files, {0}' -f $t_scriptFile) -ForegroundColor Blue
-                (Test-Path -Path $TestFile -PathType Leaf) | Should -Be $true
+            $t_testScript = ((Split-Path -Leaf $t_scriptFile) -replace '\.ps1$', '.Tests.ps1')
+            $TestFilePath = (Find-FileInTree -FileName $t_testScript -RootPath (Split-Path -Parent $t_scriptFile) -ReturnStringIfNull)
+            if (Test-Path -Path $TestFilePath -PathType Leaf) {
                 $Global:pester_temp_TestCounter.TestFilesFound += 1
             }
+            else {
+                Write-Host ('[_FunctionCoverage.tests]  Test not found for script file, {0}' -f $t_scriptFile) -ForegroundColor Yellow
+            }
+            (Test-Path -Path $TestFilePath -PathType Leaf) | Should-BeTested -Because "Test file '$t_testScript' for script '$t_scriptFile' should exist"
         }
     }
 }
 
-Describe -tag 'TestCoverage' "Validate Function Coverage" {
+Describe -Tag 'TestCoverage' "Validate Function Coverage" {
     BeforeAll {
         Write-Host "*---------------------------------------------------------"
         Write-Host "* Validating function coverage for UtilsModule:"

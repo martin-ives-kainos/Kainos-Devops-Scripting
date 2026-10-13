@@ -270,7 +270,8 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [ValidateNotNullOrEmpty()]
             [string]$FileName,
 
-            [int]$MaxDepth = 5
+            [int]$MaxDepth = 5,
+            [switch]$ReturnStringIfNull
         )
         $depth = 0
         $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -278,6 +279,9 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             $RootPath = Join-Path $RootPath '..' -Resolve
             $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
             $depth++
+        }
+        if ($ReturnStringIfNull -and ($null -eq $foundFile)) {
+            return ("--{0}_NotFound--" -f $FileName)
         }
         return $foundFile.FullName
     }

@@ -65,11 +65,16 @@ finally {
     }
 
     if ($runFTCoverage -eq "Yes") {
-        $testConfig.TestResult.OutputPath = (Join-Path $testResultOutputPath "ModuleFunctionTestCoverage.xml")
-        $testConfig.Run.Path = (Get-ChildItem $moduleRoot -Recurse -File "_*.tests.ps1" | Select-Object -ExpandProperty FullName)
-        $testConfig.Run.ExcludePath = $null
+        try {
+            $testConfig.Filter.Tag = 'TestCoverage'
+            $testConfig.TestResult.OutputPath = (Join-Path $testResultOutputPath "ModuleFunctionTestCoverage.xml")
+            $testConfig.Run.Path = (Get-ChildItem $moduleRoot -Recurse -File "_*.tests.ps1" | Select-Object -ExpandProperty FullName)
 
-        Invoke-Pester -Configuration $testConfig
+            Invoke-Pester -Configuration $testConfig
+        }
+        catch {
+            $_ | Format-List * -Force
+        }
     }
     else {
         Write-Host "Skipping function test coverage." -ForegroundColor Yellow
