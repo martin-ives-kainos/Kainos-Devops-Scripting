@@ -7,8 +7,6 @@ $moduleRoot = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition)
 Import-Module (Join-Path $moduleRoot "UtilsModule.psd1")
 $manifestData = (Read-PsdManifest -Path (Join-Path $moduleRoot "UtilsModule.psd1")).PrivateData
 
-
-
 $filterTags = @('Unit')
 
 $isBuildPipeline = (-not [string]::IsNullOrEmpty($env:TF_BUILD))
