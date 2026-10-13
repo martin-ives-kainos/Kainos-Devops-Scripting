@@ -4,6 +4,7 @@ function Get-PathEnvVar {
     param (
         [Parameter(Mandatory = $true)]
         [ValidateSet("Path", "PSModulePath")]
+        [Alias('Name')]
         [string]$VariableName,
 
 
