@@ -35,24 +35,40 @@ else {
     $runAllTests = "Yes"
 }
 
-if ($runAllTests -eq "Yes") {
-    try {
+try {
+    if ($runAllTests -eq "Yes") {
         $result = Invoke-Pester -Configuration $testConfig
         $result
     }
-    catch {
-        $_ | Format-List * -Force
+    else {
+        Write-Host "Skipping all function tests." -ForegroundColor Yellow
     }
-    finally {
+}
+catch {
+    $_ | Format-List * -Force
+}
+finally {
+    if (-not $isBuildPipeline) {
+        $runFTCoverage = Show-MessageBox -Message "Do you want to run Function Test Coverage?" -Title "Function Test Coverage" -Buttons "YesNo" -Default "Yes"
+    }
+    else {
+        $runFTCoverage = "Yes"
+    }
+
+    if ($runFTCoverage -eq "Yes") {
         $testConfig.TestResult.OutputPath = (Join-Path $testResultOutputPath "ModuleFunctionTestCoverage.xml")
         $testConfig.Run.Path = @("_*.tests.ps1")
         $testConfig.Run.ExcludePath = $null
 
         Invoke-Pester -Configuration $testConfig
     }
-} else {
-    Write-Host "Skipping all tests." -ForegroundColor Yellow
+    else {
+        Write-Host "Skipping function test coverage." -ForegroundColor Yellow
+    }
 }
 
 $testXmlFiles = Get-ChildItem -Path $testResultOutputPath -Filter "*.xml" -Recurse
-$testXmlFiles
+foreach ($xmlResults in $testXmlFiles) {
+    Write-Host "Found test result XML: $($xmlResults.FullName)"
+    New-PesterExcelReport -XmlPath $xmlResults.FullName -OutputPath (Join-Path $testResultOutputPath (("{0}.xlsx" -f $xmlResults.BaseName))) -Force
+}
