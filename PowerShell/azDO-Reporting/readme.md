@@ -7,7 +7,8 @@
 - Azure DevOps REST API where the CLI does not expose sufficient detail
 
 The report can include:
-- Organisation
+
+- Organization
 - Project Name
 - Description
 - Visibility
@@ -27,6 +28,7 @@ The report can include:
 ## Prerequisites
 
 ~~~:PowerShell
+
 # Azure CLI
 az extension add --name azure-devops
 
@@ -39,5 +41,7 @@ az login
 
 az devops configure `
 --defaults organization=https://dev.azure.com/MyOrganisation
+
 ~~~
 
+[Complete Project Inventory Report](.docs/CompleteProjectInventoryReport.md)
