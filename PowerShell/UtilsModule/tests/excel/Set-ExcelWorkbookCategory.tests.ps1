@@ -11,27 +11,27 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '..\..\public\excel\Set-ExcelWorkbookCategory.ps1')
 }
 
-BeforeEach {
-    $script:workbookPath = Join-Path $TestDrive 'sample.xlsx'
-    New-Item -Path $script:workbookPath -ItemType File -Force | Out-Null
+Describe 'Set-ExcelWorkbookCategory' -Tag 'Unit' {
+    BeforeEach {
+        $script:workbookPath = Join-Path $TestDrive 'sample.xlsx'
+        New-Item -Path $script:workbookPath -ItemType File -Force | Out-Null
 
-    $script:excelPackage = [PSCustomObject]@{
-        Workbook = [PSCustomObject]@{
-            Properties = [PSCustomObject]@{
-                Category = $null
+        $script:excelPackage = [PSCustomObject]@{
+            Workbook = [PSCustomObject]@{
+                Properties = [PSCustomObject]@{
+                    Category = $null
+                }
             }
         }
+
+        Mock Open-ExcelPackage {
+            $script:excelPackage
+        }
+
+        Mock Close-ExcelPackage {}
     }
-
-    Mock Open-ExcelPackage {
-        $script:excelPackage
-    }
-
-    Mock Close-ExcelPackage {}
-}
-
-Describe 'Set-ExcelWorkbookCategory' {
     It 'sets the requested category and closes the workbook' {
+        Write-Host ('[Set-ExcelWorkbookCategory.Tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Set-ExcelWorkbookCategory -Workbooks $script:workbookPath -Classification Public
 
         $script:excelPackage.Workbook.Properties.Category | Should -Be 'Public'
@@ -40,20 +40,22 @@ Describe 'Set-ExcelWorkbookCategory' {
     }
 
     It 'uses Confidential as the default category' {
+        Write-Host ('[Set-ExcelWorkbookCategory.Tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Set-ExcelWorkbookCategory -Workbooks $script:workbookPath
 
         $script:excelPackage.Workbook.Properties.Category | Should -Be 'Confidential'
     }
 
     It 'accepts workbook paths from the pipeline by property name' {
+        Write-Host ('[Set-ExcelWorkbookCategory.Tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         [PSCustomObject]@{ Workbooks = $script:workbookPath } |
-            Set-ExcelWorkbookCategory -Classification 'Client Shared'
-
+        Set-ExcelWorkbookCategory -Classification 'Client Shared'
         $script:excelPackage.Workbook.Properties.Category | Should -Be 'Client Shared'
         Should -Invoke Open-ExcelPackage -Times 1 -Exactly
     }
 
     It 'warns and skips workbooks that do not exist' {
+        Write-Host ('[Set-ExcelWorkbookCategory.Tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         $missingPath = Join-Path $TestDrive 'missing.xlsx'
         $warnings = @()
 
@@ -66,6 +68,7 @@ Describe 'Set-ExcelWorkbookCategory' {
     }
 
     It 'rejects unsupported classifications' {
+        Write-Host ('[Set-ExcelWorkbookCategory.Tests] {0}' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         {
             Set-ExcelWorkbookCategory -Workbooks $script:workbookPath `
                 -Classification 'Internal'
