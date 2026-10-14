@@ -36,7 +36,7 @@ function Get-DateFromString {
 
     foreach ($format in $Formats) {
         Write-Host "Trying format: $format - with input string: $cleanString"
-        $parsedDate = [datetime]::MinValue()
+        $parsedDate = [datetime]::MinValue
 
         if ([datetime]::TryParseExact(
                 $cleanString,
