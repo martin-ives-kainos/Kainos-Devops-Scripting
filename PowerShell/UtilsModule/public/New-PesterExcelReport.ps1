@@ -29,6 +29,10 @@ function New-PesterExcelReport {
         [ValidateNotNullOrEmpty()]
         [string]$OutputPath,
 
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Public','Client Shared', 'Company Restricted', 'Confidential')]
+        [string]$Classification = 'Confidential',
+
         [switch]$Force
     )
 
@@ -168,6 +172,11 @@ function New-PesterExcelReport {
 
     if ($testCases.Count -gt 0) {
         Export-Excel -InputObject @($testResultRows) -Path $resolvedOutputPath -WorksheetName 'Test Results' -TableName 'TestResults' -AutoSize -BoldTopRow -FreezeTopRow -Append -ErrorAction Stop
+    }
+
+    if (Test-Path $resolvedOutputPath -PathType Leaf) {
+        Write-Host "Excel report generated at: $resolvedOutputPath"
+        Set-ExcelWorkbookCategory -Workbooks $resolvedOutputPath -Classification $Classification
     }
 
     return $resolvedOutputPath

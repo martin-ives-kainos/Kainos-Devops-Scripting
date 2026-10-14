@@ -20,6 +20,7 @@ function Set-ExcelWorkbookCategory {
 
         [Parameter(Mandatory = $false)]
         [ValidateSet('Public','Client Shared', 'Company Restricted', 'Confidential')]
+        Alias("Category")
         [string]$Classification = 'Confidential'
     )
     begin {
