@@ -1,6 +1,6 @@
 # Complete Project Inventory Report
 
-This is a set of extracts fro the current project, depends on the authentication and/or running context within an Azure Pipeline job.
+This is a set of extracts from the current project, depends on the authentication and/or running context within an Azure Pipeline job.
 
 ~~~:PowerShell
 
