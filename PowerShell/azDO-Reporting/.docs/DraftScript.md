@@ -1,21 +1,28 @@
-Below is a production-ready PowerShell script that:
+# Draft 'production-ready' PowerShell script
 
-Authenticates using Azure CLI
-Uses Azure DevOps CLI wherever possible
-Uses REST APIs for information not exposed by the CLI
-Generates a multi-worksheet Excel workbook using ImportExcel
-Includes:
-Projects
-Repositories
-Pipelines
-Teams
-Variable Groups
-Service Connections
-Executive Summary
-Includes error handling
-Supports PAT authentication
-Performs reasonably well against large organisations
-Required Modules
+## Summary
+
+- Authenticates using Azure CLI
+- Uses Azure DevOps CLI wherever possible
+- Uses REST APIs for information not exposed by the CLI
+- Generates a multi-worksheet Excel workbook using ImportExcel
+- Includes:
+  - Projects
+  - Repositories
+  - Pipelines
+  - Teams
+  - Variable Groups
+  - Service Connections
+  - Executive Summary
+- Includes error handling
+- Supports PAT authentication
+- Performs reasonably well against large organizations
+- Required Modules
+
+
+## Scripting
+
+### Main
 Install-Module ImportExcel -Scope CurrentUser -Force
 
 az extension add --name azure-devops
