@@ -23,6 +23,9 @@
 ## Scripting
 
 ### Main
+
+~~~:PowerShell
+
 Install-Module ImportExcel -Scope CurrentUser -Force
 
 az extension add --name azure-devops
@@ -404,14 +407,17 @@ Write-Host "Report completed successfully"
 Write-Host "Output: $OutputFile"
 Write-Host ""
 
-Production enhancements I would add for an enterprise environment
-Parallel project processing using ForEach-Object -Parallel (PowerShell 7).
-Branch policy inventory via the Policy REST API.
-Agent pools and deployment pools.
-Build pipelines and release pipelines separately.
-Environment inventory and approvals.
-User/group permissions audit.
-Inactive repositories and stale pipelines reporting.
-Workbook dashboard with pivot tables and charts.
-HTML report generation alongside Excel.
-Historical snapshots for trend analysis.
+~~~
+
+## Enhancements
+
+- Parallel project processing using ForEach-Object -Parallel (PowerShell 7).
+- Branch policy inventory via the Policy REST API.
+- Agent pools and deployment pools.
+- Build pipelines and release pipelines separately.
+- Environment inventory and approvals.
+- User/group permissions audit.
+- Inactive repositories and stale pipelines reporting.
+- Workbook dashboard with pivot tables and charts.
+- HTML report generation alongside Excel.
+- Historical snapshots for trend analysis.
