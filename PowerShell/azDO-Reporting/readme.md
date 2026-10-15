@@ -44,8 +44,8 @@ az devops configure `
 
 ~~~
 
-[Complete Project Inventory Report](.docs/CompleteProjectInventoryReport.md)
+[Complete Project Inventory Report](docs/CompleteProjectInventoryReport.md)
 
-[Enhanced Report with Process, Service Connections and Variable Groups](.docs\EnhancedReport_Process_ServiceConnections_VariableGroups.md)
+[Enhanced Report with Process, Service Connections and Variable Groups](docs/EnhancedReport_Process_ServiceConnections_VariableGroups.md)
 
-[Draft 'Production' Script](.docs\DraftScript.md)
+[Draft 'Production' Script](docs/DraftScript.md)
