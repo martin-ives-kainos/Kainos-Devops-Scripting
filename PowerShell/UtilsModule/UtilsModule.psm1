@@ -9,8 +9,17 @@ $ErrorActionPreference = 'Stop'
         - Updating module paths
  #>
 $ModuleFilePath = $PSCommandPath
-$ModuleName = [System.IO.Path]::GetFileNameWithoutExtension($ModuleFilePath)
+
+# $ModuleName = [System.IO.Path]::GetFileNameWithoutExtension($ModuleFilePath)
+
 $ModuleManifest = Import-PowerShellDataFile -Path (Resolve-Path -LiteralPath ($ModuleFilePath -replace '\.psm1$', '.psd1') -ErrorAction Stop)
+
+$privateData = $ModuleManifest.PrivateData
+
+if ($privateData.Keys -notcontains 'ScriptScopes') {
+    $privateData['ScriptScopes'] = @('classes', 'private', 'public')
+}
+
 
 $ModuleManifest | Add-Member -MemberType ScriptMethod -Name PrivateDataValue -Value {
     param([string]$key)

@@ -1,0 +1,19 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="INI Configuration Editor" Width="850" Height="520" MinWidth="550" MinHeight="300" WindowStartupLocation="CenterScreen">
+    <DockPanel Margin="12">
+        <TextBlock x:Name="FileLabel" DockPanel.Dock="Top" Margin="0,0,0,10" TextWrapping="Wrap"/>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="AddButton" Content="Add" Width="85" Margin="4"/>
+            <Button x:Name="DeleteButton" Content="Delete" Width="85" Margin="4"/>
+            <Button x:Name="SaveButton" Content="Save" Width="85" Margin="4"/>
+            <Button x:Name="CancelButton" Content="Cancel" Width="85" Margin="4" IsCancel="True"/>
+        </StackPanel>
+        <DataGrid x:Name="Entries" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Extended" SelectionUnit="FullRow">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Section (blank = global)" Binding="{Binding Section, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                <DataGridTextColumn Header="Key" Binding="{Binding Key, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="3*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
