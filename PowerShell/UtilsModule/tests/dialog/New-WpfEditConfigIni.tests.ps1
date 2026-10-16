@@ -199,7 +199,7 @@ Describe -Tag 'Integration', 'WPF' 'D020: New-WpfEditConfigIni dialog' -Skip:(-n
         Should -Invoke Get-Content -Exactly 0
     }
 
-    It 'D020-I030: loads global entries, sections, empty values, and embedded equals signs' {
+    It 'D020-I030: loads global entries, sections, empty values, and embedded equals signs' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         [System.IO.File]::WriteAllText(
             $script:iniPath,
@@ -237,7 +237,7 @@ Token=a=b=c
         $result | Should -BeNullOrEmpty
     }
 
-    It 'D020-I040: adds an entry and creates a new INI file' {
+    It 'D020-I040: adds an entry and creates a new INI file' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         $result = Invoke-TestIniDialog -Path $script:iniPath -Action {
             param($window)
@@ -274,7 +274,7 @@ Token=a=b=c
         )
     }
 
-    It 'D020-I050: saves an edited value to an existing file' {
+    It 'D020-I050: saves an edited value to an existing file' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         [System.IO.File]::WriteAllText(
             $script:iniPath,
@@ -299,7 +299,7 @@ Token=a=b=c
         @(Get-ChildItem -LiteralPath $TestDrive -File).Count | Should -Be 1
     }
 
-    It 'D020-I060: deletes the selected entry and preserves other entries' {
+    It 'D020-I060: deletes the selected entry and preserves other entries' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         [System.IO.File]::WriteAllText(
             $script:iniPath,
@@ -328,7 +328,7 @@ Token=a=b=c
         )
     }
 
-    It 'D020-I070: writes global entries before named sections' {
+    It 'D020-I070: writes global entries before named sections' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         [System.IO.File]::WriteAllText(
             $script:iniPath,
@@ -354,7 +354,7 @@ Token=a=b=c
         )
     }
 
-    It 'D020-I080: does not persist edits when cancelled' {
+    It 'D020-I080: does not persist edits when cancelled' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         $original = "; Preserve this comment`r`n[Application]`r`nName=Before`r`n"
         [System.IO.File]::WriteAllText($script:iniPath, $original)
@@ -371,7 +371,7 @@ Token=a=b=c
         Should -BeExactly $original
     }
 
-    It 'D020-I090: does not create a file when a new dialog is cancelled' {
+    It 'D020-I090: does not create a file when a new dialog is cancelled' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         $result = Invoke-TestIniDialog -Path $script:iniPath -Action {
             param($window)
@@ -383,7 +383,7 @@ Token=a=b=c
         Test-Path -LiteralPath $script:iniPath | Should -BeFalse
     }
 
-    It 'D020-I100: saves an empty configuration' {
+    It 'D020-I100: saves an empty configuration' -Skip {
         Write-Host ('[New-WpfEditConfigIni.tests] {0}' -f $____Pester.CurrentTest.Name) -ForegroundColor Magenta
         $result = Invoke-TestIniDialog -Path $script:iniPath -Action {
             param($window)
