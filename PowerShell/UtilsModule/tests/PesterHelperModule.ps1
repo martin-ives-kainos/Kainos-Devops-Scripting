@@ -1,45 +1,4 @@
 New-Module -Name 'PesterHelper' -ScriptBlock {
-    function New-TestTempObject {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $false,
-                Position = 0,
-                ValueFromPipeline = $true,
-                ValueFromPipelineByPropertyName = $true,
-                HelpMessage = 'Number of properties.')]
-            [ValidateRange(1, 99)]
-            [int]
-            $PropertyCount = 10
-        )
-        $tObj = (New-Object psobject)
-        for ($index = 0; $index -lt $PropertyCount; $index++) {
-            $tObj | Add-Member -MemberType NoteProperty -Name ('TestName{0:00}' -f $index) -Value ('TestValue{0:00}' -f $index)
-        }
-        return $tObj
-    }
-
-    function New-TestHashTable {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $false,
-                Position = 0,
-                ValueFromPipeline = $true,
-                ValueFromPipelineByPropertyName = $true,
-                HelpMessage = 'Number of properties.')]
-            [ValidateRange(1, 99)]
-            [int]
-            $PropertyCount = 10
-        )
-        $table = @{}
-        for ($keyIndex = 0; $keyIndex -lt $PropertyCount; $keyIndex++) {
-            $table.Add(('TestKey{0:00}' -f $keyIndex), @{})
-            for ($index = 0; $index -lt $PropertyCount; $index++) {
-                $table[('TestKey{0:00}' -f $keyIndex)].Add(('TestName{0:00}' -f $index), ('TestValue{0:00}' -f $index))
-            }
-        }
-        return $table
-    }
-
     function ConvertFrom-JsonFile {
         [CmdletBinding()]
         param (
@@ -75,46 +34,6 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
                 return (ConvertFrom-Json -AsHashtable -Depth 99 -InputObject (Get-Content -Path $Path -Raw))
             }
             return (ConvertFrom-Json -Depth 99 -InputObject (Get-Content -Path $Path -Raw))
-        }
-        end {
-            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
-        }
-    }
-
-    function Get-ParamValidationErrMessages {
-        [CmdletBinding()]
-        param (
-            [hashtable]$CustomErrors = @{}
-        )
-        begin {
-            $funcName = 'Get-ParamValidationErrMessages'
-            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} STARTED' -f (Get-Date), $funcName)
-        }
-        process {
-            # Default to Powershell Core
-            $stdErrors = @{
-                '_Default'       = 'xxxxxxx {0}'
-                'NullOrEmpty'    = "Cannot validate argument on parameter '{0}'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again."
-                'CannotConvert'  = 'Cannot process argument transformation on parameter ''{0}''. Cannot convert the "{1}" value of type "{2}" to type "{3}".'
-                'PathTestError'  = 'Cannot validate argument on parameter ''{0}''. The " (Test-Path $_ -PathType Container) " validation script for the argument with value "{1}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
-                'ValidSet'       = 'Cannot validate argument on parameter ''{0}''. The argument "{1}" does not belong to the set "{2}" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.'
-                'ElementIsNull'  = 'Cannot validate argument on parameter ''{0}''. The argument is null, empty, or an element of the argument collection contains a null value. Supply a collection that does not contain any null values and then try the command again.'
-                'FindPath'       = "Cannot find path '{0}' because it does not exist."
-                'FindExtn'       = "File '{0}' does not have the required extension."
-                'ScriptValid'    = 'Cannot validate argument on parameter ''{0}''. The "{1}" validation script for the argument with value "{2}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
-                'LoadingObjFile' = "Error loading object from '{0}'"
-            }
-
-            foreach ($key in $CustomErrors) {
-                if ($stdErrors.ContainsKey($key)) {
-                    $stdErrors[$key] = $CustomErrors[$key]
-                }
-                else {
-                    $stdErrors.Add($key, $CustomErrors[$key])
-                }
-            }
-
-            return ($stdErrors)
         }
         end {
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
@@ -186,7 +105,8 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
         }
     }
-    function CreateConfigTokenizedTestFile {
+
+	function CreateConfigTokenizedTestFile {
         param (
             [string]$Path,
             [int]$Count = 10,
@@ -203,7 +123,8 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             }
         }
     }
-    function CreateStartPointFolder {
+
+	function CreateStartPointFolder {
         [CmdletBinding()]
         param (
             [string]$DeployScriptsPath,
@@ -258,6 +179,59 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         Set-Content $Path -Value (ConvertTo-Json -Depth 99 -InputObject $configObj)
     }
 
+    function Get-ParamValidationErrMessages {
+        [CmdletBinding()]
+        param (
+            [hashtable]$CustomErrors = @{}
+        )
+        begin {
+            $funcName = 'Get-ParamValidationErrMessages'
+            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} STARTED' -f (Get-Date), $funcName)
+        }
+        process {
+            # Default to Powershell Core
+            $stdErrors = @{
+                '_Default'       = 'xxxxxxx {0}'
+                'NullOrEmpty'    = "Cannot validate argument on parameter '{0}'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again."
+                'CannotConvert'  = 'Cannot process argument transformation on parameter ''{0}''. Cannot convert the "{1}" value of type "{2}" to type "{3}".'
+                'PathTestError'  = 'Cannot validate argument on parameter ''{0}''. The " (Test-Path $_ -PathType Container) " validation script for the argument with value "{1}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
+                'ValidSet'       = 'Cannot validate argument on parameter ''{0}''. The argument "{1}" does not belong to the set "{2}" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.'
+                'ElementIsNull'  = 'Cannot validate argument on parameter ''{0}''. The argument is null, empty, or an element of the argument collection contains a null value. Supply a collection that does not contain any null values and then try the command again.'
+                'FindPath'       = "Cannot find path '{0}' because it does not exist."
+                'FindExtn'       = "File '{0}' does not have the required extension."
+                'ScriptValid'    = 'Cannot validate argument on parameter ''{0}''. The "{1}" validation script for the argument with value "{2}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
+                'LoadingObjFile' = "Error loading object from '{0}'"
+            }
+
+            foreach ($key in $CustomErrors) {
+                if ($stdErrors.ContainsKey($key)) {
+                    $stdErrors[$key] = $CustomErrors[$key]
+                }
+                else {
+                    $stdErrors.Add($key, $CustomErrors[$key])
+                }
+            }
+
+            return ($stdErrors)
+        }
+        end {
+            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
+        }
+    }
+
+    function GetScriptFileNames {
+        [CmdletBinding()]
+        [OutputType([string[]])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [string]$Path,
+
+            [string]$Filter = '*.ps1'
+        )
+        return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
+    }
+
     function Find-FileInTree {
         param (
             [Parameter(Mandatory)]
@@ -270,7 +244,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [ValidateNotNullOrEmpty()]
             [string]$FileName,
 
-            [int]$MaxDepth = 5,
+            [int]$MaxDepth = 15,
             [switch]$ReturnStringIfNull
         )
         $depth = 0
@@ -284,6 +258,17 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             return ("--{0}_NotFound--" -f $FileName)
         }
         return $foundFile.FullName
+    }
+
+    function Find-ScriptFile {
+        [CmdletBinding()]
+        [OutputType([string])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Leaf) })]
+            [string]$TestScriptFile
+        )
+        return (Find-FileInTree -RootPath (Split-Path $TestScriptFile -Parent) -FileName ((Split-Path $TestScriptFile -Leaf) -Replace '.tests.ps1$', '.ps1'))
     }
 
     function Import-TestableModuleFile {
@@ -301,19 +286,6 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             throw "Module file '$ModuleName' not found in path '$ModulePath' or its parent directories."
         }
         Import-Module $foundModule -Force -Verbose
-    }
-
-    function GetScriptFileNames {
-        [CmdletBinding()]
-        [OutputType([string[]])]
-        param (
-            [Parameter(Mandatory)]
-            [ValidateScript({ (Test-Path $_ -PathType Container) })]
-            [string]$Path,
-
-            [string]$Filter = '*.ps1'
-        )
-        return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
     }
 
     function Invoke-MockAzCliInternalError {
@@ -354,7 +326,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             }
         }
         foreach ($varName in (Get-Variable -Scope Global | Select-Object -ExpandProperty Name | Where-Object { $_.StartsWith('pester_temp_' ) }) ) {
-            Write-Host "[$TestName] Removing global variable: $varName" -BackgroundColor Green -ForegroundColor Black
+            Write-Host "[$TestName] Removing global variable: $varName" -ForegroundColor Green
             Remove-Variable -Name $varName -Scope Global -ErrorAction SilentlyContinue
         }
     }
@@ -433,6 +405,71 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return $scriptFiles
     }
 
+    function New-TestHashTable {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory = $false,
+                Position = 0,
+                ValueFromPipeline = $true,
+                ValueFromPipelineByPropertyName = $true,
+                HelpMessage = 'Number of properties.')]
+            [ValidateRange(1, 99)]
+            [int]
+            $PropertyCount = 10
+        )
+        $table = @{}
+        for ($keyIndex = 0; $keyIndex -lt $PropertyCount; $keyIndex++) {
+            $table.Add(('TestKey{0:00}' -f $keyIndex), @{})
+            for ($index = 0; $index -lt $PropertyCount; $index++) {
+                $table[('TestKey{0:00}' -f $keyIndex)].Add(('TestName{0:00}' -f $index), ('TestValue{0:00}' -f $index))
+            }
+        }
+        return $table
+    }
+
+    function New-TestTempObject {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory = $false,
+                Position = 0,
+                ValueFromPipeline = $true,
+                ValueFromPipelineByPropertyName = $true,
+                HelpMessage = 'Number of properties.')]
+            [ValidateRange(1, 99)]
+            [int]
+            $PropertyCount = 10
+        )
+        $tObj = (New-Object psobject)
+        for ($index = 0; $index -lt $PropertyCount; $index++) {
+            $tObj | Add-Member -MemberType NoteProperty -Name ('TestName{0:00}' -f $index) -Value ('TestValue{0:00}' -f $index)
+        }
+        return $tObj
+    }
+
+	function New-TestIniFile {
+        param (
+            [string]$Path,
+            [switch]$ContentOnly
+        )
+        if ($Path -notmatch '\.ini$') {
+            $Path += '.ini'
+        }
+        $content = Get-Content $Path
+        if ($ContentOnly) {
+            return $content
+        }
+        $FullPath = Join-Path $TestDrive (Split-Path $Path -Leaf)
+        $content | Set-Content -Path $FullPath
+        return $FullPath
+    }
+
+    function Test-WpfCanRun {
+        return (
+            [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT -and
+            [System.Threading.Thread]::CurrentThread.ApartmentState -eq 'STA'
+        )
+    }
+
     function New-UniqueTestKey {
         [CmdletBinding()]
         [OutputType([string])]
@@ -466,22 +503,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         )
         if (-not (Get-Variable -Scope Global -Name $VarName -ErrorAction SilentlyContinue) -or $Force) {
             New-Variable -Name $VarName -Scope Global -Value $VarValue -Force
+            Write-Host ("Set global test variable '{0}' with value '{1}' of type '[{2}]'" -f $VarName, $VarValue, ($VarValue.GetType().Name)) -ForegroundColor Green
         }
-    }
-    function New-TestIniFile {
-        param (
-            [string]$Path,
-            [switch]$ContentOnly
-        )
-        if ($Path -notmatch '\.ini$') {
-            $Path += '.ini'
-        }
-        $content = Get-Content $Path
-        if ($ContentOnly) {
-            return $content
-        }
-        $FullPath = Join-Path $TestDrive (Split-Path $Path -Leaf)
-        $content | Set-Content -Path $FullPath
-        return $FullPath
     }
 }
