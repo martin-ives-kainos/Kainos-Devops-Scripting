@@ -7,7 +7,7 @@
 #       - Name: 'filename.xxx'
 #         VarName: 'filename.File.Path'
 #       ReturnFullPath: false
-#       RootFolder: $(Build.SourcesDirectory)
+#       RootFolder: $(Agent.WorkFolder)
 #       TargetFolder: $(build.artifactstagingdirectory)
 # --------------------------------------
 parameters:
@@ -18,7 +18,7 @@ parameters:
     type: object
   - name: RootFolder
     type: string
-    default: $(Build.SourcesDirectory)
+    default: $(Agent.WorkFolder)
   - name: ReturnFullPath
     type: boolean
     default: true
