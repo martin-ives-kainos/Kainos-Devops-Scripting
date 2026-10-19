@@ -1,4 +1,6 @@
 function New-WpfSimpleListSelect {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Function is only used internally')]
+    [CmdletBinding()]
     param (
         [string]$Title = "Simple List selection",
         [string[]]$Items = @("Option 1", "Option 2", "Option 3", "Option 4")
@@ -33,14 +35,14 @@ function New-WpfSimpleListSelect {
             $window.Close()
         })
 
-    Write-Host "Showing dialog...waiting for response" -ForegroundColor Yellow
+    Write-Output "Showing dialog...waiting for response"
     $result = $window.ShowDialog()
 
     if ($result -eq $true) {
         return $($pickList.SelectedItem)
     }
     else {
-        Write-Host "Dialog was cancelled."
+        Write-Output "Dialog was cancelled."
         return $null
     }
 }
