@@ -23,13 +23,13 @@ function Set-AzDOCliDefault {
             $cliArgs = @('devops', 'configure', '--defaults', ('{0}=''''' -f $key.ToLower()))
         }
         else {
-            Write-Host "$key = $($pTable[$key])" -ForegroundColor Black -BackgroundColor DarkGreen
+            Write-Output "$key = $($pTable[$key])" -ForegroundColor Black -BackgroundColor DarkGreen
             $cliArgs = @('devops', 'configure', '--defaults', ('{0}={1}' -f $key.ToLower(), $pTable[$key]))
         }
         Invoke-AzCli -Arguments $cliArgs
     }
-    Write-Host "Azure DevOps CLI defaults have been set." -ForegroundColor Black -BackgroundColor DarkGreen
-    Write-Host (Invoke-AzCli -Arguments @('devops', 'configure', '--list'))
-    Write-Host "-----------------------------------------" -ForegroundColor Black -BackgroundColor DarkGreen #>
+    Write-Output "Azure DevOps CLI defaults have been set." -ForegroundColor Black -BackgroundColor DarkGreen
+    Write-Output (Invoke-AzCli -Arguments @('devops', 'configure', '--list'))
+    Write-Output "-----------------------------------------" -ForegroundColor Black -BackgroundColor DarkGreen #>
 }
 
