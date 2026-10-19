@@ -1,4 +1,5 @@
 function Show-MessageBox {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingEmptyCatchBlock','',Justification = 'Function is only used internally')]
     param(
         [Parameter(Mandatory)]
         [string]$Message,
@@ -35,7 +36,7 @@ function Show-MessageBox {
     }
     $effectiveTimeoutSeconds = if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds } else { $null }
 
-    Write-Host "Waiting for message box response..." -ForegroundColor Green
+    Write-Output "Waiting for message box response..."
     if ($IsWindows) {
         try {
             Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
@@ -109,10 +110,10 @@ namespace UtilsModule {
         }
     }
 
-    Write-Host ""
-    Write-Host "=== $Title ===" -ForegroundColor Cyan
-    Write-Host $Message
-    Write-Host ""
+    Write-Output ""
+    Write-Output "=== $Title ==="
+    Write-Output $Message
+    Write-Output ""
 
     switch ($Buttons) {
 
@@ -160,31 +161,30 @@ function Read-MessageBoxResponse {
     }
 
     try {
-        Write-Host -NoNewline "$Prompt "
+        Write-Output -NoNewline "$Prompt "
         $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds.Value)
         $response = ''
         while ([DateTime]::UtcNow -lt $deadline) {
             if ($Host.UI.RawUI.KeyAvailable) {
                 $key = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
                 if ($key.VirtualKeyCode -eq 13) {
-                    Write-Host ""
+                    Write-Output ""
                     return $response
                 }
                 if ($key.VirtualKeyCode -eq 8) {
                     if ($response.Length -gt 0) {
                         $response = $response.Substring(0, $response.Length - 1)
-                        Write-Host -NoNewline "`b `b"
+                        Write-Output -NoNewline "`b `b"
                     }
                 }
                 elseif (-not [char]::IsControl($key.Character)) {
                     $response += $key.Character
-                    Write-Host -NoNewline $key.Character
+                    Write-Output -NoNewline $key.Character
                 }
             }
             Start-Sleep -Milliseconds 50
         }
 
-        Write-Host ""
         return $null
     }
     catch {
