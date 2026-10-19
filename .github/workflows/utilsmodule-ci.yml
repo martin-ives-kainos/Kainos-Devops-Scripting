@@ -1,0 +1,114 @@
+name: UtilsModule CI
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - 'PowerShell/UtilsModule/**'
+      - '.github/workflows/utilsmodule-ci.yml'
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  MODULE_ROOT: ${{ github.workspace }}/PowerShell/UtilsModule
+  TEST_RESULTS_DIR: ${{ github.workspace }}/TestResults
+
+jobs:
+  validate-and-test:
+    name: Validate & Test (PowerShell 7)
+    # Windows runner required for WPF/dialog/Excel related functions
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show PowerShell version
+        run: |
+          $PSVersionTable | Format-Table -AutoSize
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw "PowerShell 7+ is required." }
+
+      - name: Install required modules
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 6.1.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force
+          Install-Module -Name ImportExcel, PSDocs, PSDocs.Azure -Scope CurrentUser -Force
+          Get-Module -ListAvailable Pester, PSScriptAnalyzer, ImportExcel, PSDocs, PSDocs.Azure |
+            Select-Object Name, Version | Format-Table -AutoSize
+
+      - name: Validate scripts for PowerShell 7
+        run: |
+          $files = Get-ChildItem -Path $env:MODULE_ROOT -Recurse -File -Include *.ps1, *.psm1, *.psd1
+          $failed = $false
+
+          # Syntax check using the PowerShell 7 parser
+          foreach ($file in $files) {
+            $tokens = $null; $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            foreach ($e in $errors) {
+              $failed = $true
+              Write-Host "::error file=$($file.FullName),line=$($e.Extent.StartLineNumber),col=$($e.Extent.StartColumnNumber)::$($e.Message)"
+            }
+          }
+
+          Test-ModuleManifest -Path (Join-Path $env:MODULE_ROOT 'UtilsModule.psd1') | Out-Null
+
+          # PowerShell 7 syntax compatibility + error-level analyzer rules
+          $settings = @{
+            Rules = @{
+              PSUseCompatibleSyntax = @{
+                Enable         = $true
+                TargetVersions = @('7.0')
+              }
+            }
+          }
+          $results = @(
+            Invoke-ScriptAnalyzer -Path $env:MODULE_ROOT -Recurse -Settings $settings
+            Invoke-ScriptAnalyzer -Path $env:MODULE_ROOT -Recurse -Severity Error
+          ) | Sort-Object ScriptPath, Line, RuleName -Unique
+
+          foreach ($r in $results) {
+            $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
+            if ($level -eq 'error') { $failed = $true }
+            Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"
+          }
+
+          if ($failed) { throw "PowerShell 7 validation failed." }
+          Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
+
+      - name: Run Pester tests
+        run: |
+          Import-Module Pester -MinimumVersion 6.1.0 -Force
+          New-Item -ItemType Directory -Path $env:TEST_RESULTS_DIR -Force | Out-Null
+
+          $config = New-PesterConfiguration
+          $config.Run.Path = Join-Path $env:MODULE_ROOT 'tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputFormat = 'JUnitXml'
+          $config.TestResult.OutputPath = Join-Path $env:TEST_RESULTS_DIR 'UtilsModule.TestResults.xml'
+
+          Invoke-Pester -Configuration $config
+
+      - name: Publish test results
+        if: ${{ !cancelled() }}
+        uses: EnricoMi/publish-unit-test-result-action/windows@v2
+        with:
+          check_name: UtilsModule Pester Results
+          files: TestResults/**/*.xml
+
+      - name: Upload test results artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: utilsmodule-test-results
+          path: TestResults/
+          if-no-files-found: warn
