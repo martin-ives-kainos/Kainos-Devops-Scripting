@@ -8,7 +8,7 @@ function ConvertTo-Hashtable {
             Object to convert.
     #>
     [CmdletBinding()]
-    [OutputType('hashtable')]
+    [OutputType('System.Collections.Hashtable')]
     param (
         [Parameter(Mandatory = $true,
             Position = 0,
