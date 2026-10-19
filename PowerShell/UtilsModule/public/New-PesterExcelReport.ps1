@@ -19,6 +19,8 @@ function New-PesterExcelReport {
     .EXAMPLE
     New-PesterExcelReport -XmlPath '.\TestResults\ModuleFunctions.xml' -OutputPath '.\TestResults\ModuleFunctions.xlsx'
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions','',Justification = 'Function is only used internally')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly','',Justification = 'Function is only used internally')]
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -131,7 +133,7 @@ function New-PesterExcelReport {
             ''
         }
 
-        $stackTrace = if ($null -ne $failure) {
+        $v_stackTrace = if ($null -ne $failure) {
             $stackTraceNode = $failure.SelectSingleNode('./stack-trace')
             if ($null -ne $stackTraceNode) { $stackTraceNode.InnerText } else { '' }
         }
@@ -155,7 +157,7 @@ function New-PesterExcelReport {
             DurationSeconds = $caseDuration
             Assertions      = $testCase.GetAttribute('asserts')
             FailureMessage  = $failureMessage
-            StackTrace      = $stackTrace
+            v_stackTrace      = $v_stackTrace
         }
     }
 
@@ -175,7 +177,7 @@ function New-PesterExcelReport {
     }
 
     if (Test-Path $resolvedOutputPath -PathType Leaf) {
-        Write-Host "Excel report generated at: $resolvedOutputPath"
+        Write-Output "Excel report generated at: $resolvedOutputPath"
         Set-ExcelWorkbookCategory -Workbooks $resolvedOutputPath -Classification $Classification
     }
 
