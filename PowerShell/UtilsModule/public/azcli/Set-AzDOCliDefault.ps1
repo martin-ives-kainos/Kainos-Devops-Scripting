@@ -1,4 +1,4 @@
-function Set-AzDOCliDefaults {
+function Set-AzDOCliDefault {
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -6,7 +6,6 @@ function Set-AzDOCliDefaults {
         [String]$Project
     )
 
-    # TODO: Consider adding validation or default values for the parameters before populating the hashtable.
     $pTable = @{}
     $ParameterList = (Get-Command -Name $MyInvocation.InvocationName).Parameters
     foreach ($key in $ParameterList.keys) {
@@ -15,6 +14,8 @@ function Set-AzDOCliDefaults {
             $pTable.Add($var.name, $var.value)
         }
     }
+
+    Write-Output ('[{0}|{1}] Setting Azure DevOps CLI defaults for Organization: {2}, Project: {3}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, $Organization, $Project)
 
     foreach ($key in $pTable.Keys) {
         if ([string]::IsNullOrEmpty($pTable[$key])) {

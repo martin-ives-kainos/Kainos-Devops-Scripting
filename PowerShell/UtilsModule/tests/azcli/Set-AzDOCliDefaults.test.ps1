@@ -1,5 +1,5 @@
 BeforeAll {
-    . (Join-Path $PSScriptRoot '..\..\public\azcli\Set-AzDOCliDefaults.ps1' -Resolve)
+    . (Join-Path $PSScriptRoot '..\..\public\azcli\Set-AzDOCliDefault.ps1' -Resolve)
 
     function Invoke-AzCli {
         param([string[]]$Arguments)
@@ -9,13 +9,13 @@ BeforeAll {
     }
 }
 
-Describe -tag 'Unit' 'Set-AzDOCliDefaults' {
+Describe -tag 'Unit' 'Set-AzDOCliDefault' {
     BeforeEach {
         $script:AzCliDefaultTestCalls = @()
     }
 
     It 'sets the supplied organization and project defaults, then lists the defaults' {
-        Set-AzDOCliDefaults -Organization 'https://dev.azure.com/example' -Project 'Sample Project'
+        Set-AzDOCliDefault -Organization 'https://dev.azure.com/example' -Project 'Sample Project'
 
         $script:AzCliDefaultTestCalls.Count | Should -Be 3
         $script:AzCliDefaultTestCalls | Should -Contain 'devops|configure|--defaults|organization=https://dev.azure.com/example'
