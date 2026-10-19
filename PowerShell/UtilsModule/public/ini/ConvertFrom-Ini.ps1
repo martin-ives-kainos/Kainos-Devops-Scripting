@@ -1,5 +1,6 @@
 function ConvertFrom-Ini {
     [CmdletBinding(DefaultParameterSetName = 'Path')]
+    [OutputType([System.Collections.Hashtable])]
     param(
         [Parameter(Mandatory, ParameterSetName = 'Path')]
         [ValidateNotNullOrEmpty()]

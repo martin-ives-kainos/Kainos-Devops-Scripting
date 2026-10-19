@@ -1,4 +1,5 @@
 function Read-IniConfig {
+    [OutputType([System.Collections.Hashtable])]
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true,

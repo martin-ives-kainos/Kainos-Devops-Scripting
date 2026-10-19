@@ -1,5 +1,6 @@
 function Get-MonthDay {
     [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
     param ()
 
     $returnTable = @{}

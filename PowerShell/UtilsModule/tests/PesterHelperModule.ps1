@@ -314,6 +314,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
 
     function CleanUpTemporaryGlobalVariables {
         [CmdletBinding()]
+        [OutputType([System.Collections.Hashtable])]
         param (
             [string]$VarPrefix = 'pester_temp_',
             [string]$TestName = 'CleanUpTemporaryGlobalVariables'
@@ -407,6 +408,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
 
     function New-TestHashTable {
         [CmdletBinding()]
+        [OutputType([System.Collections.Hashtable])]
         param (
             [Parameter(Mandatory = $false,
                 Position = 0,
