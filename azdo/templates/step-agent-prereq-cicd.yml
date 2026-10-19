@@ -1,6 +1,6 @@
-# File: step-agent-prereq-lexacom-cicd-app.yml@templates
+# File: step-agent-prereq-cicd.yml@templates
 # --------------------------------------
-#   - template: step-agent-prereq-lexacom-cicd-app.yml@templates
+#   - template: step-agent-prereq-cicd.yml@templates
 #     parameters:
 #       ChocoConfigFile: 'env.build.servers.config'
 #       InstallAzModules: false
@@ -45,7 +45,7 @@ steps:
 # ----------------------------------------------------------
 - template: step-debug-show-template-params.yml
   parameters:
-    TemplateName: 'step-agent-prereq-lexacom-cicd-app.yml'
+    TemplateName: 'step-agent-prereq-cicd.yml'
     enabled: ${{ parameters.ShowParams }}
     SaveParamsToFile: false
     paramValues:
@@ -173,6 +173,6 @@ steps:
       - name: psdocs
       - name: importexcel
       - name: psyml
-    psRepoName: 'LexacomPSGallery'
-    OrgName: 'lexacom'
-    FeedName: 'LexacomPowerShellGallery'
+    psRepoName: 'PSGallery'
+    OrgName: 'kainos'
+    FeedName: 'PowerShellGallery'

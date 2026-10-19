@@ -6,9 +6,9 @@
 #         - name: psdocs
 #         - name: importexcel
 #         - name: az
-#       psRepoName: 'LexacomPSGallery'
-#       OrgName: 'lexacom'
-#       FeedName: 'LexacomPowerShellGallery'
+#       psRepoName: 'PSGallery'
+#       OrgName: ''
+#       FeedName: 'PowerShellGallery'
 # -------------------------------------------------------------
 # Install modules from internal powershell feed
 # -------------------------------------------------------------
@@ -21,13 +21,12 @@ parameters:
       - name: az
   - name: psRepoName
     type: string
-    default: 'LexacomPSGallery'
+    default: 'PSGallery'
   - name: OrgName
     type: string
-    default: 'lexacom'
   - name: FeedName
     type: string
-    default: 'LexacomPowerShellGallery'
+    default: 'PowerShellGallery'
   - name: ShowParams
     type: boolean
     default: false

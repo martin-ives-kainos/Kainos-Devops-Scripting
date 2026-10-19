@@ -1,7 +1,7 @@
 # File: templates/step-exec-azdocli-data.yml
 # parameters:
 #   DevopsModuleName: DevopsUtils
-#   DevopsPAT: $(LexacomPowerShellGallery.PAT)
+#   DevopsPAT: $(System.Token)
 #   CliCommand: 'az devops service-endpoint list'
 #   OutputName: ServiceConnectionsList
 #   OutputPath: $(Build.ArtifactStagingDirectory)
