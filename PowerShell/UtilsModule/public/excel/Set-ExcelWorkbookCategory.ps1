@@ -1,11 +1,5 @@
-<# function Set-ExcelWorkbookCategory {
-    [CmdletBinding()]
-    param ()
-
-} #>
-
-
 function Set-ExcelWorkbookCategory {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Function is only used internally')]
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true,
@@ -33,7 +27,7 @@ function Set-ExcelWorkbookCategory {
                 Write-Warning "The workbook '$xlWorkbook' does not exist."
                 continue
             }
-            Write-Host ('[{0}|{1}] Setting category for workbook: {2} to {3}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, $xlWorkbook, $Classification)
+            Write-Output ('[{0}|{1}] Setting category for workbook: {2} to {3}' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName, $xlWorkbook, $Classification)
             $excelPackage = Open-ExcelPackage -Path $xlWorkbook # Open the Excel package using ImportExcel helpers
             $excelPackage.Workbook.Properties.Category = $Classification
 
