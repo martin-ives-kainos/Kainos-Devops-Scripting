@@ -2,7 +2,7 @@ function ConvertTo-Ini {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [hashtable]$InputObject,
+        [System.Collections.Hashtable]$InputObject,
         [Parameter(Mandatory)]
         [ValidateScript({
             if ([string]::IsNullOrWhiteSpace($_)) {

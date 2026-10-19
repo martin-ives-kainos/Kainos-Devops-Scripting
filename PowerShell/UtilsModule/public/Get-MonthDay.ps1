@@ -1,4 +1,4 @@
-function Get-MonthDays {
+function Get-MonthDay {
     [CmdletBinding()]
     param ()
 
@@ -15,16 +15,3 @@ function Get-MonthDays {
     }
     return $returnTable
 }
-
-<#
-1..12 | ForEach-Object {
-    [PSCustomObject]@{
-        Month       = (Get-Culture).DateTimeFormat.GetMonthName($_)
-        MaximumDays = switch ($_) {
-            2 { 29 }
-            {$_ -in 4,6,9,11} { 30 }
-            default { 31 }
-        }
-    }
-}
-#>

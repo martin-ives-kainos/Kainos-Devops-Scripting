@@ -23,7 +23,7 @@ BeforeAll {
             [bool]$Accept
         )
 
-        $state = [hashtable]::Synchronized(@{
+        $state = [System.Collections.Hashtable]::Synchronized(@{
             DefaultDate = $null
             TimedOut    = $false
             Ticks       = 0

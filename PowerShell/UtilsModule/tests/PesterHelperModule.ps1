@@ -162,7 +162,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
     function CreateDeployConfigJsonFile {
         param (
             [string]$Path,
-            [hashtable]$Settings = @{
+            [System.Collections.Hashtable]$Settings = @{
                 'WebsiteName'           = 'Default Web Site'
                 'ApplicationFolderPath' = 'TestDrive\inetpub\wwwroot\Test.App'
                 'ApplicationType'       = 'WebApplication'
@@ -182,7 +182,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
     function Get-ParamValidationErrMessages {
         [CmdletBinding()]
         param (
-            [hashtable]$CustomErrors = @{}
+            [System.Collections.Hashtable]$CustomErrors = @{}
         )
         begin {
             $funcName = 'Get-ParamValidationErrMessages'

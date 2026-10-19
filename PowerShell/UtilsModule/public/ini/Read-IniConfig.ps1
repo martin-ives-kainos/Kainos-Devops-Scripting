@@ -14,7 +14,7 @@ function Read-IniConfig {
             ValueFromPipeline = $false,
             ValueFromPipelineByPropertyName = $false,
             HelpMessage = 'Default data for the config file.')]
-        [hashtable]$DefaultData = @{}
+        [System.Collections.Hashtable]$DefaultData = @{}
     )
     begin {
         Write-Verbose ('[{0}|{1}] --STARTED: message-text' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)

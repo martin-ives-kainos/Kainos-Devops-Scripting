@@ -1,6 +1,6 @@
 [cmdletbinding()]
 param(
-    [hashtable]$ModulesList = @{
+    [System.Collections.Hashtable]$ModulesList = @{
         "PSWriteOffice"   = "0"
         "powershell-yaml" = "0"
         "PSDocs"          = "0"

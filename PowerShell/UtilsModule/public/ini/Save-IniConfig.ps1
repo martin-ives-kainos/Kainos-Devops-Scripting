@@ -16,7 +16,7 @@ function Save-IniConfig {
             HelpMessage = 'Path for a ini formatted config file.')]
         [ValidateNotNull()]
         [Alias('DefaultData')]
-        [hashtable]$Data
+        [System.Collections.Hashtable]$Data
     )
     begin {
         Write-Verbose ('[{0}|{1}] --STARTED: message-text' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)

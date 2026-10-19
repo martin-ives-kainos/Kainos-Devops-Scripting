@@ -18,7 +18,7 @@ BeforeDiscovery {
     SetUpGlobalTestVariables -VarName 'pester_temp_DatesNoPath' -TestCases $t_TestCases
 }
 BeforeAll {
-    . (Find-FileInTree -RootPath $PSScriptRoot -FileName 'Get-MonthDays.ps1')
+    . (Find-FileInTree -RootPath $PSScriptRoot -FileName 'Get-MonthDay.ps1')
     . (Find-FileInTree -RootPath $PSScriptRoot -FileName 'New-FolderNamesByMonth.ps1')
 }
 AfterAll {

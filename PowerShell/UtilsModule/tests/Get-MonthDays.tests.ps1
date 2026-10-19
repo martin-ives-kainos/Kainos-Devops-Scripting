@@ -1,12 +1,12 @@
-. (Join-Path $PSScriptRoot '..\public\Get-MonthDays.ps1')
+. (Join-Path $PSScriptRoot '..\public\Get-MonthDay.ps1')
 
-Describe 'Get-MonthDays' {
+Describe 'Get-MonthDay' {
     BeforeAll {
-        $monthDays = Get-MonthDays
+        $monthDays = Get-MonthDay
     }
 
     It 'returns a table with twelve months' {
-        $monthDays | Should -BeOfType [hashtable]
+        $monthDays | Should -BeOfType [System.Collections.Hashtable]
         $monthDays.Count | Should -Be 12
     }
 

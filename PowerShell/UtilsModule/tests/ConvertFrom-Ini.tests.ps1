@@ -5,7 +5,7 @@ BeforeAll {
 
     function New-IniTestResults {
         [CmdletBinding()]
-        [OutputType([hashtable])]
+        [OutputType([System.Collections.Hashtable])]
         param (
             [Parameter(Mandatory = $true)]
             [ValidateSet("File Parsing", "Content Parsing")]

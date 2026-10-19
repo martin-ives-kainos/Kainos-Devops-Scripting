@@ -1,10 +1,11 @@
 function New-FolderNamesByMonth {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions','',Justification = 'Function is only used internally')]
     [CmdletBinding()]
-    [OutputType([Hashtable])]
+    [OutputType([System.Collections.Hashtable])]
     param ([string]$RootPath)
     $monthFolders = @{}
 
-    $daysPerMonth = (Get-MonthDays)
+    $daysPerMonth = (Get-MonthDay)
 
     for ($i = 1; $i -le 12; $i++) {
         $tMonth = [pscustomobject]@{

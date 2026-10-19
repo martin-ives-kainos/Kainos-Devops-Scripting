@@ -1,6 +1,6 @@
 function Read-PsdManifest {
     [CmdletBinding()]
-    [OutputType([hashtable])]
+    [OutputType([System.Collections.Hashtable])]
     param (
         [Parameter(Mandatory)]
         [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]

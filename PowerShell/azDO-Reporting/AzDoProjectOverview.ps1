@@ -64,7 +64,7 @@ function Invoke-AzDoRestGet {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Uri,
-        [Parameter(Mandatory)][hashtable]$Headers
+        [Parameter(Mandatory)][System.Collections.Hashtable]$Headers
     )
 
     $items = @()

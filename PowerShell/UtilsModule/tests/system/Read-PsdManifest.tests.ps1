@@ -17,7 +17,7 @@ Describe -Tag 'Unit' 'Read-PsdManifest' {
 
         $result = Read-PsdManifest -Path $manifestPath
 
-        $result | Should -BeOfType [hashtable]
+        $result | Should -BeOfType [System.Collections.Hashtable]
         $result.Name | Should -BeExactly 'Example'
         $result.Version | Should -BeExactly '1.2.3'
         $result.Settings.Enabled | Should -BeTrue
