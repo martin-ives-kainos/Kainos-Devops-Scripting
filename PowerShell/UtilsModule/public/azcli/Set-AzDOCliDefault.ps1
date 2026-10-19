@@ -1,4 +1,5 @@
 function Set-AzDOCliDefault {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Function is only used internally')]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -23,13 +24,13 @@ function Set-AzDOCliDefault {
             $cliArgs = @('devops', 'configure', '--defaults', ('{0}=''''' -f $key.ToLower()))
         }
         else {
-            Write-Output "$key = $($pTable[$key])" -ForegroundColor Black -BackgroundColor DarkGreen
+            Write-Output "$key = $($pTable[$key])"
             $cliArgs = @('devops', 'configure', '--defaults', ('{0}={1}' -f $key.ToLower(), $pTable[$key]))
         }
         Invoke-AzCli -Arguments $cliArgs
     }
-    Write-Output "Azure DevOps CLI defaults have been set." -ForegroundColor Black -BackgroundColor DarkGreen
+    Write-Output "Azure DevOps CLI defaults have been set."
     Write-Output (Invoke-AzCli -Arguments @('devops', 'configure', '--list'))
-    Write-Output "-----------------------------------------" -ForegroundColor Black -BackgroundColor DarkGreen #>
+    Write-Output "-----------------------------------------"
 }
 
