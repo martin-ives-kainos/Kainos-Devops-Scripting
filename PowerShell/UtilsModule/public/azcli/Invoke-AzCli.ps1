@@ -59,15 +59,15 @@ function Invoke-AzCli {
         $azArgs += @('--output', 'json')
     }
 
-    Write-Host "[${diagFuncName}] Running: az $($azArgs -join ' ')"
+    Write-Output "[${diagFuncName}] Running: az $($azArgs -join ' ')"
 
     try {
-        Write-Host "[${diagFuncName}]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes"
+        Write-Output "[${diagFuncName}]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes"
         $internalResult = Invoke-AzCliInternal -azArgs $azArgs
         $stdOut = $internalResult.StdOut
         $exitCode = $internalResult.ExitCode
 
-        Write-Host "[${diagFuncName}]...Separate error records (from stderr) out of the combined stream"
+        Write-Output "[${diagFuncName}]...Separate error records (from stderr) out of the combined stream"
         $errorLines = $stdOut | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
         $outputLines = $stdOut | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
 
@@ -75,11 +75,11 @@ function Invoke-AzCli {
         $rawError = ($errorLines | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
 
         if ($exitCode -ne 0) {
-            Write-Host "...Azure CLI command failed with exit code $exitCode"
+            Write-Output "...Azure CLI command failed with exit code $exitCode"
             $errorMessage = if ($rawError) { $rawError } else { $rawOutput }
 
             if ($PassThruOnError) {
-                Write-Host "...Returning error object due to PassThruOnError"
+                Write-Output "...Returning error object due to PassThruOnError"
                 return [pscustomobject]@{
                     Success  = $false
                     Output   = $null
@@ -95,16 +95,16 @@ function Invoke-AzCli {
         $parsedOutput = $rawOutput
         if ($AsJson -and $rawOutput) {
             try {
-                Write-Host "[${diagFuncName}] ...Parsing raw output as JSON"
+                Write-Output "[${diagFuncName}] ...Parsing raw output as JSON"
                 $parsedOutput = $rawOutput | ConvertFrom-Json -ErrorAction Stop
 
                 if (![string]::IsNullOrEmpty($DataFilePath)) {
-                    Write-Host "[${diagFuncName}] ...Ensure parent directory exists for data file"
+                    Write-Output "[${diagFuncName}] ...Ensure parent directory exists for data file"
                     $parentDir = Split-Path $DataFilePath -Parent
                     if (-not (Test-Path $parentDir -PathType Container)) {
                         New-Item -ItemType Directory -Path $parentDir | Out-Null
                     }
-                    Write-Host "[${diagFuncName}] ...Writing parsed output to data file: $DataFilePath"
+                    Write-Output "[${diagFuncName}] ...Writing parsed output to data file: $DataFilePath"
                     $parsedOutput | ConvertTo-Json -Depth 99 | Set-Content -Path $DataFilePath -Force
                 }
             }
