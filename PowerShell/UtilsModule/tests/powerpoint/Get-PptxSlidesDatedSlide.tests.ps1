@@ -1,7 +1,7 @@
 BeforeAll {
     . (Join-Path $PSScriptRoot '..\..\public\Get-DateFromString.ps1' -Resolve)
     . (Join-Path $PSScriptRoot '..\..\public\powerpoint\Get-PptxShapeText.ps1' -Resolve)
-    . (Join-Path $PSScriptRoot '..\..\public\powerpoint\Get-PptxSlidesDatedSlides.ps1' -Resolve)
+    . (Join-Path $PSScriptRoot '..\..\public\powerpoint\Get-PptxSlidesDatedSlide.ps1' -Resolve)
 
     function New-TestPptxDatedSlide {
         param(
@@ -29,7 +29,7 @@ BeforeAll {
     }
 }
 
-Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlides' {
+Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlide' {
     It 'returns only slides in the default slide range' {
         $presentation = [pscustomobject]@{
             Slides = @(
@@ -40,7 +40,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlides' {
             )
         }
 
-        $result = @(Get-PptxSlidesDatedSlides -InputObject $presentation)
+        $result = @(Get-PptxSlidesDatedSlide -InputObject $presentation)
 
         $result.Count | Should -Be 2
         @($result.SlideNumber) | Should -Be @(4, 10)
@@ -59,7 +59,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlides' {
             return [pscustomobject]@{ Success = $false; Date = $null }
         }
 
-        $result = @(Get-PptxSlidesDatedSlides -InputObject $presentation)
+        $result = @(Get-PptxSlidesDatedSlide -InputObject $presentation)
 
         $result.Count | Should -Be 1
         $result[0].DateFound | Should -Be ([datetime]::new(2026, 10, 13))
@@ -77,7 +77,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlides' {
         }
         Mock Get-DateFromString { [pscustomobject]@{ Success = $false; Date = $null } }
 
-        $result = @(Get-PptxSlidesDatedSlides -InputObject $presentation -StartSlide 2 -EndSlide 2 -MonthNames @('Launch'))
+        $result = @(Get-PptxSlidesDatedSlide -InputObject $presentation -StartSlide 2 -EndSlide 2 -MonthNames @('Launch'))
 
         $result.Count | Should -Be 1
         $result[0].SlideNumber | Should -Be 2
@@ -88,7 +88,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlides' {
     It 'rejects a start slide greater than the end slide' {
         $presentation = [pscustomobject]@{ Slides = @() }
 
-        { Get-PptxSlidesDatedSlides -InputObject $presentation -StartSlide 5 -EndSlide 4 } |
+        { Get-PptxSlidesDatedSlide -InputObject $presentation -StartSlide 5 -EndSlide 4 } |
             Should -Throw 'StartSlide cannot be greater than EndSlide.'
     }
 }

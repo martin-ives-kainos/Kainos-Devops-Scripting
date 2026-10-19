@@ -1,4 +1,4 @@
-function Get-PptxSlidesDatedSlides {
+function Get-PptxSlidesDatedSlide {
     [CmdletBinding()]
     [OutputType([array])]
     param (
