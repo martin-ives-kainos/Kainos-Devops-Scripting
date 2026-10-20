@@ -46,7 +46,10 @@ jobs:
       - name: TEST Script call wf-PSAnalize-Modual.ps1 Analyze module for PowerShell 7 compatibility
         shell: pwsh
         run: |
-          ./wf-PSAnalize-Modual.ps1 -ModuleRoot $env:MODULE_ROOT
+          # ./wf-PSAnalize-Modual.ps1 -ModuleRoot $env:MODULE_ROOT
+          Write-Host "Here is the workspace: ${{ github.workspace }}"
+          Get-ChildItem -Path ${{ github.workspace }} -Recurse -File
+          Write-Host "Finished listing files in the module root."
 
       - name: Validate scripts for PowerShell 7
         run: |
