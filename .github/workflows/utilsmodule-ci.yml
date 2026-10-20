@@ -45,8 +45,16 @@ jobs:
 
       - name: Validate scripts for PowerShell 7
         run: |
+          Write-Host "Starting validation of PowerShell scripts..."
           $files = Get-ChildItem -Path $env:MODULE_ROOT -Recurse -File -Include *.ps1, *.psm1, *.psd1
-          $failed = $false
+          $failSteps = @{
+              SyntaxCheck = $false
+              ScriptAnalyzer = $false
+          }
+          if ($files.Count -eq 0) {
+              Write-Host "No PowerShell scripts found in $env:MODULE_ROOT"
+              exit 0
+          }
 
           # Syntax check using the PowerShell 7 parser
           foreach ($file in $files) {
@@ -54,14 +62,19 @@ jobs:
             $tokens = $null; $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors) | Out-Null
             foreach ($e in $errors) {
-              $failed = $true
+              $failSteps['SyntaxCheck'] = $true
               Write-Host "::error file=$($file.FullName),line=$($e.Extent.StartLineNumber),col=$($e.Extent.StartColumnNumber)::$($e.Message)"
             }
           }
+          if ($failSteps['SyntaxCheck']) {
+              Write-Warning "Syntax check failed for one or more PowerShell scripts."
+          } else {
+              Write-Host "Syntax check passed for all PowerShell scripts."
+          }
 
-          Test-ModuleManifest -Path (Join-Path $env:MODULE_ROOT 'UtilsModule.psd1') | Out-Null
+          Test-ModuleManifest -Path (Join-Path $env:MODULE_ROOT 'UtilsModule.psd1') | Format-Table -AutoSize
 
-          # PowerShell 7 syntax compatibility + error-level analyzer rules
+          Write-Host "Starting PowerShell 7 syntax compatibility + error-level analyzer rules..."
           $settings = @{
             Rules = @{
               PSUseCompatibleSyntax = @{
@@ -77,12 +90,15 @@ jobs:
 
           foreach ($r in $results) {
             $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
-            if ($level -eq 'error') { $failed = $true }
+            if ($level -eq 'error') { $failSteps['ScriptAnalyzer'] = $true }
             Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"
           }
 
-          if ($failed) { throw "PowerShell 7 validation failed." }
-          Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
+          if ($failSteps['SyntaxCheck'] -or $failSteps['ScriptAnalyzer']) {
+            throw "PowerShell 7 validation failed."
+          } else {
+              Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
+          }
 
       - name: Run Pester tests
         run: |
