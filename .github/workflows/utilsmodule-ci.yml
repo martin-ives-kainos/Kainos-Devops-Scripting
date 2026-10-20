@@ -43,6 +43,11 @@ jobs:
           Get-Module -ListAvailable Pester, PSScriptAnalyzer, ImportExcel, PSDocs, PSDocs.Azure |
             Select-Object Name, Version | Format-Table -AutoSize
 
+      - name: TEST Script call wf-PSAnalize-Modual.ps1 Analyze module for PowerShell 7 compatibility
+        shell: pwsh
+        run: |
+          ./wf-PSAnalize-Modual.ps1 -ModuleRoot $env:MODULE_ROOT
+
       - name: Validate scripts for PowerShell 7
         run: |
           Write-Host "Starting validation of PowerShell scripts..."
