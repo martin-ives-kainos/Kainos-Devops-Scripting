@@ -1,8 +1,8 @@
 BeforeAll {
-    . (Join-Path $PSScriptRoot '..\..\public\system\Get-DuplicatedUserEnvPaths.ps1' -Resolve)
+    . (Join-Path $PSScriptRoot '..\..\public\system\Get-DuplicatedUserEnvPath.ps1' -Resolve)
 }
 
-Describe -Tag 'Unit' 'Get-DuplicatedUserEnvPaths' {
+Describe -Tag 'Unit' 'Get-DuplicatedUserEnvPath' {
     It 'returns only user paths also present in the machine environment for <VariableName>' -ForEach @(
         @{ VariableName = 'Path' }
         @{ VariableName = 'PSModulePath' }
@@ -17,12 +17,12 @@ Describe -Tag 'Unit' 'Get-DuplicatedUserEnvPaths' {
         ) -split ';'
         $expectedPaths = @($userPaths | Where-Object { $machinePaths -contains $_ })
 
-        $result = @(Get-DuplicatedUserEnvPaths -VariableName $VariableName)
+        $result = @(Get-DuplicatedUserEnvPath -VariableName $VariableName)
 
         $result | Should -Be $expectedPaths
     }
 
     It 'rejects an unsupported environment variable name' {
-        { Get-DuplicatedUserEnvPaths -VariableName 'TEMP' } | Should -Throw
+        { Get-DuplicatedUserEnvPath -VariableName 'TEMP' } | Should -Throw
     }
 }

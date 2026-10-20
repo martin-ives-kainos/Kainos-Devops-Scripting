@@ -12,7 +12,7 @@ $errorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot "UtilsModule\UtilsModule.psd1" -Resolve)
 
 # Where are our userdefined powershell modules located?
-$dupPath = Get-DuplicatedUserEnvPaths -VariableName "PSModulePath"
+$dupPath = Get-DuplicatedUserEnvPath -VariableName "PSModulePath"
 
 if ($dupPath.Count -gt 0) {
     $dupPath | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }

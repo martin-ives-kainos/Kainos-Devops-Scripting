@@ -13,12 +13,12 @@ The full path to add to the environment variable. This path will be validated ag
 both user and system environment variables to prevent duplicates.
 
 .EXAMPLE
-Get-DuplicatedUserEnvPaths -VariableName "Path"
+Get-DuplicatedUserEnvPath -VariableName "Path"
 
 This example identifies any paths in the user's Path environment variable that are already defined in the system environment.
 
 .EXAMPLE
-Get-DuplicatedUserEnvPaths -VariableName "PSModulePath"
+Get-DuplicatedUserEnvPath -VariableName "PSModulePath"
 
 This example adds "C:\CustomModules" to the user's PSModulePath environment variable.
 
@@ -26,9 +26,9 @@ This example adds "C:\CustomModules" to the user's PSModulePath environment vari
 - The function checks both user and system environment variables to identify duplicates
 
 .LINK
-Get-DuplicatedUserEnvPaths
+Get-DuplicatedUserEnvPath
 #>
-function Get-DuplicatedUserEnvPaths {
+function Get-DuplicatedUserEnvPath {
     [CmdletBinding()]
     [OutputType([string[]])]
     param (

@@ -38,7 +38,7 @@ function Get-PptxSlidesDatedSlide {
         if ($slide.SlideNumber -lt $StartSlide -or $slide.SlideNumber -gt $EndSlide) {
             continue
         }
-        Write-Host "Slide $($slide.SlideNumber)"
+        Write-Output "Slide $($slide.SlideNumber)"
         $newDatedSlide = (New-Object psobject)
         $newDatedSlide | Add-Member -MemberType NoteProperty -Name SlideNumber -Value $slide.SlideNumber
         $newDatedSlide | Add-Member -MemberType NoteProperty -Name DateFound -Value ''
@@ -53,7 +53,7 @@ function Get-PptxSlidesDatedSlide {
                         $newDatedSlide.DateFound = $lineDate.Date
                     }
                     if ($MonthNames | ForEach-Object { $line.Trim().ToUpper().Contains($_.ToUpper()) } | Where-Object { $_ }) {
-                        Write-Host $line
+                        Write-Output $line
                         $newDatedSlide.LineFound = $line
                         $slide.SlideShowTransition.Hidden = $true
                         break
@@ -61,7 +61,7 @@ function Get-PptxSlidesDatedSlide {
                 }
 
             } catch {
-                Write-Host "Error reading shape text: $_"
+                Write-Output "Error reading shape text: $_"
             }
         }
         $datedSlides += $newDatedSlide
@@ -71,18 +71,18 @@ function Get-PptxSlidesDatedSlide {
 
     switch ($PSCmdlet.ParameterSetName) {
         'FromFile' {
-            Write-Host "Quitting PowerPoint and Releasing COM objects for FromFile parameter set."
+            Write-Output "Quitting PowerPoint and Releasing COM objects for FromFile parameter set."
             $pptApp.Quit()
             try {
                 [System.Runtime.InteropServices.Marshal]::ReleaseComObject($presentation) | Out-Null
                 [System.Runtime.InteropServices.Marshal]::ReleaseComObject($pptApp) | Out-Null
             }
             catch {
-                Write-Host "Error releasing COM objects: $_"
+                Write-Output "Error releasing COM objects: $_"
             }
         }
         'FromObject' {
-            Write-Host "Releasing PowerPoint COM objects for FromObject parameter set. Not applicable."
+            Write-Output "Releasing PowerPoint COM objects for FromObject parameter set. Not applicable."
 #            $presentation = $InputObject
         }
     }

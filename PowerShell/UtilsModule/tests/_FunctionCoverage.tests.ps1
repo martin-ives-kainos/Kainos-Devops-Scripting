@@ -39,6 +39,8 @@ AfterAll {
 BeforeAll {
     Write-Host "Starting function coverage tests for UtilsModule..." -ForegroundColor Cyan
     function New-ShouldBeTested {
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Function is only used internally')]
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Function is only used internally')]
         [CmdletBinding()]
         [Alias('Should-BeTested')]
         param (
@@ -46,14 +48,20 @@ BeforeAll {
             [Parameter(Position = 0)]      $Expected = $True,
             [string] $Because
         )
-        end {
+        begin {
             $assert = New-ShouldAssertion -Caller $PSCmdlet -Actual $Actual -Buffer $Input
             $Actual = $assert.Actual()
-
+        }
+        process {
             if ($Actual -ne $Expected) {
                 $assert.Fail('<because>.', @{ Expected = $Expected; Because = $Because })
             }
+            else {
+                $assert.Pass()
+            }
         }
+        end { }
+
     }
 
 }

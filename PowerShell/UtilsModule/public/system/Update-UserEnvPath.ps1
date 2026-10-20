@@ -35,7 +35,7 @@ This example adds "C:\CustomModules" to the user's PSModulePath environment vari
 Update-UserEnvPath
 #>
 function Update-UserEnvPath {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true)]
         [ValidateSet("Path", "PSModulePath")]
@@ -155,14 +155,16 @@ function Update-UserEnvPath {
     }
 
     $myEnvPaths = [EnvPaths]::New($VariableName)
-    switch ($Action) {
-        'Add' {
-            $myEnvPaths.AddPaths($Paths)
+    if ($PSCmdlet.ShouldProcess("User environment variable '$VariableName'", "$Action paths: $($Paths -join ';')")) {
+        switch ($Action) {
+            'Add' {
+                $myEnvPaths.AddPaths($Paths)
+            }
+            'Remove' {
+                $myEnvPaths.RemovePaths($Paths)
+            }
         }
-        'Remove' {
-            $myEnvPaths.RemovePaths($Paths)
-        }
+        $myEnvPaths.Save()
     }
-    $myEnvPaths.Save()
 
 }
