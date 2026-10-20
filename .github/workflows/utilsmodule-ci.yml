@@ -34,10 +34,8 @@ jobs:
           $PSVersionTable | Format-Table -AutoSize
           if ($PSVersionTable.PSVersion.Major -lt 7) { throw "PowerShell 7+ is required." }
 
-      - name: TEST Find script
+      - name: TEST Execute wf-*.ps1 scripts
         shell: pwsh
         run: |
-          Write-Host "Here is the workspace: ${{ github.workspace }}"
-          Get-ChildItem -Path ${{ github.workspace }} -Recurse -Filter 'wf-*.ps1' -Force
-          Write-Host "Finished listing files in the module root."
+          . (Join-Path ${{ github.workspace }}  '.github\workflows\wf-PSAnalize-Module.ps1' -Resolve) -ModuleRoot $env:MODULE_ROOT
 
