@@ -47,7 +47,7 @@ jobs:
         run: |
           . ${{ github.workspace }}/.github/workflows/wf-PSAnalize-Module.ps1 -ModuleRoot $env:MODULE_ROOT
 
-        - name: Run Pester tests
+      - name: Run Pester tests
         run: |
           Import-Module Pester -MinimumVersion 6.1.0 -Force
           New-Item -ItemType Directory -Path $env:TEST_RESULTS_DIR -Force | Out-Null
