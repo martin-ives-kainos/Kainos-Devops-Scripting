@@ -5,6 +5,12 @@ param(
     [string]$FileTypeCheck = 'Module'
 )
 $erroractionpreference = 'Stop'
+
+if (-not $env:GITHUB_ACTION) {
+    Write-Warning "Running outside of GitHub Actions."
+    $ModuleRoot = (Join-Path $PSScriptRoot '../../PowerShell/UtilsModule' -Resolve)
+}
+
 Write-Host "Starting validation of PowerShell $FileTypeCheck scripts in $ModuleRoot..."
 
 $files = @()
