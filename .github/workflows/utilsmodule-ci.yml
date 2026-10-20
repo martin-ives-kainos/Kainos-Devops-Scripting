@@ -88,8 +88,13 @@ jobs:
             Invoke-ScriptAnalyzer -Path $env:MODULE_ROOT -Recurse -Severity Error
           ) | Sort-Object ScriptPath, Line, RuleName -Unique
 
+          $prevFile = $null
+
           foreach ($r in $results) {
-            Write-Host "--- Analyzing $($r.ScriptPath) ---"
+            if ($prevFile -ne $r.ScriptPath) {
+              $prevFile = $r.ScriptPath
+              Write-Host "--- Analyzing $($r.ScriptPath) ---"
+            }
             $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
             if ($level -eq 'error') { $failSteps['ScriptAnalyzer'] = $true }
             Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"

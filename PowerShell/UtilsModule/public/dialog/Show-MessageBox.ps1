@@ -161,27 +161,28 @@ function Read-MessageBoxResponse {
     }
 
     try {
-        Write-Output -NoNewline "$Prompt "
+        $outputMessage = "$Prompt "
         $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds.Value)
         $response = ''
         while ([DateTime]::UtcNow -lt $deadline) {
             if ($Host.UI.RawUI.KeyAvailable) {
                 $key = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
                 if ($key.VirtualKeyCode -eq 13) {
-                    Write-Output ""
+                    Write-Output "$outputMessage`n"
                     return $response
                 }
                 if ($key.VirtualKeyCode -eq 8) {
                     if ($response.Length -gt 0) {
                         $response = $response.Substring(0, $response.Length - 1)
-                        Write-Output -NoNewline "`b `b"
+                        $outputMessage += "`b `b"
                     }
                 }
                 elseif (-not [char]::IsControl($key.Character)) {
                     $response += $key.Character
-                    Write-Output -NoNewline $key.Character
+                    $outputMessage += $key.Character
                 }
             }
+            Write-Output ("{0}{1}" -f $outputMessage, $key.Character)
             Start-Sleep -Milliseconds 50
         }
 
