@@ -1,16 +1,30 @@
 [CmdletBinding()]
 param(
-    [string]$ModuleRoot
+    [string]$ModuleRoot,
+    [ValidateSet('Module', 'Test')]
+    [string]$FileTypeCheck = 'Module'
 )
 $erroractionpreference = 'Stop'
-Write-Host "Starting validation of PowerShell scripts..."77
-$files = Get-ChildItem -Path $env:MODULE_ROOT -Recurse -File -Include *.ps1, *.psm1, *.psd1
+Write-Host "Starting validation of PowerShell $FileTypeCheck scripts in $ModuleRoot..."
+
+$files = @()
+
+switch ($FileTypeCheck) {
+    'Module' {
+        $files = (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.ps1, *.psm1, *.psd1 | Where-Object { $_.Name.Trim().ToLower().EndsWith('.tests.ps1') -eq $false } )
+    }
+    'Test' {
+        $files = (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.tests.ps1)
+    }
+}
+
+
 $failSteps = @{
     SyntaxCheck    = $false
     ScriptAnalyzer = $false
 }
 if ($files.Count -eq 0) {
-    Write-Host "No PowerShell scripts found in $env:MODULE_ROOT"
+    Write-Host "No PowerShell $FileTypeCheck scripts found in $ModuleRoot"
     exit 0
 }
 
@@ -25,13 +39,15 @@ foreach ($file in $files) {
     }
 }
 if ($failSteps['SyntaxCheck']) {
-    Write-Warning "Syntax check failed for one or more PowerShell scripts."
+    Write-Warning "Syntax check failed for one or more PowerShell $FileTypeCheck scripts."
 }
 else {
-    Write-Host "Syntax check passed for all PowerShell scripts."
+    Write-Host "Syntax check passed for all PowerShell $FileTypeCheck scripts."
 }
 
-Test-ModuleManifest -Path (Join-Path $env:MODULE_ROOT 'UtilsModule.psd1') | Format-Table -AutoSize
+if ($FileTypeCheck -eq 'Module') {
+    Test-ModuleManifest -Path (Join-Path $ModuleRoot 'UtilsModule.psd1') | Format-Table -AutoSize
+}
 
 Write-Host "Starting PowerShell 7 syntax compatibility + error-level analyzer rules..."
 $settings = @{
@@ -43,8 +59,8 @@ $settings = @{
     }
 }
 $results = @(
-    Invoke-ScriptAnalyzer -Path $env:MODULE_ROOT -Recurse -Settings $settings
-    Invoke-ScriptAnalyzer -Path $env:MODULE_ROOT -Recurse -Severity Error
+    Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Settings $settings
+    Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Severity Error
 ) | Sort-Object ScriptPath, Line, RuleName -Unique
 
 $prevFile = $null
@@ -65,4 +81,4 @@ if ($failSteps['SyntaxCheck'] -or $failSteps['ScriptAnalyzer']) {
 else {
     Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
 }
-Write-Host "PowerShell 7 analysis completed."
+Write-Host "PowerShell 7 $FileTypeCheck analysis completed."
