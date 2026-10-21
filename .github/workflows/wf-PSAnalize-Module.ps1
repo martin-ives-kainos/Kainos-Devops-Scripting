@@ -10,6 +10,19 @@ $erroractionpreference = 'Stop'
 if (-not $env:GITHUB_ACTION) {
     Write-Warning "Running outside of GitHub Actions."
     $ModuleRoot = (Join-Path $PSScriptRoot '../../PowerShell/UtilsModule' -Resolve)
+
+    $pssaModule = Get-Module PSScriptAnalyzer
+    if (-not $pssaModule) {
+        Write-Warning "PSScriptAnalyzer module is not loaded. Find if available."
+        $pssaModule = Get-Module PSScriptAnalyzer -ListAvailable
+        if ($pssaModule) {
+            Write-Host "PSScriptAnalyzer module found. Importing..."
+            Import-Module PSScriptAnalyzer
+        }
+        else {
+            Write-Warning "PSScriptAnalyzer module not found."
+        }
+    }
 }
 
 Write-Host "Starting validation of PowerShell $FileTypeCheck scripts in $ModuleRoot..."
@@ -68,7 +81,7 @@ if ($FileTypeCheck -eq 'Module') {
 }
 
 Write-Host "Starting PowerShell 7 syntax compatibility + error-level analyzer rules..."
-$settings = @{
+$pssasettings = @{
     Rules = @{
         PSUseCompatibleSyntax = @{
             Enable         = $true
@@ -77,31 +90,27 @@ $settings = @{
     }
 }
 
-if ($env:GITHUB_ACTION) {
-    $results = @(
-        Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Settings $settings
-        Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Severity Error
-    ) | Sort-Object ScriptPath, Line, RuleName -Unique
+$results = @(
+    Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Settings $pssasettings
+    Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Severity Error
+) | Sort-Object ScriptPath, Line, RuleName -Unique
 
-    $prevFile = $null
+$prevFile = $null
 
-    foreach ($r in $results) {
-        if ($prevFile -ne $r.ScriptPath) {
-            $prevFile = $r.ScriptPath
-            Write-Host "--- Analyzing $($r.ScriptPath) ---"
-        }
-        $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
-        if ($level -eq 'error') { $failSteps['ScriptAnalyzer'] = $true }
-        Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"
+foreach ($r in $results) {
+    if ($prevFile -ne $r.ScriptPath) {
+        $prevFile = $r.ScriptPath
+        Write-Host "--- Analyzing $($r.ScriptPath) ---"
     }
+    $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
+    if ($level -eq 'error') { $failSteps['ScriptAnalyzer'] = $true }
+    Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"
+}
 
-    if ($failSteps['SyntaxCheck'] -or $failSteps['ScriptAnalyzer']) {
-        throw "PowerShell 7 validation failed."
-    }
-    else {
-        Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
-    }
-} else {
-    Write-Host "PowerShell 7 analysis skipped as not running in GitHub Actions."
+if ($failSteps['SyntaxCheck'] -or $failSteps['ScriptAnalyzer']) {
+    throw "PowerShell 7 validation failed."
+}
+else {
+    Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
 }
 Write-Host "PowerShell 7 $FileTypeCheck analysis completed."
