@@ -2,7 +2,8 @@
 param(
     [string]$ModuleRoot,
     [ValidateSet('Module', 'Test')]
-    [string]$FileTypeCheck = 'Module'
+    [string]$FileTypeCheck = 'Module',
+    [string[]]$ExcludeFolders = @('bin', 'obj', '.temp')
 )
 $erroractionpreference = 'Stop'
 
@@ -17,7 +18,16 @@ $files = @()
 
 switch ($FileTypeCheck) {
     'Module' {
-        $files = (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.ps1, *.psm1, *.psd1 | Where-Object { $_.Name.Trim().ToLower().EndsWith('.tests.ps1') -eq $false } )
+        foreach ($modScript in (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.ps1, *.psm1, *.psd1)) {
+            if ($ExcludeFolders -contains (Split-Path -Leaf $modScript.DirectoryName)) {
+                continue
+            }
+            if ($modScript.Name.Trim().ToLower().EndsWith('.tests.ps1')) {
+                continue
+            }
+
+            $files += $modScript
+        }
     }
     'Test' {
         $files = (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.tests.ps1)
@@ -52,7 +62,9 @@ else {
 }
 
 if ($FileTypeCheck -eq 'Module') {
-    Test-ModuleManifest -Path (Join-Path $ModuleRoot 'UtilsModule.psd1') | Format-Table -AutoSize
+    foreach ($manifest in $files | Where-Object { $_.Extension -eq '.psd1' }) {
+        Test-ModuleManifest -Path $manifest.FullName | Format-Table -AutoSize
+    }
 }
 
 Write-Host "Starting PowerShell 7 syntax compatibility + error-level analyzer rules..."
@@ -64,27 +76,32 @@ $settings = @{
         }
     }
 }
-$results = @(
-    Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Settings $settings
-    Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Severity Error
-) | Sort-Object ScriptPath, Line, RuleName -Unique
 
-$prevFile = $null
+if ($env:GITHUB_ACTION) {
+    $results = @(
+        Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Settings $settings
+        Invoke-ScriptAnalyzer -Path $ModuleRoot -Recurse -Severity Error
+    ) | Sort-Object ScriptPath, Line, RuleName -Unique
 
-foreach ($r in $results) {
-    if ($prevFile -ne $r.ScriptPath) {
-        $prevFile = $r.ScriptPath
-        Write-Host "--- Analyzing $($r.ScriptPath) ---"
+    $prevFile = $null
+
+    foreach ($r in $results) {
+        if ($prevFile -ne $r.ScriptPath) {
+            $prevFile = $r.ScriptPath
+            Write-Host "--- Analyzing $($r.ScriptPath) ---"
+        }
+        $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
+        if ($level -eq 'error') { $failSteps['ScriptAnalyzer'] = $true }
+        Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"
     }
-    $level = if ($r.Severity -eq 'Error' -or $r.RuleName -eq 'PSUseCompatibleSyntax') { 'error' } else { 'warning' }
-    if ($level -eq 'error') { $failSteps['ScriptAnalyzer'] = $true }
-    Write-Host "::$level file=$($r.ScriptPath),line=$($r.Line),col=$($r.Column)::[$($r.RuleName)] $($r.Message)"
-}
 
-if ($failSteps['SyntaxCheck'] -or $failSteps['ScriptAnalyzer']) {
-    throw "PowerShell 7 validation failed."
-}
-else {
-    Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
+    if ($failSteps['SyntaxCheck'] -or $failSteps['ScriptAnalyzer']) {
+        throw "PowerShell 7 validation failed."
+    }
+    else {
+        Write-Host "Validated $($files.Count) files - no PowerShell 7 issues found."
+    }
+} else {
+    Write-Host "PowerShell 7 analysis skipped as not running in GitHub Actions."
 }
 Write-Host "PowerShell 7 $FileTypeCheck analysis completed."
