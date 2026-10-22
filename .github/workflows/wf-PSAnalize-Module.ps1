@@ -151,7 +151,7 @@ $pssasettings = @{
     }
 }
 
-foreach ($fileType in $pssasettings.Keys) {
+foreach ($fileType in $pssasettings.Keys | Sort-Object) {
     $pssaFolders = @()
 
     Write-Host "Processing $fileType settings..."
@@ -183,7 +183,7 @@ foreach ($fileType in $pssasettings.Keys) {
         }
     }
 
-    foreach ($folder in $pssaFolders) {
+    foreach ($folder in $pssaFolders | Sort-Object) {
         if ($ExcludeFolders -contains (Split-Path $folder -Leaf)) {
             Write-Warning "Skipping excluded folder: $folder"
             continue
