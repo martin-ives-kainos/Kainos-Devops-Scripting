@@ -1,4 +1,10 @@
 BeforeAll {
+    $helperPath = $PSScriptRoot
+    while (-not (Test-Path (Join-Path $helperPath 'PesterHelperModule.ps1'))) {
+        $helperPath = Join-Path $helperPath '..' -Resolve
+    }
+    . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
+
     $script:OriginalAppData = $env:APPDATA
     $script:OriginalUserName = $env:USERNAME
     . (Join-Path $PSScriptRoot '..\public\LocalCredentials\Read-LocalCredential.ps1' -Resolve)
@@ -21,7 +27,7 @@ Describe 'Read-LocalCredential' {
         Set-Content -LiteralPath $savedFile -Value 'saved credential'
         $expectedCredential = [pscredential]::new(
             'saved-user',
-            (ConvertTo-SecureString 'saved-password' -AsPlainText -Force)
+            (New-TestSecureString 'saved-password')
         )
         Mock Import-Clixml { $expectedCredential }
         Mock Get-Credential { throw 'Should not prompt when a saved credential exists.' }
@@ -39,7 +45,7 @@ Describe 'Read-LocalCredential' {
         $savedFile = Join-Path $TestDrive 'LocalCred_ExampleApp.xml'
         $expectedCredential = [pscredential]::new(
             'environment-user',
-            (ConvertTo-SecureString 'new-password' -AsPlainText -Force)
+            (New-TestSecureString 'new-password')
         )
         Mock Get-Credential { $expectedCredential }
         Mock Export-Clixml {}
@@ -60,7 +66,7 @@ Describe 'Read-LocalCredential' {
         Set-Content -LiteralPath $savedFile -Value 'saved credential'
         $expectedCredential = [pscredential]::new(
             'prompted-user',
-            (ConvertTo-SecureString 'prompted-password' -AsPlainText -Force)
+            (New-TestSecureString 'prompted-password')
         )
         Mock Get-Credential { $expectedCredential }
         Mock Import-Clixml { throw 'Should not import when ForcePrompt is specified.' }

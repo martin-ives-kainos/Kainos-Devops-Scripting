@@ -1,9 +1,23 @@
 [CmdletBinding()]
 param(
     [string]$ModuleRoot,
-    [string[]]$ExcludeFolders = @('bin', 'obj', '.temp')
+    [string[]]$ExcludeFolders = @('bin', 'obj', '.temp'),
+    [string]$SubFolderToProcess = '*'
 )
 $erroractionpreference = 'Stop'
+
+function Invoke-ScriptAnalyzerForFolder {
+    param(
+        [string]$Folder,
+        [hashtable]$Settings
+    )
+    Write-Host "===Analyzing folder: $Folder==="
+    $results = @(
+        Invoke-ScriptAnalyzer -Path $Folder -Recurse -Settings $Settings
+        Invoke-ScriptAnalyzer -Path $Folder -Recurse -Severity Error
+    ) | Sort-Object ScriptPath, Line, RuleName -Unique
+    return $results
+}
 
 if (-not $env:GITHUB_ACTION) {
     Write-Warning "Running outside of GitHub Actions."
@@ -32,12 +46,13 @@ if (-not $env:GITHUB_ACTION) {
 Write-Host "Module root: $ModuleRoot - Find first manifest file..."
 
 $privateData = @{
-    ScriptScopes  = @('classes', 'private', 'public', 'internal')
-    TestFolders   = @('tests')
-    ModuleName    = $null
-    ModuleVersion = $null
-    ModulePath    = $null
-    ManifestFile  = $null
+    ManifestFile         = $null
+    ModuleName           = $null
+    ModulePath           = $null
+    ModuleVersion        = $null
+    ScriptScopes         = @('classes', 'private', 'public', 'internal')
+    TestFolders          = @('tests')
+    TestExcludeRules = @()
 }
 foreach ($manifestFile in (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.psd1)) {
     if ($manifestFile) {
@@ -141,13 +156,7 @@ $pssasettings = @{
                 TargetVersions = @('7.0')
             }
         }
-        ExcludeRules = @(
-            'PSAvoidGlobalVars',
-            'PSAvoidUsingWriteHost',
-            'PSUseShouldProcessForStateChangingFunctions',
-            'PSReviewUnusedParameter',
-            'PSUseDeclaredVarsMoreThanAssignments'
-        )
+        ExcludeRules = $privateData.TestExcludeRules
     }
 }
 
@@ -188,11 +197,11 @@ foreach ($fileType in $pssasettings.Keys | Sort-Object) {
             Write-Warning "Skipping excluded folder: $folder"
             continue
         }
-        Write-Host "===Analyzing folder: $folder==="
-        $results = @(
-            Invoke-ScriptAnalyzer -Path $folder -Recurse -Settings $pssasettings[$fileType]
-            Invoke-ScriptAnalyzer -Path $folder -Recurse -Severity Error
-        ) | Sort-Object ScriptPath, Line, RuleName -Unique
+        if ($SubFolderToProcess -ne '*' -and (Split-Path $folder -Leaf) -ne $SubFolderToProcess) {
+            Write-Host "Skipping folder not matching subfolder to process: $folder"
+            continue
+        }
+        $results = Invoke-ScriptAnalyzerForFolder -Folder $folder -Settings $pssasettings[$fileType]
 
         $prevFile = $null
 

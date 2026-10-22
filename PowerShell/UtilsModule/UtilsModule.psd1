@@ -140,6 +140,14 @@
 
         TestFolders         = @('tests')
         TestTags            = @('Unit', 'Integration', 'Functional', 'Smoke', 'Debug', 'All')
+        TestExcludeRules    = @(
+            'PSAvoidGlobalVars',
+            'PSAvoidUsingWriteHost',
+            'PSUseShouldProcessForStateChangingFunctions',
+            'PSReviewUnusedParameter',
+            'PSUseDeclaredVarsMoreThanAssignments',
+            'PSAvoidUsingConvertToSecureStringWithPlainText'
+        )
     } # End of PrivateData hashtable
 
     # HelpInfo URI of this module
