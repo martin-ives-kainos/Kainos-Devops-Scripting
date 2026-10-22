@@ -12,7 +12,7 @@ BeforeDiscovery {
     . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
     SetUpGlobalTestVariables -VarName 'pester_temp_RunDate' -VarValue (Get-Date)
     SetUpGlobalTestVariables -VarName 'pester_temp_ModuleRootPath' -VarValue (Join-Path $PSScriptRoot '..' -Resolve)
-    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolders -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
+    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolder -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
     SetUpGlobalTestVariables -VarName 'pester_temp_TestCounter' -VarValue @{TestatableFiles = 0; TestFilesFound = 0 }
 
     $tc_TestCoverageNotRequired = @('ConvertTo-Hashtable.ps1')

@@ -50,7 +50,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
                 Object to convert.
         #>
         [CmdletBinding()]
-        [OutputType('hashtable')]
+        [OutputType('System.Collections.Hashtable')]
         param (
             [Parameter(Mandatory = $true,
                 Position = 0,
@@ -179,13 +179,13 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         Set-Content $Path -Value (ConvertTo-Json -Depth 99 -InputObject $configObj)
     }
 
-    function Get-ParamValidationErrMessages {
+    function Get-ParamValidationErrMessage {
         [CmdletBinding()]
         param (
             [System.Collections.Hashtable]$CustomErrors = @{}
         )
         begin {
-            $funcName = 'Get-ParamValidationErrMessages'
+            $funcName = 'Get-ParamValidationErrMessage'
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} STARTED' -f (Get-Date), $funcName)
         }
         process {
@@ -332,7 +332,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
-    function Get-ModuleTestableFolders {
+    function Get-ModuleTestableFolder {
         [CmdletBinding()]
         [OutputType([string[]])]
         param (
