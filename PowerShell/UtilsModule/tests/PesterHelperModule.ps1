@@ -1,6 +1,26 @@
 New-Module -Name 'PesterHelper' -ScriptBlock {
 
 
+    function CleanUpTemporaryGlobalVariables {
+        [CmdletBinding()]
+        [OutputType([System.Collections.Hashtable])]
+        param (
+            [string]$VarPrefix = 'pester_temp_',
+            [string]$TestName = 'CleanUpTemporaryGlobalVariables'
+        )
+        foreach ($frame in (Get-PSCallStack)) {
+            $loc = $frame.Location.ToString()
+            if ($loc.ToLower().Contains('.tests.')) {
+                $TestName = ($loc -split ':' | Select-Object -First 1)
+                break
+            }
+        }
+        foreach ($varName in (Get-Variable -Scope Global | Select-Object -ExpandProperty Name | Where-Object { $_.StartsWith('pester_temp_' ) }) ) {
+            Write-Host "[$TestName] Removing global variable: $varName" -ForegroundColor Green
+            Remove-Variable -Name $varName -Scope Global -ErrorAction SilentlyContinue
+        }
+    }
+
     function ConvertFrom-JsonFile {
         [CmdletBinding()]
         param (
@@ -126,6 +146,26 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
+    function CreateDeployConfigJsonFile {
+        param (
+            [string]$Path,
+            [System.Collections.Hashtable]$Settings = @{
+                'WebsiteName'           = 'Default Web Site'
+                'ApplicationFolderPath' = 'TestDrive\inetpub\wwwroot\Test.App'
+                'ApplicationType'       = 'WebApplication'
+                'AppPoolName'           = 'Test.App'
+                'ApplicationName'       = 'Test.App'
+                'AppPoolDotNetVersion'  = 'v4.0'
+                'ConfigFileName'        = 'web.config'
+            }
+        )
+        $configObj = New-Object psobject
+        $Settings.Keys | ForEach-Object {
+            $configObj | Add-Member -MemberType NoteProperty -Name $_ -Value $Settings[$_]
+        }
+        Set-Content $Path -Value (ConvertTo-Json -Depth 99 -InputObject $configObj)
+    }
+
     function CreateStartPointFolder {
         [CmdletBinding()]
         param (
@@ -161,77 +201,43 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         Remove-Item (Split-Path -Parent $testZipPath) -Force -Recurse
     }
 
-    function CreateDeployConfigJsonFile {
-        param (
-            [string]$Path,
-            [System.Collections.Hashtable]$Settings = @{
-                'WebsiteName'           = 'Default Web Site'
-                'ApplicationFolderPath' = 'TestDrive\inetpub\wwwroot\Test.App'
-                'ApplicationType'       = 'WebApplication'
-                'AppPoolName'           = 'Test.App'
-                'ApplicationName'       = 'Test.App'
-                'AppPoolDotNetVersion'  = 'v4.0'
-                'ConfigFileName'        = 'web.config'
-            }
-        )
-        $configObj = New-Object psobject
-        $Settings.Keys | ForEach-Object {
-            $configObj | Add-Member -MemberType NoteProperty -Name $_ -Value $Settings[$_]
-        }
-        Set-Content $Path -Value (ConvertTo-Json -Depth 99 -InputObject $configObj)
-    }
-
-    function Get-ParamValidationErrMessage {
-        [CmdletBinding()]
-        param (
-            [System.Collections.Hashtable]$CustomErrors = @{}
-        )
-        begin {
-            $funcName = 'Get-ParamValidationErrMessage'
-            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} STARTED' -f (Get-Date), $funcName)
-        }
-        process {
-            # Default to Powershell Core
-            $stdErrors = @{
-                '_Default'       = 'xxxxxxx {0}'
-                'NullOrEmpty'    = "Cannot validate argument on parameter '{0}'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again."
-                'CannotConvert'  = 'Cannot process argument transformation on parameter ''{0}''. Cannot convert the "{1}" value of type "{2}" to type "{3}".'
-                'PathTestError'  = 'Cannot validate argument on parameter ''{0}''. The " (Test-Path $_ -PathType Container) " validation script for the argument with value "{1}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
-                'ValidSet'       = 'Cannot validate argument on parameter ''{0}''. The argument "{1}" does not belong to the set "{2}" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.'
-                'ElementIsNull'  = 'Cannot validate argument on parameter ''{0}''. The argument is null, empty, or an element of the argument collection contains a null value. Supply a collection that does not contain any null values and then try the command again.'
-                'FindPath'       = "Cannot find path '{0}' because it does not exist."
-                'FindExtn'       = "File '{0}' does not have the required extension."
-                'ScriptValid'    = 'Cannot validate argument on parameter ''{0}''. The "{1}" validation script for the argument with value "{2}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
-                'LoadingObjFile' = "Error loading object from '{0}'"
-            }
-
-            foreach ($key in $CustomErrors) {
-                if ($stdErrors.ContainsKey($key)) {
-                    $stdErrors[$key] = $CustomErrors[$key]
-                }
-                else {
-                    $stdErrors.Add($key, $CustomErrors[$key])
-                }
-            }
-
-            return ($stdErrors)
-        }
-        end {
-            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
-        }
-    }
-
-    function GetScriptFileNames {
-        [CmdletBinding()]
-        [OutputType([string[]])]
+    function Find-FileInTree {
         param (
             [Parameter(Mandatory)]
             [ValidateScript({ (Test-Path $_ -PathType Container) })]
-            [string]$Path,
+            [string]$RootPath,
 
-            [string]$Filter = '*.ps1'
+            [Parameter(Mandatory)]
+            [Alias('Name')]
+            [Alias('Path')]
+            [ValidateNotNullOrEmpty()]
+            [string]$FileName,
+
+            [int]$MaxDepth = 15,
+            [switch]$ReturnStringIfNull
         )
-        return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
+        $depth = 0
+        $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        while ($null -eq $foundFile -and $depth -lt $MaxDepth) {
+            $RootPath = Join-Path $RootPath '..' -Resolve
+            $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $depth++
+        }
+        if ($ReturnStringIfNull -and ($null -eq $foundFile)) {
+            return ("--{0}_NotFound--" -f $FileName)
+        }
+        return $foundFile.FullName
+    }
+
+    function Find-ScriptFile {
+        [CmdletBinding()]
+        [OutputType([string])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Leaf) })]
+            [string]$TestScriptFile
+        )
+        return (Find-FileInTree -RootPath (Split-Path $TestScriptFile -Parent) -FileName ((Split-Path $TestScriptFile -Leaf) -replace '.tests.ps1$', '.ps1'))
     }
 
     function Get-ModuleManifestData {
@@ -297,106 +303,6 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
         end {
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
-        }
-    }
-
-    function Find-FileInTree {
-        param (
-            [Parameter(Mandatory)]
-            [ValidateScript({ (Test-Path $_ -PathType Container) })]
-            [string]$RootPath,
-
-            [Parameter(Mandatory)]
-            [Alias('Name')]
-            [Alias('Path')]
-            [ValidateNotNullOrEmpty()]
-            [string]$FileName,
-
-            [int]$MaxDepth = 15,
-            [switch]$ReturnStringIfNull
-        )
-        $depth = 0
-        $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        while ($null -eq $foundFile -and $depth -lt $MaxDepth) {
-            $RootPath = Join-Path $RootPath '..' -Resolve
-            $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
-            $depth++
-        }
-        if ($ReturnStringIfNull -and ($null -eq $foundFile)) {
-            return ("--{0}_NotFound--" -f $FileName)
-        }
-        return $foundFile.FullName
-    }
-
-    function Find-ScriptFile {
-        [CmdletBinding()]
-        [OutputType([string])]
-        param (
-            [Parameter(Mandatory)]
-            [ValidateScript({ (Test-Path $_ -PathType Leaf) })]
-            [string]$TestScriptFile
-        )
-        return (Find-FileInTree -RootPath (Split-Path $TestScriptFile -Parent) -FileName ((Split-Path $TestScriptFile -Leaf) -replace '.tests.ps1$', '.ps1'))
-    }
-
-    function Import-TestableModuleFile {
-        param (
-            [Parameter(Mandatory)]
-            [ValidateNotNullOrEmpty()]
-            [ValidateScript({ $_.ToLower().Trim().EndsWith('.psd1') -or $_.ToLower().Trim().EndsWith('.psm1') })]
-            [string]$ModuleName,
-            [Parameter(Mandatory)]
-            [ValidateScript({ (Test-Path $_ -PathType Container) })]
-            [string]$ModulePath
-        )
-        $foundModule = Find-FileInTree -RootPath $ModulePath -FileName $ModuleName
-        if ($null -eq $foundModule) {
-            throw "Module file '$ModuleName' not found in path '$ModulePath' or its parent directories."
-        }
-        Import-Module $foundModule -Force -Verbose
-    }
-
-    function Invoke-MockAzCliInternalError {
-        param (
-            [Parameter(Mandatory)]
-            [ValidateRange(-1, 9)]
-            [int]$ExitCode,
-            [Parameter(Mandatory)]
-            [ValidateNotNullOrEmpty()]
-            [string]$ErrorMessage
-        )
-        $global:LASTEXITCODE = $ExitCode
-        $result = @{
-            StdOut   = @($ErrorMessage)
-            ExitCode = $global:LASTEXITCODE
-        }
-        try {
-            Write-Host ('[Invoke-AzCli.tests] {0} ---Mocking Invoke-AzCliInternal--- {1}' -f $____Pester.CurrentTest.Name, $result.StdOut[0]) -BackgroundColor Blue -ForegroundColor White
-            throw $result.StdOut[0]
-        }
-        catch {
-            $result.StdOut += $_
-        }
-        return $result
-    }
-
-    function CleanUpTemporaryGlobalVariables {
-        [CmdletBinding()]
-        [OutputType([System.Collections.Hashtable])]
-        param (
-            [string]$VarPrefix = 'pester_temp_',
-            [string]$TestName = 'CleanUpTemporaryGlobalVariables'
-        )
-        foreach ($frame in (Get-PSCallStack)) {
-            $loc = $frame.Location.ToString()
-            if ($loc.ToLower().Contains('.tests.')) {
-                $TestName = ($loc -split ':' | Select-Object -First 1)
-                break
-            }
-        }
-        foreach ($varName in (Get-Variable -Scope Global | Select-Object -ExpandProperty Name | Where-Object { $_.StartsWith('pester_temp_' ) }) ) {
-            Write-Host "[$TestName] Removing global variable: $varName" -ForegroundColor Green
-            Remove-Variable -Name $varName -Scope Global -ErrorAction SilentlyContinue
         }
     }
 
@@ -474,6 +380,100 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return $scriptFiles
     }
 
+    function Get-ParamValidationErrMessage {
+        [CmdletBinding()]
+        param (
+            [System.Collections.Hashtable]$CustomErrors = @{}
+        )
+        begin {
+            $funcName = 'Get-ParamValidationErrMessage'
+            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} STARTED' -f (Get-Date), $funcName)
+        }
+        process {
+            # Default to Powershell Core
+            $stdErrors = @{
+                '_Default'       = 'xxxxxxx {0}'
+                'NullOrEmpty'    = "Cannot validate argument on parameter '{0}'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again."
+                'CannotConvert'  = 'Cannot process argument transformation on parameter ''{0}''. Cannot convert the "{1}" value of type "{2}" to type "{3}".'
+                'PathTestError'  = 'Cannot validate argument on parameter ''{0}''. The " (Test-Path $_ -PathType Container) " validation script for the argument with value "{1}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
+                'ValidSet'       = 'Cannot validate argument on parameter ''{0}''. The argument "{1}" does not belong to the set "{2}" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.'
+                'ElementIsNull'  = 'Cannot validate argument on parameter ''{0}''. The argument is null, empty, or an element of the argument collection contains a null value. Supply a collection that does not contain any null values and then try the command again.'
+                'FindPath'       = "Cannot find path '{0}' because it does not exist."
+                'FindExtn'       = "File '{0}' does not have the required extension."
+                'ScriptValid'    = 'Cannot validate argument on parameter ''{0}''. The "{1}" validation script for the argument with value "{2}" did not return a result of True. Determine why the validation script failed, and then try the command again.'
+                'LoadingObjFile' = "Error loading object from '{0}'"
+            }
+
+            foreach ($key in $CustomErrors) {
+                if ($stdErrors.ContainsKey($key)) {
+                    $stdErrors[$key] = $CustomErrors[$key]
+                }
+                else {
+                    $stdErrors.Add($key, $CustomErrors[$key])
+                }
+            }
+
+            return ($stdErrors)
+        }
+        end {
+            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
+        }
+    }
+
+    function GetScriptFileNames {
+        [CmdletBinding()]
+        [OutputType([string[]])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [string]$Path,
+
+            [string]$Filter = '*.ps1'
+        )
+        return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
+    }
+
+    function Import-TestableModuleFile {
+        param (
+            [Parameter(Mandatory)]
+            [ValidateNotNullOrEmpty()]
+            [ValidateScript({ $_.ToLower().Trim().EndsWith('.psd1') -or $_.ToLower().Trim().EndsWith('.psm1') })]
+            [string]$ModuleName,
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Container) })]
+            [string]$ModulePath
+        )
+        $foundModule = Find-FileInTree -RootPath $ModulePath -FileName $ModuleName
+        if ($null -eq $foundModule) {
+            throw "Module file '$ModuleName' not found in path '$ModulePath' or its parent directories."
+        }
+        Import-Module $foundModule -Force -Verbose
+    }
+
+    function Invoke-MockAzCliInternalError {
+        param (
+            [Parameter(Mandatory)]
+            [ValidateRange(-1, 9)]
+            [int]$ExitCode,
+            [Parameter(Mandatory)]
+            [ValidateNotNullOrEmpty()]
+            [string]$ErrorMessage
+        )
+        $global:LASTEXITCODE = $ExitCode
+        $result = @{
+            StdOut   = @($ErrorMessage)
+            ExitCode = $global:LASTEXITCODE
+        }
+        try {
+            Write-Host ('[Invoke-AzCli.tests] {0} ---Mocking Invoke-AzCliInternal--- {1}' -f $____Pester.CurrentTest.Name, $result.StdOut[0]) -BackgroundColor Blue -ForegroundColor White
+            throw $result.StdOut[0]
+        }
+        catch {
+            $result.StdOut += $_
+        }
+        return $result
+    }
+
     function New-TestHashTable {
         [CmdletBinding()]
         [OutputType([System.Collections.Hashtable])]
@@ -500,32 +500,6 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
         end {
             return $table
-        }
-    }
-
-    function New-TestTempObject {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $false,
-                Position = 0,
-                ValueFromPipeline = $true,
-                ValueFromPipelineByPropertyName = $true,
-                HelpMessage = 'Number of properties.')]
-            [ValidateRange(1, 99)]
-            [int]
-            $PropertyCount = 10
-        )
-        begin {
-            $tObj = (New-Object psobject)
-        }
-        process {
-            for ($index = 0; $index -lt $PropertyCount; $index++) {
-                $tObj | Add-Member -MemberType NoteProperty -Name ('TestName{0:00}' -f $index) -Value ('TestValue{0:00}' -f $index)
-            }
-            return $tObj
-        }
-        end {
-
         }
     }
 
@@ -575,11 +549,30 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return (ConvertTo-SecureString $InputString -AsPlainText -Force)
     }
 
-    function Test-WpfCanRun {
-        return (
-            [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT -and
-            [System.Threading.Thread]::CurrentThread.ApartmentState -eq 'STA'
+    function New-TestTempObject {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory = $false,
+                Position = 0,
+                ValueFromPipeline = $true,
+                ValueFromPipelineByPropertyName = $true,
+                HelpMessage = 'Number of properties.')]
+            [ValidateRange(1, 99)]
+            [int]
+            $PropertyCount = 10
         )
+        begin {
+            $tObj = (New-Object psobject)
+        }
+        process {
+            for ($index = 0; $index -lt $PropertyCount; $index++) {
+                $tObj | Add-Member -MemberType NoteProperty -Name ('TestName{0:00}' -f $index) -Value ('TestValue{0:00}' -f $index)
+            }
+            return $tObj
+        }
+        end {
+
+        }
     }
 
     function New-UniqueTestKey {
@@ -617,5 +610,12 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             New-Variable -Name $VarName -Scope Global -Value $VarValue -Force
             Write-Host ("Set global test variable '{0}' with value '{1}' of type '[{2}]'" -f $VarName, $VarValue, ($VarValue.GetType().Name)) -ForegroundColor Green
         }
+    }
+
+    function Test-WpfCanRun {
+        return (
+            [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT -and
+            [System.Threading.Thread]::CurrentThread.ApartmentState -eq 'STA'
+        )
     }
 }
