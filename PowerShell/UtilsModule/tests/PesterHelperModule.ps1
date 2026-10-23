@@ -255,7 +255,6 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         )
         begin {
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} BEGIN' -f (Get-Date), $funcName)
-            $privateData = @{}
         }
         process {
             $t_Manifest = Import-PowerShellDataFile -Path (Resolve-Path -LiteralPath $ManifestFile -ErrorAction SilentlyContinue)
@@ -273,17 +272,17 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
                 }
                 switch ($key) {
                     'ManifestFile' {
-                        $t_Manifest['PrivateData'][$key] = $ManifestFile.FullName
+                        $t_Manifest['PrivateData'][$key] = $ManifestFile
                     }
                     'ModulePath' {
-                        $t_Manifest['PrivateData'][$key] = $ManifestFile.DirectoryName
+                        $t_Manifest['PrivateData'][$key] = (Split-Path -Path $ManifestFile -Parent)
                     }
                     'ModuleName' {
                         if ($t_Manifest.Keys -contains 'RootModule') {
                             $t_Manifest['PrivateData'][$key] = ($t_Manifest.RootModule -replace '\.psm1$', '')
                         }
                         else {
-                            $t_Manifest['PrivateData'][$key] = $ManifestFile.BaseName
+                            $t_Manifest['PrivateData'][$key] = ((Split-Path -Path $ManifestFile -Leaf) -replace '\.psd1$', '')
                         }
                     }
                     'ModuleVersion' {
@@ -549,6 +548,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
 
     function New-TestIsPipeline {
         [CmdletBinding()]
+        [OutputType([bool])]
         param ()
 
         if (-not [string]::IsNullOrEmpty($env:TF_BUILD)) {

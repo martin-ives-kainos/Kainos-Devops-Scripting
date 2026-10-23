@@ -43,9 +43,16 @@ if (-not $env:GITHUB_ACTION) {
     $logFile = (Join-Path $logFile '_PSAnalysis.log')
 }
 
+# TODO: Move the PesterHelperModule to it's own repository/product module
+. (Get-ChildItem $moduleRoot -Recurse -File "PesterHelperModule.ps1" | Select-Object -ExpandProperty FullName | Select-Object -First 1)
+if ($null -eq (Get-Command -Name 'New-TestIsPipeline' -ErrorAction SilentlyContinue -Module 'PesterHelper')) {
+    throw "Failed to import PesterHelperModule or 'New-TestIsPipeline' command not found."
+}
+
+
 Write-Host "Module root: $ModuleRoot - Find first manifest file..."
 
-$privateData = @{
+$DefaultPrivateData = @{
     ManifestFile         = $null
     ModuleName           = $null
     ModulePath           = $null
@@ -55,38 +62,19 @@ $privateData = @{
     TestExcludeRules = @()
 }
 foreach ($manifestFile in (Get-ChildItem -Path $ModuleRoot -Recurse -File -Include *.psd1)) {
-    if ($manifestFile) {
-        $t_Manifest = Import-PowerShellDataFile -Path (Resolve-Path -LiteralPath $manifestFile -ErrorAction SilentlyContinue)
-        if (-not $t_Manifest) {
-            continue
-        }
-        if ($t_Manifest.Keys -notcontains 'PrivateData') {
-            continue
-        }
-        $privateData.ModuleName = ($t_Manifest.RootModule -replace '\.psm1$', '')
-        $privateData.ModuleVersion = $t_Manifest.ModuleVersion
-        $privateData.ModulePath = $manifestFile.DirectoryName
-        $privateData.ManifestFile = $manifestFile.FullName
-        foreach ($pdKey in $t_Manifest.PrivateData.Keys) {
-            if ($privateData.Keys -notcontains $pdKey) {
-                $privateData[$pdKey] = $t_Manifest.PrivateData[$pdKey]
-            }
-            else {
-                $privateData[$pdKey] = $t_Manifest.PrivateData[$pdKey]
-            }
-        }
+    $privateData = (Get-ModuleManifestData -ManifestFile $manifestFile -DefaultCustomData $DefaultPrivateData)
+    if ($null -ne $privateData.ModuleName) {
         break
     }
+}
+
+if ($null -eq $privateData.ModuleName) {
+    throw "Failed to determine module name from manifest files in $ModuleRoot"
 }
 
 Write-Host "Starting validation of PowerShell scripts in $ModuleRoot..."
 
 $pspasyntexfiles = @()
-
-$modscriptFolders = @{
-    Scoped = @()
-    Test   = @()
-}
 
 foreach ($scope in ($privateData.ScriptScopes + $privateData.TestFolders)) {
     $scriptsPath = Join-Path $ModuleRoot $scope

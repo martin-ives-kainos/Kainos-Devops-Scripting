@@ -13,11 +13,11 @@ if ($null -eq (Get-Command -Name 'New-TestIsPipeline' -ErrorAction SilentlyConti
 Import-Module (Join-Path $moduleRoot "UtilsModule.psd1")
 $manifestData = (Get-ModuleManifestData -Path (Join-Path $moduleRoot "UtilsModule.psd1"))
 
+$localRunSettings
+
 $filterTags = @('Unit')
 
-$isBuildPipeline = (-not [string]::IsNullOrEmpty($env:TF_BUILD))
-
-if (-not $isBuildPipeline) {
+if (-not (Test-IsPipeline)) {
     $env:BUILD_ARTIFACTSTAGINGDIRECTORY = Join-Path -Path $moduleRoot -ChildPath ".temp"
     if ($IsWindows) {
         $filterTags = (New-WpfSimpleListSelect -Title "Select Test Tags" -Items $manifestData.TestTags)
@@ -41,7 +41,7 @@ $testConfig.TestResult.Enabled = $true
 $testConfig.TestResult.OutputFormat = 'NUnitXml'
 $testConfig.TestResult.OutputPath = (Join-Path $testResultOutputPath "ModuleFunctions.xml")
 
-if (-not $isBuildPipeline) {
+if (-not (Test-IsPipeline)) {
     $runAllTests = Show-MessageBox -Message "Do you want to run $($filterTags -join ', ') tests?" -Title "Run $($filterTags -join ', ') Tests" -Buttons "YesNo" -Default "Yes"
 }
 else {
@@ -61,7 +61,7 @@ catch {
     $_ | Format-List * -Force
 }
 finally {
-    if (-not $isBuildPipeline) {
+    if (-not (Test-IsPipeline)) {
         $runFTCoverage = Show-MessageBox -Message "Do you want to run Function Test Coverage?" -Title "Function Test Coverage" -Buttons "YesNo" -Default "Yes"
     }
     else {
