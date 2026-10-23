@@ -1,13 +1,19 @@
 name: UtilsModule CI
 
 on:
-  push:
-    branches-ignore:
-      - main
-    paths:
-      - 'PowerShell/UtilsModule/**'
-      - '.github/workflows/utilsmodule-ci.yml'
-      - '.github/workflows/wf-PSAnalize-Module.ps1'
+  workflow_dispatch:
+    inputs:
+      filterTags:
+        description: 'Filter tags for tests'
+        required: false
+        default: 'Unit'
+#  push:
+#    branches-ignore:
+#      - main
+#    paths:
+#      - 'PowerShell/UtilsModule/**'
+#      - '.github/workflows/utilsmodule-ci.yml'
+#      - '.github/workflows/wf-PSAnalize-Module.ps1'
 
 permissions:
   contents: read

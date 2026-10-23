@@ -478,9 +478,27 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return $FullPath
     }
 
+    function New-TestIsPipeline {
+        [CmdletBinding()]
+        param ()
+
+        if (-not [string]::IsNullOrEmpty($env:TF_BUILD)) {
+            Write-Host "Running in Azure Pipeline build." -ForegroundColor Yellow
+            return $true
+        }
+        if (-not [string]::IsNullOrEmpty($env:GITHUB_ACTION)) {
+            Write-Host "Running in GitHub Actions." -ForegroundColor Yellow
+            return $true
+        }
+
+        Write-Host "Not running in a recognized pipeline." -ForegroundColor Yellow
+        return $false
+
+    }
+
     function New-TestSecureString {
         [CmdletBinding()]
-        [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText','',Justification = 'Function is only used internally')]
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Function is only used internally')]
         param (
             [Parameter(Mandatory = $true)]
             [string]$InputString
