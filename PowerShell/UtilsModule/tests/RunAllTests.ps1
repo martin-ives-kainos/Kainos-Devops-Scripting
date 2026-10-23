@@ -4,8 +4,14 @@ $ErrorActionPreference = "Stop"
 
 $moduleRoot = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) -ChildPath ".." -Resolve)
 
+# TODO: Move the PesterHelperModule to it's own repository/product module
+. (Get-ChildItem $moduleRoot -Recurse -File "PesterHelperModule.ps1" | Select-Object -ExpandProperty FullName | Select-Object -First 1)
+if ($null -eq (Get-Command -Name 'New-TestIsPipeline' -ErrorAction SilentlyContinue -Module 'PesterHelper')) {
+    throw "Failed to import PesterHelperModule or 'New-TestIsPipeline' command not found."
+}
+
 Import-Module (Join-Path $moduleRoot "UtilsModule.psd1")
-$manifestData = (Read-PsdManifest -Path (Join-Path $moduleRoot "UtilsModule.psd1")).PrivateData
+$manifestData = (Get-ModuleManifestData -Path (Join-Path $moduleRoot "UtilsModule.psd1"))
 
 $filterTags = @('Unit')
 

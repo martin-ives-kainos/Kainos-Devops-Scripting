@@ -1,4 +1,6 @@
 New-Module -Name 'PesterHelper' -ScriptBlock {
+
+
     function ConvertFrom-JsonFile {
         [CmdletBinding()]
         param (
@@ -230,6 +232,73 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [string]$Filter = '*.ps1'
         )
         return (Get-ChildItem $Path -Filter $Filter | Select-Object -ExpandProperty BaseName)
+    }
+
+    function Get-ModuleManifestData {
+        [CmdletBinding()]
+        [OutputType([System.Collections.Hashtable])]
+        param (
+            [Parameter(Mandatory)]
+            [ValidateScript({ (Test-Path $_ -PathType Leaf) })]
+            [Alias('Path')]
+            [string]$ManifestFile,
+            [Hashtable]$DefaultCustomData = @{
+                ManifestFile     = $null
+                ModuleName       = $null
+                ModulePath       = $null
+                ModuleVersion    = $null
+                ScriptScopes     = @('classes', 'private', 'public', 'internal')
+                TestFolders      = @('tests')
+                TestExcludeRules = @()
+                TestTags         = @('Unit', 'Integration', 'Functional', 'Smoke', 'Debug', 'All')
+            }
+        )
+        begin {
+            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} BEGIN' -f (Get-Date), $funcName)
+            $privateData = @{}
+        }
+        process {
+            $t_Manifest = Import-PowerShellDataFile -Path (Resolve-Path -LiteralPath $ManifestFile -ErrorAction SilentlyContinue)
+
+            if ($t_Manifest.Keys -notcontains 'PrivateData') {
+                $t_Manifest['PrivateData'] = @{
+                    PSData = @{}
+                }
+            }
+
+            # Ensure PrivateData has the expected defaultstructure
+            foreach ($key in $DefaultCustomData.Keys) {
+                if ($t_Manifest['PrivateData'].Keys -notcontains $key) {
+                    $t_Manifest['PrivateData'].Add($key, $DefaultCustomData[$key])
+                }
+                switch ($key) {
+                    'ManifestFile' {
+                        $t_Manifest['PrivateData'][$key] = $ManifestFile.FullName
+                    }
+                    'ModulePath' {
+                        $t_Manifest['PrivateData'][$key] = $ManifestFile.DirectoryName
+                    }
+                    'ModuleName' {
+                        if ($t_Manifest.Keys -contains 'RootModule') {
+                            $t_Manifest['PrivateData'][$key] = ($t_Manifest.RootModule -replace '\.psm1$', '')
+                        }
+                        else {
+                            $t_Manifest['PrivateData'][$key] = $ManifestFile.BaseName
+                        }
+                    }
+                    'ModuleVersion' {
+                        if ($t_Manifest.Keys -contains 'ModuleVersion') {
+                            $t_Manifest['PrivateData'][$key] = $t_Manifest.ModuleVersion
+                        }
+                    }
+                }
+            }
+
+            return ($t_Manifest.PrivateData)
+        }
+        end {
+            Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} ENDED' -f (Get-Date), $funcName)
+        }
     }
 
     function Find-FileInTree {
