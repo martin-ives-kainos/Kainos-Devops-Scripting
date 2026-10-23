@@ -3,7 +3,7 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '..\UtilsModule.psd1' -Resolve) -Force -PassThru | Out-Null
     . (Join-Path $PSScriptRoot 'PesterHelperModule.ps1' -Resolve)
 
-    function New-IniTestResults {
+    function New-IniTestResult {
         [CmdletBinding()]
         [OutputType([System.Collections.Hashtable])]
         param (
@@ -33,7 +33,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Parses sections and key/value pairs {0} from: {1}' -f $P_Name, $P_FileName) {
@@ -52,7 +52,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_IgnoresCommentsBlankLines.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Ignores comments and blank lines {0} from: {1}' -f $P_Name, $P_FileName) {
@@ -67,7 +67,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_StoreKeysBeforeSections_global.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Stores keys before a section in _Global {0} from: {1}' -f $P_Name, $P_FileName) {
@@ -82,7 +82,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_TrimWhiteSpace.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
 
@@ -96,7 +96,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValuePairs.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Parses values with embedded environment variables {0} from: {1}' -f $P_Name, $P_FileName) {
@@ -110,7 +110,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_HandlesEmbededEqualsInValue.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Handles values containing equal signs {0} from: {1}' -f $P_Name, $P_FileName) {
@@ -125,7 +125,7 @@ Describe -tag 'Unit' 'ConvertFrom-Ini' {
         @{ P_Name = "Content Parsing"; P_FileName = "Test_ParseSection_KeyValueArray.ini" }
     ) {
         BeforeEach {
-            $result = New-IniTestResults -TestType $P_Name -FileName $P_FileName
+            $result = New-IniTestResult -TestType $P_Name -FileName $P_FileName
             Write-Verbose $result
         }
         It ('Handles array values {0} from: {1}' -f $P_Name, $P_FileName) {

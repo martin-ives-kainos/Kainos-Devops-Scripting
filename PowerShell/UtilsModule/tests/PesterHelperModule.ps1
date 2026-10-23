@@ -50,7 +50,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
                 Object to convert.
         #>
         [CmdletBinding()]
-        [OutputType('hashtable')]
+        [OutputType('System.Collections.Hashtable')]
         param (
             [Parameter(Mandatory = $true,
                 Position = 0,
@@ -106,7 +106,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
-	function CreateConfigTokenizedTestFile {
+    function CreateConfigTokenizedTestFile {
         param (
             [string]$Path,
             [int]$Count = 10,
@@ -124,7 +124,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
-	function CreateStartPointFolder {
+    function CreateStartPointFolder {
         [CmdletBinding()]
         param (
             [string]$DeployScriptsPath,
@@ -179,13 +179,13 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         Set-Content $Path -Value (ConvertTo-Json -Depth 99 -InputObject $configObj)
     }
 
-    function Get-ParamValidationErrMessages {
+    function Get-ParamValidationErrMessage {
         [CmdletBinding()]
         param (
             [System.Collections.Hashtable]$CustomErrors = @{}
         )
         begin {
-            $funcName = 'Get-ParamValidationErrMessages'
+            $funcName = 'Get-ParamValidationErrMessage'
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} STARTED' -f (Get-Date), $funcName)
         }
         process {
@@ -268,7 +268,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [ValidateScript({ (Test-Path $_ -PathType Leaf) })]
             [string]$TestScriptFile
         )
-        return (Find-FileInTree -RootPath (Split-Path $TestScriptFile -Parent) -FileName ((Split-Path $TestScriptFile -Leaf) -Replace '.tests.ps1$', '.ps1'))
+        return (Find-FileInTree -RootPath (Split-Path $TestScriptFile -Parent) -FileName ((Split-Path $TestScriptFile -Leaf) -replace '.tests.ps1$', '.ps1'))
     }
 
     function Import-TestableModuleFile {
@@ -332,9 +332,9 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
-    function Get-ModuleTestableFolders {
+    function Get-ModuleTestableFolder {
         [CmdletBinding()]
-        [OutputType([string[]])]
+        [OutputType([System.Collections.Hashtable])]
         param (
             [Parameter(Mandatory)]
             [ValidateScript({ (Test-Path $_ -PathType Container) })]
@@ -354,9 +354,9 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         return $folderList
     }
 
-    function Get-ModuleTestableScripts {
+    function Get-ModuleTestableScript {
         [CmdletBinding()]
-        [OutputType([hashtable[]])]
+        [OutputType([System.Collections.Hashtable[]])]
         param (
             [Parameter(Mandatory)]
             [ValidateScript({ (Test-Path $_ -PathType Container) })]
@@ -419,14 +419,20 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [int]
             $PropertyCount = 10
         )
-        $table = @{}
-        for ($keyIndex = 0; $keyIndex -lt $PropertyCount; $keyIndex++) {
-            $table.Add(('TestKey{0:00}' -f $keyIndex), @{})
-            for ($index = 0; $index -lt $PropertyCount; $index++) {
-                $table[('TestKey{0:00}' -f $keyIndex)].Add(('TestName{0:00}' -f $index), ('TestValue{0:00}' -f $index))
+        begin {
+            $table = @{}
+        }
+        process {
+            for ($keyIndex = 0; $keyIndex -lt $PropertyCount; $keyIndex++) {
+                $table.Add(('TestKey{0:00}' -f $keyIndex), @{})
+                for ($index = 0; $index -lt $PropertyCount; $index++) {
+                    $table[('TestKey{0:00}' -f $keyIndex)].Add(('TestName{0:00}' -f $index), ('TestValue{0:00}' -f $index))
+                }
             }
         }
-        return $table
+        end {
+            return $table
+        }
     }
 
     function New-TestTempObject {
@@ -441,14 +447,21 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [int]
             $PropertyCount = 10
         )
-        $tObj = (New-Object psobject)
-        for ($index = 0; $index -lt $PropertyCount; $index++) {
-            $tObj | Add-Member -MemberType NoteProperty -Name ('TestName{0:00}' -f $index) -Value ('TestValue{0:00}' -f $index)
+        begin {
+            $tObj = (New-Object psobject)
         }
-        return $tObj
+        process {
+            for ($index = 0; $index -lt $PropertyCount; $index++) {
+                $tObj | Add-Member -MemberType NoteProperty -Name ('TestName{0:00}' -f $index) -Value ('TestValue{0:00}' -f $index)
+            }
+            return $tObj
+        }
+        end {
+
+        }
     }
 
-	function New-TestIniFile {
+    function New-TestIniFile {
         param (
             [string]$Path,
             [switch]$ContentOnly
@@ -463,6 +476,16 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         $FullPath = Join-Path $TestDrive (Split-Path $Path -Leaf)
         $content | Set-Content -Path $FullPath
         return $FullPath
+    }
+
+    function New-TestSecureString {
+        [CmdletBinding()]
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText','',Justification = 'Function is only used internally')]
+        param (
+            [Parameter(Mandatory = $true)]
+            [string]$InputString
+        )
+        return (ConvertTo-SecureString $InputString -AsPlainText -Force)
     }
 
     function Test-WpfCanRun {

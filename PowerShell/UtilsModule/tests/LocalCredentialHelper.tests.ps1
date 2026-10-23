@@ -1,4 +1,10 @@
 BeforeAll {
+    $helperPath = $PSScriptRoot
+    while (-not (Test-Path (Join-Path $helperPath 'PesterHelperModule.ps1'))) {
+        $helperPath = Join-Path $helperPath '..' -Resolve
+    }
+    . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
+
     $script:OriginalUserProfile = $env:USERPROFILE
     . (Join-Path $PSScriptRoot '..\classes\LocalCredentialHelper.ps1' -Resolve)
 }
@@ -14,13 +20,13 @@ Describe 'LocalCredentialHelper' {
 
     It 'builds the saved credential filename under the user profile' {
         [LocalCredentialHelper]::SavedCredentialFileName('ExampleApp') |
-            Should -Be (Join-Path $TestDrive 'LocalCred_ExampleApp.xml')
+        Should -Be (Join-Path $TestDrive 'LocalCred_ExampleApp.xml')
     }
 
     It 'reads an existing saved credential without prompting' {
         $expectedCredential = [pscredential]::new(
             'test-user',
-            (ConvertTo-SecureString 'test-password' -AsPlainText -Force)
+            (New-TestSecureString 'test-password' )
         )
         $savedFile = [LocalCredentialHelper]::SavedCredentialFileName('ExampleApp')
         $expectedCredential | Export-Clixml -Path $savedFile
@@ -34,7 +40,7 @@ Describe 'LocalCredentialHelper' {
     It 'prompts for and saves a credential when no saved file exists' {
         $expectedCredential = [pscredential]::new(
             'prompted-user',
-            (ConvertTo-SecureString 'prompted-password' -AsPlainText -Force)
+            (New-TestSecureString 'prompted-password')
         )
         $savedFile = [LocalCredentialHelper]::SavedCredentialFileName('PromptedApp')
         Remove-Item -LiteralPath $savedFile -Force -ErrorAction SilentlyContinue

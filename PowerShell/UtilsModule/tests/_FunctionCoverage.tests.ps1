@@ -12,7 +12,7 @@ BeforeDiscovery {
     . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
     SetUpGlobalTestVariables -VarName 'pester_temp_RunDate' -VarValue (Get-Date)
     SetUpGlobalTestVariables -VarName 'pester_temp_ModuleRootPath' -VarValue (Join-Path $PSScriptRoot '..' -Resolve)
-    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolders -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
+    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolder -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
     SetUpGlobalTestVariables -VarName 'pester_temp_TestCounter' -VarValue @{TestatableFiles = 0; TestFilesFound = 0 }
 
     $tc_TestCoverageNotRequired = @('ConvertTo-Hashtable.ps1')
@@ -21,7 +21,7 @@ BeforeDiscovery {
     foreach ($scriptPath in $Global:pester_temp_ScriptPaths.Keys | Sort-Object) {
         $tc_ScriptFiles.Add($scriptPath, @())
         Write-Host ("---Processing script path {0}" -f $scriptPath) -ForegroundColor Cyan
-        foreach ($scriptFile in Get-ModuleTestableScripts -ModulePath $Global:pester_temp_ScriptPaths[$scriptPath] -PathType "ScriptFolder" | Select-Object -ExpandProperty tcf_ScriptFile) {
+        foreach ($scriptFile in Get-ModuleTestableScript -ModulePath $Global:pester_temp_ScriptPaths[$scriptPath] -PathType "ScriptFolder" | Select-Object -ExpandProperty tcf_ScriptFile) {
             if ($tc_TestCoverageNotRequired -contains (Split-Path $scriptFile -Leaf)) {
                 Write-Host ("------Skipping test coverage for {0}" -f (Split-Path $scriptFile -Leaf)) -ForegroundColor Yellow
                 continue
@@ -69,7 +69,7 @@ BeforeAll {
 Describe -Tag 'TestCoverage' "Function coverage for UtilsModule" {
     Context "Test the root folder, no scripts requiring tests should be there" {
         It "Should not have any scripts requiring tests in the root folder" {
-            $rootScripts = Get-ModuleTestableScripts -ModulePath $global:pester_temp_ModuleRootPath  -PathType "Root"
+            $rootScripts = Get-ModuleTestableScript -ModulePath $global:pester_temp_ModuleRootPath  -PathType "Root"
             $Global:pester_temp_TestCounter.TestatableFiles += $rootScripts.Count
 
             $rootScripts.Count | Should -Be 0
