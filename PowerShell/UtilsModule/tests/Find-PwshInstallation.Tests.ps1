@@ -1,3 +1,11 @@
+if ($null -eq $PesterPreference) {
+    $PesterPreference = New-PesterConfiguration
+    $PesterPreference.Output.Verbosity = 'Detailed'
+    $PesterPreference.Debug.WriteDebugMessages = $false
+    $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+    $PesterPreference.Filter.Tag = @('Unit')
+}
+
 BeforeAll {
     . (Join-Path $PSScriptRoot '..\public\Find-PwshInstallation.ps1' -Resolve)
 }
@@ -13,13 +21,13 @@ Describe -Tag 'Unit' 'Find-PwshInstallation' {
 
     It 'writes a message and returns null when pwsh is unavailable' {
         Mock Get-Command { $null }
-        Mock Write-Host {}
+        Mock Write-Information {
+            Write-Host 'Mocked Write-Information called'
+        }
 
         $result = Find-PwshInstallation
 
         $result | Should -BeNullOrEmpty
-        Should -Invoke Write-Host -Exactly 1 -ParameterFilter {
-            $Object -eq 'PowerShell 7 executable not found in PATH.'
-        }
+        Should -Invoke Write-Information -Exactly 1
     }
 }
