@@ -33,6 +33,11 @@
 
 # Invoke-AzCli.Tests.ps1
 
+$PesterPreference = New-PesterConfiguration
+# $PesterPreference.Debug.WriteDebugMessages = $true
+# $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+$PesterPreference.Filter.Tag = @('Unit')
+
 function Invoke-MockAzCliInternalError {
     param (
         [Parameter(Mandatory)]
@@ -75,7 +80,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         $global:InvokeAzCliTestArguments = @()
         $global:LASTEXITCODE = 0
     }
-    It 'appends JSON output arguments and parses JSON output by default' {
+    It '[T-001] appends JSON output arguments and parses JSON output by default' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             $global:InvokeAzCliTestArguments = $args[1]
@@ -94,7 +99,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-    It 'appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified' {
+    It '[T-002] appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             $global:InvokeAzCliTestArguments = $args[1]
@@ -114,8 +119,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-
-    It 'does not append JSON output arguments when an output option is supplied' {
+    It '[T-003] does not append JSON output arguments when an output option is supplied' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             $global:InvokeAzCliTestArguments = $args[1]
@@ -126,16 +130,15 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
             }
         }
 
-        $result = Invoke-AzCli -Arguments @('account', 'show', '-o', 'table') -AsJson
+        $result = Invoke-AzCli -Arguments @('account', 'show', '-o', 'table') -AsJson | Select-Object -Last 1
 
-        @($global:InvokeAzCliTestArguments) |
-        Should -BeExactly @('account', 'show', '-o', 'table')
+        @($global:InvokeAzCliTestArguments) | Should -BeExactly @('account', 'show', '-o', 'table')
 
         $result | Should -Be 'demo'
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-    It 'returns raw output when AsJson is disabled' {
+    It '[T-004] returns raw output when AsJson is disabled' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             $global:InvokeAzCliTestArguments = $args[1]
@@ -157,7 +160,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-    It 'returns a successful result object with PassThruOnError' {
+    It '[T-005] returns a successful result object with PassThruOnError' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             Invoke-MockAzCliInternalError -ExitCode 0 -ErrorMessage '123'
@@ -174,7 +177,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-    It 'returns a failure result when Azure CLI exits with a nonzero code' {
+    It '[T-006] returns a failure result when Azure CLI exits with a nonzero code' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             Invoke-MockAzCliInternalError -ExitCode 3 -ErrorMessage 'Resource was not found'
@@ -192,7 +195,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         Should -Invoke Invoke-AzCliInternal -ModuleName 'UtilsModule' -Times 1 -Exactly
     }
 
-    It 'throws when Azure CLI exits with a nonzero code and PassThruOnError is not used' {
+    It '[T-007] throws when Azure CLI exits with a nonzero code and PassThruOnError is not used' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             Invoke-MockAzCliInternalError -ExitCode 7 -ErrorMessage 'Azure CLI failure'
@@ -203,7 +206,8 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         } | Should -Throw '*Azure CLI command failed (exit code 7)*'
     }
 
-    It 'returns ExitCode -1 when command invocation throws' {
+    It '[T-008] returns ExitCode -1 when command invocation throws' {
+        Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             Invoke-MockAzCliInternalError -ExitCode -1 -ErrorMessage 'Azure CLI executable could not be started.'
         }
@@ -216,7 +220,7 @@ Describe -tag 'Unit' 'Invoke-AzCli' {
         $result.ExitCode | Should -Be -1
     }
 
-    It 'returns raw output when successful output is not valid JSON' {
+    It '[T-009] returns raw output when successful output is not valid JSON' {
         Write-Host ('[Invoke-AzCli.tests] {0} Message' -f $____Pester.CurrentTest.Name) -BackgroundColor Green -ForegroundColor Black
         Mock -CommandName Invoke-AzCliInternal -ModuleName 'UtilsModule' -MockWith {
             Invoke-MockAzCliInternalError -ExitCode 0 -ErrorMessage 'not valid JSON'

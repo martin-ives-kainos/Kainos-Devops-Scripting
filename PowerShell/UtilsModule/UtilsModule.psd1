@@ -139,7 +139,7 @@
         )
 
         TestFolders         = @('tests')
-        TestTags            = @('Unit', 'Integration', 'Functional', 'Smoke', 'Debug', 'All')
+        TestTags            = @('Unit', 'Integration', 'Functional', 'Smoke', 'Debug', 'WIP', 'All')
         TestExcludeRules    = @(
             'PSAvoidGlobalVars',
             'PSAvoidUsingWriteHost',
