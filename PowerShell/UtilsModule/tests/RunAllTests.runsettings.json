@@ -23,6 +23,6 @@
   },
   "RunTestStages": {
     "ModuleFunctions": true,
-    "TestCoverage": false
+    "TestCoverage": true
   }
 }
