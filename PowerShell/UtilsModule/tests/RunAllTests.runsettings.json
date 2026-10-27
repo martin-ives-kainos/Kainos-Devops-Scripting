@@ -1,0 +1,28 @@
+{
+  "RequiredEnvVars": {
+    "PESTER_FILTER_TAGS": {
+      "Description": "Tags to filter Pester tests by",
+      "Default": "Unit",
+      "Required": false,
+      "ManifestDataKey": "TestTags"
+    },
+    "PESTER_OUTPUT_ROOT": {
+      "Description": "Output root folder for test results",
+      "Default": "",
+      "Required": true,
+      "ManifestDataKey": ""
+    }
+  },
+  "PesterConfig": {
+    "Should_ErrorAction": "Stop",
+    "Output_Verbosity": "Detailed",
+    "Run_PassThru": true,
+    "Run_Throw": true,
+    "TestResult_Enabled": true,
+    "TestResult_OutputFormat": "NUnitXml"
+  },
+  "RunTestStages": {
+    "ModuleFunctions": true,
+    "TestCoverage": false
+  }
+}

@@ -1,0 +1,652 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="165" errors="0" failures="20" not-run="0" inconclusive="0" ignored="0" skipped="10" invalid="0" date="2026-10-26" time="16:09:26">
+  <environment user-domain="AzureAD" clr-version="10.0.13" machine-name="HDWPJM4" platform="Microsoft Windows 11 Enterprise|C:\windows|\Device\Harddisk0\Partition3" nunit-version="2.5.8.0" cwd="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting" user="MartinIves" os-version="10.0.26200" />
+  <culture-info current-culture="en-GB" current-uiculture="en-US" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="22.3575" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCli.tests.ps1" executed="True" result="Failure" success="False" time="2.3836" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCli.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-AzCli" executed="True" result="Failure" success="False" time="1.3175" asserts="0" description="Invoke-AzCli">
+            <results>
+              <test-case description="appends JSON output arguments and parses JSON output by default" name="Invoke-AzCli.appends JSON output arguments and parses JSON output by default" time="0.6322" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified" name="Invoke-AzCli.appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified" time="0.0611" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not append JSON output arguments when an output option is supplied" name="Invoke-AzCli.does not append JSON output arguments when an output option is supplied" time="0.1349" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'demo', but got @('[Invoke-AzCli] Running: az account show -o table', '[Invoke-AzCli]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes', '[Invoke-AzCli]...Separate error records (from stderr) out of the combined stream', '[Invoke-AzCli] ...Parsing raw output as JSON', 'demo').</message>
+                  <stack-trace>at $result | Should -Be 'demo', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCli.tests.ps1:134</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns raw output when AsJson is disabled" name="Invoke-AzCli.returns raw output when AsJson is disabled" time="0.0547" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected '{"name":"demo"}', but got @('[Invoke-AzCli] Running: az account show', '[Invoke-AzCli]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes', '[Invoke-AzCli]...Separate error records (from stderr) out of the combined stream', '{"name":"demo"}').</message>
+                  <stack-trace>at $result | Should -Be '{"name":"demo"}', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCli.tests.ps1:156</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns a successful result object with PassThruOnError" name="Invoke-AzCli.returns a successful result object with PassThruOnError" time="0.0975" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns a failure result when Azure CLI exits with a nonzero code" name="Invoke-AzCli.returns a failure result when Azure CLI exits with a nonzero code" time="0.052" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="throws when Azure CLI exits with a nonzero code and PassThruOnError is not used" name="Invoke-AzCli.throws when Azure CLI exits with a nonzero code and PassThruOnError is not used" time="0.0591" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns ExitCode -1 when command invocation throws" name="Invoke-AzCli.returns ExitCode -1 when command invocation throws" time="0.0473" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns raw output when successful output is not valid JSON" name="Invoke-AzCli.returns raw output when successful output is not valid JSON" time="0.0612" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'not valid JSON', but got @('[Invoke-AzCli] Running: az account show', '[Invoke-AzCli]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes', '[Invoke-AzCli]...Separate error records (from stderr) out of the combined stream', 'not valid JSON').</message>
+                  <stack-trace>at $result | Should -Be 'not valid JSON', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCli.tests.ps1:227</stack-trace>
+                </failure>
+              </test-case>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCliInternal.tests.ps1" executed="True" result="Success" success="True" time="0.2666" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\azcli\Invoke-AzCliInternal.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-AzCliInternal" executed="True" result="Success" success="True" time="0.1164" asserts="0" description="Invoke-AzCliInternal">
+            <results>
+              <test-case description="forwards arguments and returns standard output and the successful exit code" name="Invoke-AzCliInternal.forwards arguments and returns standard output and the successful exit code" time="0.0859" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns standard output and a nonzero exit code when az fails" name="Invoke-AzCliInternal.returns standard output and a nonzero exit code when az fails" time="0.0247" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Get-WpfDate.tests.ps1" executed="True" result="Success" success="True" time="1.4658" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Get-WpfDate.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-WpfDate" executed="True" result="Success" success="True" time="1.2359" asserts="0" description="Get-WpfDate">
+            <results>
+              <test-case description="returns the selected date and initializes the picker with the default date" name="Get-WpfDate.returns the selected date and initializes the picker with the default date" time="0.9331" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns null when the dialog is closed without accepting" name="Get-WpfDate.returns null when the dialog is closed without accepting" time="0.2984" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\New-WpfEditConfigIni.tests.ps1" executed="True" result="Ignored" success="True" time="0.6726" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\New-WpfEditConfigIni.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="D010: New-WpfEditConfigIni validation" executed="True" result="Ignored" success="True" time="0.1723" asserts="0" description="D010: New-WpfEditConfigIni validation">
+            <results>
+              <test-case description="D010-I010: rejects an empty path" name="D010: New-WpfEditConfigIni validation.D010-I010: rejects an empty path" time="0.0515" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="D010-I020: rejects a null path" name="D010: New-WpfEditConfigIni validation.D010-I020: rejects a null path" time="0.04" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="D010-I030: requires the Path parameter" name="D010: New-WpfEditConfigIni validation.D010-I030: requires the Path parameter" time="0.037" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="D010-I040: rejects execution outside STA mode" name="D010: New-WpfEditConfigIni validation.D010-I040: rejects execution outside STA mode" time="0.0404" asserts="0" success="False" result="Ignored" executed="False" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="D020: New-WpfEditConfigIni dialog" executed="True" result="Ignored" success="True" time="0.364" asserts="0" description="D020: New-WpfEditConfigIni dialog">
+            <results>
+              <test-case description="D020-I010: rejects a missing parent directory" name="D020: New-WpfEditConfigIni dialog.D020-I010: rejects a missing parent directory" time="0.0676" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="D020-I020: reports unsupported syntax with its line number" name="D020: New-WpfEditConfigIni dialog.D020-I020: reports unsupported syntax with its line number" time="0.0729" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="D020-I030: loads global entries, sections, empty values, and embedded equals signs" name="D020: New-WpfEditConfigIni dialog.D020-I030: loads global entries, sections, empty values, and embedded equals signs" time="0.0014" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I040: adds an entry and creates a new INI file" name="D020: New-WpfEditConfigIni dialog.D020-I040: adds an entry and creates a new INI file" time="0.0013" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I050: saves an edited value to an existing file" name="D020: New-WpfEditConfigIni dialog.D020-I050: saves an edited value to an existing file" time="0.0018" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I060: deletes the selected entry and preserves other entries" name="D020: New-WpfEditConfigIni dialog.D020-I060: deletes the selected entry and preserves other entries" time="0.003" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I070: writes global entries before named sections" name="D020: New-WpfEditConfigIni dialog.D020-I070: writes global entries before named sections" time="0.0037" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I080: does not persist edits when cancelled" name="D020: New-WpfEditConfigIni dialog.D020-I080: does not persist edits when cancelled" time="0.003" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I090: does not create a file when a new dialog is cancelled" name="D020: New-WpfEditConfigIni dialog.D020-I090: does not create a file when a new dialog is cancelled" time="0.0031" asserts="0" success="False" result="Ignored" executed="False" />
+              <test-case description="D020-I100: saves an empty configuration" name="D020: New-WpfEditConfigIni dialog.D020-I100: saves an empty configuration" time="0.0029" asserts="0" success="False" result="Ignored" executed="False" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1" executed="True" result="Failure" success="False" time="0.7724" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Show-MessageBox console fallback" executed="True" result="Failure" success="False" time="0.6433" asserts="0" description="Show-MessageBox console fallback">
+            <results>
+              <test-case description="returns OK after the default OK prompt" name="Show-MessageBox console fallback.returns OK after the default OK prompt" time="0.1702" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns Cancel when the user selects cancel for OKCancel" name="Show-MessageBox console fallback.returns Cancel when the user selects cancel for OKCancel" time="0.0339" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'Cancel', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'Cancel').</message>
+                  <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons OKCancel | Should -Be 'Cancel', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:25</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns OK when the user does not select cancel for OKCancel" name="Show-MessageBox console fallback.returns OK when the user does not select cancel for OKCancel" time="0.0334" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'OK', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'OK').</message>
+                  <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons OKCancel | Should -Be 'OK', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:31</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns Yes when the user selects yes for YesNo" name="Show-MessageBox console fallback.returns Yes when the user selects yes for YesNo" time="0.0412" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'Yes', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'Yes').</message>
+                  <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNo | Should -Be 'Yes', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:37</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns No when the user selects no for YesNo" name="Show-MessageBox console fallback.returns No when the user selects no for YesNo" time="0.0333" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'No', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'No').</message>
+                  <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNo | Should -Be 'No', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:43</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns the configured default when the response is blank" name="Show-MessageBox console fallback.returns the configured default when the response is blank" time="0.0421" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'Yes', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'Yes').</message>
+                  <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNo -Default Yes | Should -Be 'Yes', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:49</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns the configured default when the response times out" name="Show-MessageBox console fallback.returns the configured default when the response times out" time="0.1044" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'Yes', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'Yes').</message>
+                  <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNo -Default Yes -TimeoutSeconds 5 | Should -Be 'Yes', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:55</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="rejects a default that is not in the button set" name="Show-MessageBox console fallback.rejects a default that is not in the button set" time="0.0394" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects an unsupported button set" name="Show-MessageBox console fallback.rejects an unsupported button set" time="0.0402" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="Show-MessageBox console fallback.returns YesNoCancel selection based on the user input" executed="True" result="Failure" success="False" time="0.1006" asserts="0" description="returns YesNoCancel selection based on the user input">
+                <results>
+                  <test-case description="returns YesNoCancel selection based on the user input" name="Show-MessageBox console fallback.returns YesNoCancel selection based on the user input(&quot;Yes&quot;,&quot;y&quot;)" time="0.0347" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'Yes', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'Yes').</message>
+                      <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNoCancel | Should -Be $Expected, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:72</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="returns YesNoCancel selection based on the user input" name="Show-MessageBox console fallback.returns YesNoCancel selection based on the user input(&quot;No&quot;,&quot;n&quot;)" time="0.0348" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'No', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'No').</message>
+                      <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNoCancel | Should -Be $Expected, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:72</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="returns YesNoCancel selection based on the user input" name="Show-MessageBox console fallback.returns YesNoCancel selection based on the user input(&quot;Cancel&quot;,&quot;x&quot;)" time="0.0312" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'Cancel', but got @('Waiting for message box response...', &lt;empty&gt;, '=== Information ===', 'Continue?', &lt;empty&gt;, 'Cancel').</message>
+                      <stack-trace>at Show-MessageBox -Message 'Continue?' -Buttons YesNoCancel | Should -Be $Expected, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\dialog\Show-MessageBox.tests.ps1:72</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\excel\Set-ExcelWorkbookCategory.tests.ps1" executed="True" result="Failure" success="False" time="0.4466" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\excel\Set-ExcelWorkbookCategory.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Set-ExcelWorkbookCategory" executed="True" result="Failure" success="False" time="0.3068" asserts="0" description="Set-ExcelWorkbookCategory">
+            <results>
+              <test-case description="sets the requested category and closes the workbook" name="Set-ExcelWorkbookCategory.sets the requested category and closes the workbook" time="0.1259" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="uses Confidential as the default category" name="Set-ExcelWorkbookCategory.uses Confidential as the default category" time="0.0279" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="accepts workbook paths from the pipeline by property name" name="Set-ExcelWorkbookCategory.accepts workbook paths from the pipeline by property name" time="0.0311" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="warns and skips workbooks that do not exist" name="Set-ExcelWorkbookCategory.warns and skips workbooks that do not exist" time="0.0744" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected Close-ExcelPackage to be called 0 times exactly, but was called 1 time
+Performed invocations:
+  [*] Close-ExcelPackage -ExcelPackage PSObject{Workbook=PSObject{Properties=PSObject{Category=$null}}} from C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\excel\Set-ExcelWorkbookCategory.tests.ps1:31</message>
+                  <stack-trace>at Should -Invoke Close-ExcelPackage -Times 0 -Exactly, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\excel\Set-ExcelWorkbookCategory.tests.ps1:67</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="rejects unsupported classifications" name="Set-ExcelWorkbookCategory.rejects unsupported classifications" time="0.0441" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\fileio\Get-UserShellPath.tests.ps1" executed="True" result="Success" success="True" time="0.3595" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\fileio\Get-UserShellPath.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-UserShellPath" executed="True" result="Success" success="True" time="0.2426" asserts="0" description="Get-UserShellPath">
+            <results>
+              <test-case description="returns the path for a valid user shell folder" name="Get-UserShellPath.returns the path for a valid user shell folder" time="0.12" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="throws when the folder name is not a valid user shell folder" name="Get-UserShellPath.throws when the folder name is not a valid user shell folder" time="0.0487" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not query the folder path for an invalid folder name" name="Get-UserShellPath.does not query the folder path for an invalid folder name" time="0.0318" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects an empty folder name" name="Get-UserShellPath.rejects an empty folder name" time="0.0381" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\fileio\New-FolderNamesByMonth.tests.ps1" executed="True" result="Success" success="True" time="0.4289" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\fileio\New-FolderNamesByMonth.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="New-FolderNamesByMonth" executed="True" result="Success" success="True" time="0.2117" asserts="0" description="New-FolderNamesByMonth">
+            <results>
+              <test-suite type="TestFixture" name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath" executed="True" result="Success" success="True" time="0.2092" asserts="0" description="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath">
+                <results>
+                  <test-suite type="ParameterizedTest" name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for " executed="True" result="Success" success="True" time="0.1463" asserts="0" description="Returns the expected values for month number for ">
+                    <results>
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (1,31,&quot;January&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Jan&quot;)" time="0.0324" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (2,28,&quot;February&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Feb&quot;)" time="0.0088" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (3,31,&quot;March&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Mar&quot;)" time="0.0064" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (4,30,&quot;April&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Apr&quot;)" time="0.007" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (5,31,&quot;May&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;May&quot;)" time="0.0179" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (6,30,&quot;June&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Jun&quot;)" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (7,31,&quot;July&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Jul&quot;)" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (8,31,&quot;August&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Aug&quot;)" time="0.0121" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (9,30,&quot;September&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Sept&quot;)" time="0.007" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (10,31,&quot;October&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Oct&quot;)" time="0.0181" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (11,30,&quot;November&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Nov&quot;)" time="0.0096" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Returns the expected values for month number for " name="New-FolderNamesByMonth.Folder Names By Month No Path/RootPath.Returns the expected values for month number for (12,31,&quot;December&quot;,&quot;FullName=true;AbbreviatedName=true;MaximumDays=true;Path=false&quot;,&quot;Dec&quot;)" time="0.0129" asserts="0" success="True" result="Success" executed="True" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ini\ConvertTo-IniValue.Tests.ps1" executed="True" result="Success" success="True" time="0.2765" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ini\ConvertTo-IniValue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="ConvertTo-IniValue Tests" executed="True" result="Success" success="True" time="0.086" asserts="0" description="ConvertTo-IniValue Tests">
+            <results>
+              <test-suite type="TestFixture" name="ConvertTo-IniValue Tests.Test a set of expected INI values" executed="True" result="Success" success="True" time="0.0837" asserts="0" description="ConvertTo-IniValue Tests.Test a set of expected INI values">
+                <results>
+                  <test-suite type="ParameterizedTest" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found" executed="True" result="Success" success="True" time="0.0805" asserts="0" description="Test section is valid and found">
+                    <results>
+                      <test-case description="Test section is valid and found" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found(&quot;Name&quot;,&quot;MartinIves&quot;)" time="0.0351" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found(&quot;Enabled&quot;,&quot;true&quot;)" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found(&quot;Count&quot;,&quot;42&quot;)" time="0.019" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found(&quot;StartDate&quot;,&quot;2026-10-26T16:09:33.4234771+00:00&quot;)" time="0.0069" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found(&quot;Servers&quot;,&quot;web01|web02&quot;)" time="0.0042" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="ConvertTo-IniValue Tests.Test a set of expected INI values.Test section is valid and found(&quot;Settings&quot;,&quot;{&quot;Retry&quot;:3,&quot;Timeout&quot;:30}&quot;)" time="0.01" asserts="0" success="True" result="Success" executed="True" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ini\Read-IniConfig.Tests.ps1" executed="True" result="Success" success="True" time="0.6569" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ini\Read-IniConfig.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Read-IniConfig Tests" executed="True" result="Success" success="True" time="0.2735" asserts="0" description="Read-IniConfig Tests">
+            <results>
+              <test-suite type="TestFixture" name="Read-IniConfig Tests.When the INI file exists" executed="True" result="Success" success="True" time="0.1552" asserts="0" description="Read-IniConfig Tests.When the INI file exists">
+                <results>
+                  <test-suite type="ParameterizedTest" name="Read-IniConfig Tests.When the INI file exists.Test section is valid and found" executed="True" result="Success" success="True" time="0.1515" asserts="0" description="Test section is valid and found">
+                    <results>
+                      <test-case description="Test section is valid and found" name="Read-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;SQL01&quot;,&quot;Database&quot;,&quot;Server&quot;)" time="0.0845" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Read-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;1433&quot;,&quot;Database&quot;,&quot;Port&quot;)" time="0.0197" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Read-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;MyApp&quot;,&quot;Application&quot;,&quot;Name&quot;)" time="0.0183" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Read-IniConfig Tests.When the INI file exists.Test section is valid and found(True,&quot;Application&quot;,&quot;Debug&quot;)" time="0.0161" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Read-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;MartinIves&quot;,&quot;EnvVars&quot;,&quot;UserName&quot;)" time="0.013" asserts="0" success="True" result="Success" executed="True" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Read-IniConfig Tests.When the INI file does not exist but DefaultData is provided" executed="True" result="Success" success="True" time="0.2255" asserts="0" description="Read-IniConfig Tests.When the INI file does not exist but DefaultData is provided">
+                <results>
+                  <test-case description="Created INI file successfully contains the DefaultData" name="Read-IniConfig Tests.When the INI file does not exist but DefaultData is provided.Created INI file successfully contains the DefaultData" time="0.0672" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Read-IniConfig Tests.When the INI file does not exist and no DefaultData is provided" executed="True" result="Success" success="True" time="0.271" asserts="0" description="Read-IniConfig Tests.When the INI file does not exist and no DefaultData is provided">
+                <results>
+                  <test-case description="Should throw an error" name="Read-IniConfig Tests.When the INI file does not exist and no DefaultData is provided.Should throw an error" time="0.0422" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ini\Save-IniConfig.Tests.ps1" executed="True" result="Ignored" success="True" time="0.6121" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ini\Save-IniConfig.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Save-IniConfig Tests" executed="True" result="Ignored" success="True" time="0.1671" asserts="0" description="Save-IniConfig Tests">
+            <results>
+              <test-suite type="TestFixture" name="Save-IniConfig Tests.When the INI file exists" executed="True" result="Success" success="True" time="0.1166" asserts="0" description="Save-IniConfig Tests.When the INI file exists">
+                <results>
+                  <test-suite type="ParameterizedTest" name="Save-IniConfig Tests.When the INI file exists.Test section is valid and found" executed="True" result="Success" success="True" time="0.113" asserts="0" description="Test section is valid and found">
+                    <results>
+                      <test-case description="Test section is valid and found" name="Save-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;SQL02&quot;,&quot;Database&quot;,&quot;Server&quot;)" time="0.0657" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Save-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;9999&quot;,&quot;Database&quot;,&quot;Port&quot;)" time="0.0191" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Save-IniConfig Tests.When the INI file exists.Test section is valid and found(&quot;MyApp2&quot;,&quot;Application&quot;,&quot;Name&quot;)" time="0.0133" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Test section is valid and found" name="Save-IniConfig Tests.When the INI file exists.Test section is valid and found(False,&quot;Application&quot;,&quot;Debug&quot;)" time="0.0148" asserts="0" success="True" result="Success" executed="True" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Save-IniConfig Tests.When the INI file does not exist but DefaultData is provided" executed="True" result="Success" success="True" time="0.1576" asserts="0" description="Save-IniConfig Tests.When the INI file does not exist but DefaultData is provided">
+                <results>
+                  <test-case description="Created INI file successfully contains the DefaultData" name="Save-IniConfig Tests.When the INI file does not exist but DefaultData is provided.Created INI file successfully contains the DefaultData" time="0.0358" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Save-IniConfig Tests.Test saving specific data types" executed="True" result="Ignored" success="True" time="0.1639" asserts="0" description="Save-IniConfig Tests.Test saving specific data types">
+                <results>
+                  <test-case description="Throw an error saving an object as a value" name="Save-IniConfig Tests.Test saving specific data types.Throw an error saving an object as a value" time="0.0023" asserts="0" success="False" result="Ignored" executed="False" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxShapeText.tests.ps1" executed="True" result="Success" success="True" time="0.2223" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxShapeText.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-PptxShapeText" executed="True" result="Success" success="True" time="0.0966" asserts="0" description="Get-PptxShapeText">
+            <results>
+              <test-case description="returns text from a shape with a text frame" name="Get-PptxShapeText.returns text from a shape with a text frame" time="0.023" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns an empty string for a shape without text or a table" name="Get-PptxShapeText.returns an empty string for a shape without text or a table" time="0.0156" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="concatenates text from grouped shapes recursively" name="Get-PptxShapeText.concatenates text from grouped shapes recursively" time="0.0176" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="concatenates table cell text in row-major order" name="Get-PptxShapeText.concatenates table cell text in row-major order" time="0.0372" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxSlidesDatedSlide.tests.ps1" executed="True" result="Failure" success="False" time="0.3157" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxSlidesDatedSlide.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-PptxSlidesDatedSlide" executed="True" result="Failure" success="False" time="0.1785" asserts="0" description="Get-PptxSlidesDatedSlide">
+            <results>
+              <test-case description="returns only slides in the default slide range" name="Get-PptxSlidesDatedSlide.returns only slides in the default slide range" time="0.0276" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 2, but got 4.</message>
+                  <stack-trace>at $result.Count | Should -Be 2, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxSlidesDatedSlide.tests.ps1:45</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="extracts a date and matching month line and hides the slide" name="Get-PptxSlidesDatedSlide.extracts a date and matching month line and hides the slide" time="0.0808" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 1, but got 3.</message>
+                  <stack-trace>at $result.Count | Should -Be 1, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxSlidesDatedSlide.tests.ps1:64</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="uses the configured slide range and month names" name="Get-PptxSlidesDatedSlide.uses the configured slide range and month names" time="0.0384" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 1, but got 3.</message>
+                  <stack-trace>at $result.Count | Should -Be 1, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\powerpoint\Get-PptxSlidesDatedSlide.tests.ps1:82</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="rejects a start slide greater than the end slide" name="Get-PptxSlidesDatedSlide.rejects a start slide greater than the end slide" time="0.0278" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Get-DuplicatedUserEnvPath.tests.ps1" executed="True" result="Success" success="True" time="0.2011" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Get-DuplicatedUserEnvPath.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-DuplicatedUserEnvPath" executed="True" result="Success" success="True" time="0.0867" asserts="0" description="Get-DuplicatedUserEnvPath">
+            <results>
+              <test-case description="rejects an unsupported environment variable name" name="Get-DuplicatedUserEnvPath.rejects an unsupported environment variable name" time="0.0277" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="Get-DuplicatedUserEnvPath.returns only user paths also present in the machine environment for &lt;VariableName&gt;" executed="True" result="Success" success="True" time="0.0559" asserts="0" description="returns only user paths also present in the machine environment for &lt;VariableName&gt;">
+                <results>
+                  <test-case description="returns only user paths also present in the machine environment for Path" name="Get-DuplicatedUserEnvPath.returns only user paths also present in the machine environment for Path" time="0.0524" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns only user paths also present in the machine environment for PSModulePath" name="Get-DuplicatedUserEnvPath.returns only user paths also present in the machine environment for PSModulePath" time="0.0035" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Install-ReqdUserModule.tests.ps1" executed="True" result="Success" success="True" time="3.9203" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Install-ReqdUserModule.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Install-ReqdUserModule" executed="True" result="Success" success="True" time="3.7719" asserts="0" description="Install-ReqdUserModule">
+            <results>
+              <test-case description="requires a non-empty module name" name="Install-ReqdUserModule.requires a non-empty module name" time="0.0468" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns the installed module when it is already current" name="Install-ReqdUserModule.returns the installed module when it is already current" time="3.6152" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="installs and returns the module when a newer version is available" name="Install-ReqdUserModule.installs and returns the module when a newer version is available" time="0.1072" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Read-PsdManifest.tests.ps1" executed="True" result="Success" success="True" time="0.2786" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Read-PsdManifest.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Read-PsdManifest" executed="True" result="Success" success="True" time="0.156" asserts="0" description="Read-PsdManifest">
+            <results>
+              <test-case description="reads manifest data including nested hashtables" name="Read-PsdManifest.reads manifest data including nested hashtables" time="0.0506" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects a path that does not exist" name="Read-PsdManifest.rejects a path that does not exist" time="0.0283" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects a directory path" name="Read-PsdManifest.rejects a directory path" time="0.0275" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="throws when the manifest contents are invalid" name="Read-PsdManifest.throws when the manifest contents are invalid" time="0.0463" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Update-UserEnvPath.tests.ps1" executed="True" result="Success" success="True" time="1.0626" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\system\Update-UserEnvPath.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Update-UserEnvPath" executed="True" result="Success" success="True" time="0.9176" asserts="0" description="Update-UserEnvPath">
+            <results>
+              <test-case description="adds a new path to the user environment variable" name="Update-UserEnvPath.adds a new path to the user environment variable" time="0.3103" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not add a path that already exists for the user" name="Update-UserEnvPath.does not add a path that already exists for the user" time="0.11" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="removes an existing user path" name="Update-UserEnvPath.removes an existing user path" time="0.1859" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not save when the requested path is already absent" name="Update-UserEnvPath.does not save when the requested path is already absent" time="0.0914" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects an unsupported environment variable name" name="Update-UserEnvPath.rejects an unsupported environment variable name" time="0.1099" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects an unsupported action" name="Update-UserEnvPath.rejects an unsupported action" time="0.1074" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ConvertFrom-Ini.tests.ps1" executed="True" result="Success" success="True" time="0.8247" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ConvertFrom-Ini.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="ConvertFrom-Ini" executed="True" result="Success" success="True" time="0.4156" asserts="0" description="ConvertFrom-Ini">
+            <results>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini" executed="True" result="Success" success="True" time="0.0777" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini">
+                <results>
+                  <test-case description="Parses sections and key/value pairs File Parsing from: Test_ParseSection_KeyValuePairs.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini.Parses sections and key/value pairs File Parsing from: Test_ParseSection_KeyValuePairs.ini" time="0.0619" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini" executed="True" result="Success" success="True" time="0.0896" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini">
+                <results>
+                  <test-case description="Parses sections and key/value pairs Content Parsing from: Test_ParseSection_KeyValuePairs.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini.Parses sections and key/value pairs Content Parsing from: Test_ParseSection_KeyValuePairs.ini" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_IgnoresCommentsBlankLines.ini" executed="True" result="Success" success="True" time="0.1355" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_IgnoresCommentsBlankLines.ini">
+                <results>
+                  <test-case description="Ignores comments and blank lines File Parsing from: Test_IgnoresCommentsBlankLines.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_IgnoresCommentsBlankLines.ini.Ignores comments and blank lines File Parsing from: Test_IgnoresCommentsBlankLines.ini" time="0.042" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_IgnoresCommentsBlankLines.ini" executed="True" result="Success" success="True" time="0.142" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_IgnoresCommentsBlankLines.ini">
+                <results>
+                  <test-case description="Ignores comments and blank lines Content Parsing from: Test_IgnoresCommentsBlankLines.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_IgnoresCommentsBlankLines.ini.Ignores comments and blank lines Content Parsing from: Test_IgnoresCommentsBlankLines.ini" time="0.0037" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_StoreKeysBeforeSections_global.ini" executed="True" result="Success" success="True" time="0.1935" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_StoreKeysBeforeSections_global.ini">
+                <results>
+                  <test-case description="Stores keys before a section in _Global File Parsing from: Test_StoreKeysBeforeSections_global.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_StoreKeysBeforeSections_global.ini.Stores keys before a section in _Global File Parsing from: Test_StoreKeysBeforeSections_global.ini" time="0.0472" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_StoreKeysBeforeSections_global.ini" executed="True" result="Success" success="True" time="0.2026" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_StoreKeysBeforeSections_global.ini">
+                <results>
+                  <test-case description="Stores keys before a section in _Global Content Parsing from: Test_StoreKeysBeforeSections_global.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_StoreKeysBeforeSections_global.ini.Stores keys before a section in _Global Content Parsing from: Test_StoreKeysBeforeSections_global.ini" time="0.0052" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_TrimWhiteSpace.ini" executed="True" result="Success" success="True" time="0.2562" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_TrimWhiteSpace.ini">
+                <results>
+                  <test-case description="Trims whitespace around keys and values File Parsing from: Test_TrimWhiteSpace.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_TrimWhiteSpace.ini.Trims whitespace around keys and values File Parsing from: Test_TrimWhiteSpace.ini" time="0.0493" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_TrimWhiteSpace.ini" executed="True" result="Success" success="True" time="0.2655" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_TrimWhiteSpace.ini">
+                <results>
+                  <test-case description="Trims whitespace around keys and values Content Parsing from: Test_TrimWhiteSpace.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_TrimWhiteSpace.ini.Trims whitespace around keys and values Content Parsing from: Test_TrimWhiteSpace.ini" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini" executed="True" result="Success" success="True" time="0.2901" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini">
+                <results>
+                  <test-case description="Parses values with embedded environment variables File Parsing from: Test_ParseSection_KeyValuePairs.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini.Parses values with embedded environment variables File Parsing from: Test_ParseSection_KeyValuePairs.ini" time="0.0213" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini" executed="True" result="Success" success="True" time="0.3022" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini">
+                <results>
+                  <test-case description="Parses values with embedded environment variables Content Parsing from: Test_ParseSection_KeyValuePairs.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValuePairs.ini.Parses values with embedded environment variables Content Parsing from: Test_ParseSection_KeyValuePairs.ini" time="0.0092" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_HandlesEmbededEqualsInValue.ini" executed="True" result="Success" success="True" time="0.3505" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_HandlesEmbededEqualsInValue.ini">
+                <results>
+                  <test-case description="Handles values containing equal signs File Parsing from: Test_HandlesEmbededEqualsInValue.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_HandlesEmbededEqualsInValue.ini.Handles values containing equal signs File Parsing from: Test_HandlesEmbededEqualsInValue.ini" time="0.0461" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_HandlesEmbededEqualsInValue.ini" executed="True" result="Success" success="True" time="0.3556" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_HandlesEmbededEqualsInValue.ini">
+                <results>
+                  <test-case description="Handles values containing equal signs Content Parsing from: Test_HandlesEmbededEqualsInValue.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_HandlesEmbededEqualsInValue.ini.Handles values containing equal signs Content Parsing from: Test_HandlesEmbededEqualsInValue.ini" time="0.0031" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValueArray.ini" executed="True" result="Success" success="True" time="0.4071" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValueArray.ini">
+                <results>
+                  <test-case description="Handles array values File Parsing from: Test_ParseSection_KeyValueArray.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValueArray.ini.Handles array values File Parsing from: Test_ParseSection_KeyValueArray.ini" time="0.0486" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValueArray.ini" executed="True" result="Success" success="True" time="0.4137" asserts="0" description="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValueArray.ini">
+                <results>
+                  <test-case description="Handles array values Content Parsing from: Test_ParseSection_KeyValueArray.ini" name="ConvertFrom-Ini.File and Content Parsing - Test_ParseSection_KeyValueArray.ini.Handles array values Content Parsing from: Test_ParseSection_KeyValueArray.ini" time="0.0046" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ConvertTo-Ini.tests.ps1" executed="True" result="Success" success="True" time="0.495" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\ConvertTo-Ini.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="ConvertTo-Ini" executed="True" result="Success" success="True" time="0.174" asserts="0" description="ConvertTo-Ini">
+            <results>
+              <test-case description="Throws an error when the path is empty" name="ConvertTo-Ini.Throws an error when the path is empty" time="0.044" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Throws an error when the path is invalid" name="ConvertTo-Ini.Throws an error when the path is invalid" time="0.0303" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Converts a hashtable to INI format" name="ConvertTo-Ini.Converts a hashtable to INI format" time="0.0482" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Writes global keys without a section header" name="ConvertTo-Ini.Writes global keys without a section header" time="0.0433" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Find-PwshInstallation.Tests.ps1" executed="True" result="Failure" success="False" time="0.2027" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Find-PwshInstallation.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Find-PwshInstallation" executed="True" result="Failure" success="False" time="0.0883" asserts="0" description="Find-PwshInstallation">
+            <results>
+              <test-case description="returns the executable path when pwsh is available" name="Find-PwshInstallation.returns the executable path when pwsh is available" time="0.057" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="writes a message and returns null when pwsh is unavailable" name="Find-PwshInstallation.writes a message and returns null when pwsh is unavailable" time="0.0292" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected $null or empty, but got @('PowerShell 7 executable not found in PATH.', $null).</message>
+                  <stack-trace>at $result | Should -BeNullOrEmpty, C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Find-PwshInstallation.Tests.ps1:20</stack-trace>
+                </failure>
+              </test-case>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Get-DateFromString.Tests.ps1" executed="True" result="Success" success="True" time="0.1863" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Get-DateFromString.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-DateFromString" executed="True" result="Success" success="True" time="0.0797" asserts="0" description="Get-DateFromString">
+            <results>
+              <test-case description="parses an input using the supplied exact format" name="Get-DateFromString.parses an input using the supplied exact format" time="0.0247" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="removes ordinal suffixes before parsing" name="Get-DateFromString.removes ordinal suffixes before parsing" time="0.0184" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="falls back to standard parsing when no exact format matches" name="Get-DateFromString.falls back to standard parsing when no exact format matches" time="0.0177" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns an unsuccessful result for an unparseable input" name="Get-DateFromString.returns an unsuccessful result for an unparseable input" time="0.0157" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Get-MonthDays.tests.ps1" executed="True" result="Success" success="True" time="0.1682" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Get-MonthDays.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-MonthDay" executed="True" result="Success" success="True" time="0.0672" asserts="0" description="Get-MonthDay">
+            <results>
+              <test-case description="returns a table with twelve months" name="Get-MonthDay.returns a table with twelve months" time="0.0146" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="uses the current culture month names" name="Get-MonthDay.uses the current culture month names" time="0.018" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns the maximum number of days for each month" name="Get-MonthDay.returns the maximum number of days for each month" time="0.0196" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Get-PathEnvVar.tests.ps1" executed="True" result="Success" success="True" time="0.21" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Get-PathEnvVar.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-PathEnvVar" executed="True" result="Success" success="True" time="0.103" asserts="0" description="Get-PathEnvVar">
+            <results>
+              <test-case description="returns the machine Path split on semicolons with boundary semicolons removed" name="Get-PathEnvVar.returns the machine Path split on semicolons with boundary semicolons removed" time="0.0214" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="accepts Name as an alias for VariableName" name="Get-PathEnvVar.accepts Name as an alias for VariableName" time="0.0228" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects unsupported environment variable names" name="Get-PathEnvVar.rejects unsupported environment variable names" time="0.0277" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects unsupported scopes" name="Get-PathEnvVar.rejects unsupported scopes" time="0.0284" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Invoke-AzCli.tests.ps1" executed="True" result="Failure" success="False" time="0.5653" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Invoke-AzCli.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-AzCli" executed="True" result="Failure" success="False" time="0.2171" asserts="0" description="Invoke-AzCli">
+            <results>
+              <test-case description="appends JSON output arguments and parses JSON output by default" name="Invoke-AzCli.appends JSON output arguments and parses JSON output by default" time="0.0546" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified" name="Invoke-AzCli.appends JSON output arguments, parses JSON output by default, saves output to a file when DataFilePath is specified" time="0.023" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not append JSON output arguments when an output option is supplied" name="Invoke-AzCli.does not append JSON output arguments when an output option is supplied" time="0.0544" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'demo', but got @('[Invoke-AzCli] Running: az account show -o table', '[Invoke-AzCli]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes', '[Invoke-AzCli]...Separate error records (from stderr) out of the combined stream', '[Invoke-AzCli] ...Parsing raw output as JSON', 'demo').</message>
+                  <stack-trace>at $result | Should -Be 'demo', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Invoke-AzCli.tests.ps1:115</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns raw output when AsJson is disabled" name="Invoke-AzCli.returns raw output when AsJson is disabled" time="0.0247" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected '{"name":"demo"}', but got @('[Invoke-AzCli] Running: az account show', '[Invoke-AzCli]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes', '[Invoke-AzCli]...Separate error records (from stderr) out of the combined stream', '{"name":"demo"}').</message>
+                  <stack-trace>at $result | Should -Be '{"name":"demo"}', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Invoke-AzCli.tests.ps1:137</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="returns a successful result object with PassThruOnError" name="Invoke-AzCli.returns a successful result object with PassThruOnError" time="0.0106" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns a failure result when Azure CLI exits with a nonzero code" name="Invoke-AzCli.returns a failure result when Azure CLI exits with a nonzero code" time="0.014" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="throws when Azure CLI exits with a nonzero code and PassThruOnError is not used" name="Invoke-AzCli.throws when Azure CLI exits with a nonzero code and PassThruOnError is not used" time="0.0098" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns ExitCode -1 when command invocation throws" name="Invoke-AzCli.returns ExitCode -1 when command invocation throws" time="0.0089" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="returns raw output when successful output is not valid JSON" name="Invoke-AzCli.returns raw output when successful output is not valid JSON" time="0.0124" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected 'not valid JSON', but got @('[Invoke-AzCli] Running: az account show', '[Invoke-AzCli]...Capture stdout and stderr separately, avoid throwing on non-terminating stream writes', '[Invoke-AzCli]...Separate error records (from stderr) out of the combined stream', 'not valid JSON').</message>
+                  <stack-trace>at $result | Should -Be 'not valid JSON', C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Invoke-AzCli.tests.ps1:208</stack-trace>
+                </failure>
+              </test-case>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\LocalCredentialHelper.tests.ps1" executed="True" result="Success" success="True" time="0.3137" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\LocalCredentialHelper.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="LocalCredentialHelper" executed="True" result="Success" success="True" time="0.175" asserts="0" description="LocalCredentialHelper">
+            <results>
+              <test-case description="builds the saved credential filename under the user profile" name="LocalCredentialHelper.builds the saved credential filename under the user profile" time="0.029" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="reads an existing saved credential without prompting" name="LocalCredentialHelper.reads an existing saved credential without prompting" time="0.0708" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="prompts for and saves a credential when no saved file exists" name="LocalCredentialHelper.prompts for and saves a credential when no saved file exists" time="0.0727" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\New-PesterExcelReport.tests.ps1" executed="True" result="Success" success="True" time="4.0273" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\New-PesterExcelReport.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Check requirements to be able to runNew-PesterExcelReport" executed="True" result="Success" success="True" time="3.6455" asserts="0" description="Check requirements to be able to runNew-PesterExcelReport">
+            <results>
+              <test-case description="requires the ImportExcel module" name="Check requirements to be able to runNew-PesterExcelReport.requires the ImportExcel module" time="0.0419" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="New-PesterExcelReport" executed="True" result="Success" success="True" time="3.8825" asserts="0" description="New-PesterExcelReport">
+            <results>
+              <test-case description="exports a summary and test cases to separate worksheets" name="New-PesterExcelReport.exports a summary and test cases to separate worksheets" time="0.1554" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects XML that is not a NUnit test-results document" name="New-PesterExcelReport.rejects XML that is not a NUnit test-results document" time="0.047" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not overwrite an existing workbook without Force" name="New-PesterExcelReport.does not overwrite an existing workbook without Force" time="0.0324" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\New-WpfSimpleListSelect.tests.ps1" executed="True" result="Success" success="True" time="0.1602" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\New-WpfSimpleListSelect.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="New-WpfSimpleListSelect XAML" executed="True" result="Success" success="True" time="0.0227" asserts="0" description="New-WpfSimpleListSelect XAML">
+            <results>
+              <test-case description="contains the named controls required by the selection function" name="New-WpfSimpleListSelect XAML.contains the named controls required by the selection function" time="0.0207" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Read-LocalCredential.tests.ps1" executed="True" result="Success" success="True" time="0.3693" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Read-LocalCredential.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Read-LocalCredential" executed="True" result="Success" success="True" time="0.2283" asserts="0" description="Read-LocalCredential">
+            <results>
+              <test-case description="imports an existing credential without prompting" name="Read-LocalCredential.imports an existing credential without prompting" time="0.074" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="prompts with the environment username and saves a new credential" name="Read-LocalCredential.prompts with the environment username and saves a new credential" time="0.0817" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="prompts again when ForcePrompt is specified even if a credential exists" name="Read-LocalCredential.prompts again when ForcePrompt is specified even if a credential exists" time="0.0435" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects an empty application name" name="Read-LocalCredential.rejects an empty application name" time="0.0269" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\RunAllTests.tests.ps1" executed="True" result="Success" success="True" time="0.1042" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\RunAllTests.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Run All Tests Script" executed="True" result="Success" success="True" time="0.0196" asserts="0" description="Run All Tests Script">
+            <results>
+              <test-case description="Dummy test: Satisfies the requirement for a test file" name="Run All Tests Script.Dummy test: Satisfies the requirement for a test file" time="0.0161" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Save-ObjectToFile.tests.ps1" executed="True" result="Success" success="True" time="0.3884" asserts="0" description="C:\Users\MartinIves\src\kainos-ghub\Kainos-Devops-Scripting\PowerShell\UtilsModule\tests\Save-ObjectToFile.tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Passed Parameter Validation" executed="True" result="Success" success="True" time="0.1252" asserts="0" description="Passed Parameter Validation">
+            <results>
+              <test-suite type="TestFixture" name="Passed Parameter Validation.Testing Path parameter Validation" executed="True" result="Success" success="True" time="0.0659" asserts="0" description="Passed Parameter Validation.Testing Path parameter Validation">
+                <results>
+                  <test-case description="[Path] Null value Passed" name="Passed Parameter Validation.Testing Path parameter Validation.[Path] Null value Passed" time="0.0311" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="[Path] Empty value Passed" name="Passed Parameter Validation.Testing Path parameter Validation.[Path] Empty value Passed" time="0.0167" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Passed Parameter Validation.Testing InputObject parameter Validation" executed="True" result="Success" success="True" time="0.0758" asserts="0" description="Passed Parameter Validation.Testing InputObject parameter Validation">
+                <results>
+                  <test-case description="[InputObject] Null value Passed" name="Passed Parameter Validation.Testing InputObject parameter Validation.[InputObject] Null value Passed" time="0.0047" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="[InputObject] Empty value Passed" name="Passed Parameter Validation.Testing InputObject parameter Validation.[InputObject] Empty value Passed" time="0.0027" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Passed Parameter Validation.Testing InputObject parameter Validation" executed="True" result="Success" success="True" time="0.108" asserts="0" description="Passed Parameter Validation.Testing InputObject parameter Validation">
+                <results>
+                  <test-case description="[InputObject] Test error with System.Collections.Hashtable" name="Passed Parameter Validation.Testing InputObject parameter Validation.[InputObject] Test error with System.Collections.Hashtable" time="0.0285" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Function Save-ObjectToFile" executed="True" result="Success" success="True" time="0.2404" asserts="0" description="Function Save-ObjectToFile">
+            <results>
+              <test-case description="Check  has been created" name="Function Save-ObjectToFile.Check  has been created" time="0.0172" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Test object is not null" name="Function Save-ObjectToFile.Test object is not null" time="0.0148" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Read object is not null" name="Function Save-ObjectToFile.Read object is not null" time="0.0145" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Property count matched" name="Function Save-ObjectToFile.Property count matched" time="0.0195" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
