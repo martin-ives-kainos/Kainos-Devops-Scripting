@@ -1,3 +1,11 @@
+if ($null -eq $PesterPreference) {
+    $PesterPreference = New-PesterConfiguration
+    $PesterPreference.Output.Verbosity = 'Detailed'
+    # $PesterPreference.Debug.WriteDebugMessages = $true
+    # $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+    $PesterPreference.Filter.Tag = @('Unit')
+}
+
 BeforeAll {
     . (Join-Path $PSScriptRoot '..\..\public\Get-DateFromString.ps1' -Resolve)
     . (Join-Path $PSScriptRoot '..\..\public\powerpoint\Get-PptxShapeText.ps1' -Resolve)
@@ -30,7 +38,7 @@ BeforeAll {
 }
 
 Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlide' {
-    It 'returns only slides in the default slide range' {
+    It '[T001] returns only slides in the default slide range' {
         $presentation = [pscustomobject]@{
             Slides = @(
                 (New-TestPptxDatedSlide -SlideNumber 3)
@@ -46,7 +54,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlide' {
         @($result.SlideNumber) | Should -Be @(4, 10)
     }
 
-    It 'extracts a date and matching month line and hides the slide' {
+    It '[T002] extracts a date and matching month line and hides the slide' {
         $slide = New-TestPptxDatedSlide -SlideNumber 4 -Texts @(
             '2026-10-13'
             'October milestone'
@@ -67,7 +75,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlide' {
         $slide.SlideShowTransition.Hidden | Should -BeTrue
     }
 
-    It 'uses the configured slide range and month names' {
+    It '[T003] uses the configured slide range and month names' {
         $slide = New-TestPptxDatedSlide -SlideNumber 2 -Texts @('Launch milestone')
         $presentation = [pscustomobject]@{
             Slides = @(
@@ -85,7 +93,7 @@ Describe -Tag 'Unit' 'Get-PptxSlidesDatedSlide' {
         $slide.SlideShowTransition.Hidden | Should -BeTrue
     }
 
-    It 'rejects a start slide greater than the end slide' {
+    It '[T004] rejects a start slide greater than the end slide' {
         $presentation = [pscustomobject]@{ Slides = @() }
 
         { Get-PptxSlidesDatedSlide -InputObject $presentation -StartSlide 5 -EndSlide 4 } |
