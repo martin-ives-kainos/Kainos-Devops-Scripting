@@ -33,10 +33,12 @@
 
 # Invoke-AzCli.Tests.ps1
 
-$PesterPreference = New-PesterConfiguration
-# $PesterPreference.Debug.WriteDebugMessages = $true
-# $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
-$PesterPreference.Filter.Tag = @('Unit')
+if ($null -eq $PesterPreference) {
+    $PesterPreference = New-PesterConfiguration
+    # $PesterPreference.Debug.WriteDebugMessages = $true
+    # $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+    $PesterPreference.Filter.Tag = @('Unit')
+}
 
 function Invoke-MockAzCliInternalError {
     param (
