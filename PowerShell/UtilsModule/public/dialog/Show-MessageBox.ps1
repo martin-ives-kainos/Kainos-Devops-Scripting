@@ -36,7 +36,7 @@ function Show-MessageBox {
     }
     $effectiveTimeoutSeconds = if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds } else { $null }
 
-    Write-Output "Waiting for message box response..."
+    Write-Information "Waiting for message box response..."
     if ($IsWindows) {
         try {
             Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
@@ -110,10 +110,10 @@ namespace UtilsModule {
         }
     }
 
-    Write-Output ""
-    Write-Output "=== $Title ==="
-    Write-Output $Message
-    Write-Output ""
+    Write-Information ""
+    Write-Information "=== $Title ==="
+    Write-Information $Message
+    Write-Information ""
 
     switch ($Buttons) {
 
@@ -168,7 +168,7 @@ function Read-MessageBoxResponse {
             if ($Host.UI.RawUI.KeyAvailable) {
                 $key = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
                 if ($key.VirtualKeyCode -eq 13) {
-                    Write-Output "$outputMessage`n"
+                    Write-Information "$outputMessage`n"
                     return $response
                 }
                 if ($key.VirtualKeyCode -eq 8) {
@@ -182,7 +182,7 @@ function Read-MessageBoxResponse {
                     $outputMessage += $key.Character
                 }
             }
-            Write-Output ("{0}{1}" -f $outputMessage, $key.Character)
+            Write-Information ("{0}{1}" -f $outputMessage, $key.Character)
             Start-Sleep -Milliseconds 50
         }
 
