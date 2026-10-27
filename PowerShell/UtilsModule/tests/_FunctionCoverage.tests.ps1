@@ -3,6 +3,15 @@
         Bring this back to basics, manually look at testing each function and script.
 #>
 
+if ($null -eq $PesterPreference) {
+    $PesterPreference = New-PesterConfiguration
+    $PesterPreference.Output.Verbosity = 'Detailed'
+    # $PesterPreference.Debug.WriteDebugMessages = $true
+    # $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+    $PesterPreference.Filter.Tag = @('TestCoverage')
+}
+
+
 BeforeDiscovery {
 
     $helperPath = $PSScriptRoot
