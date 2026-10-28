@@ -10,41 +10,46 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '..\..\UtilsModule.psd1' -Resolve)
 }
 
-Describe 'Get-PathEnvVar' -Tags 'Unit' {
-    It 'returns the machine Path split on semicolons with boundary semicolons removed' {
-        $rawPath = [Environment]::GetEnvironmentVariable(
-            'Path',
-            [EnvironmentVariableTarget]::Machine
-        )
-        $expected = $rawPath.Trim(';') -split ';'
+Describe 'Get-PathEnvVar' {
+    BeforeAll {
+        Mock Read-EnvironmentVariable -ModuleName 'UtilsModule' {
+            param ($VariableName, $Scope)
+            Write-Host "Mock Reading environment variable $VariableName for scope $Scope" -ForegroundColor Cyan
+            return ("{0}1;{0}2;{0}3;Both1;Both2;Both3" -f $Scope)
+        }
 
-        $result = @(Get-PathEnvVar -VariableName Path -Scope Machine)
+        $t_settings = @{
+            Scope        = 'Machine'
+            VariableName = 'Path'
+        }
+        $t_settings.RawPath = ("{0}1;{0}2;{0}3;Both1;Both2;Both3" -f $t_settings.Scope)
+        $t_settings.Expected = $t_settings.RawPath.Trim(';') -split ';'
+        Write-Verbose "Test settings: $($t_settings | Out-String)"
+    }
+    It '[T-001] returns the machine Path split on semicolons with boundary semicolons removed' -Tag 'Unit' {
 
-        $result.Count | Should -Be $expected.Count
-        for ($i = 0; $i -lt $expected.Count; $i++) {
-            $result[$i] | Should -Be $expected[$i]
+        $result = @(Get-PathEnvVar -VariableName $t_settings.VariableName -Scope $t_settings.Scope)
+
+        $result.Count | Should -Be $t_settings.Expected.Count
+        for ($i = 0; $i -lt $t_settings.Expected.Count; $i++) {
+            $result[$i] | Should -Be $t_settings.Expected[$i]
         }
     }
 
-    It 'accepts Name as an alias for VariableName' {
-        $expected = [Environment]::GetEnvironmentVariable(
-            'Path',
-            [EnvironmentVariableTarget]::Machine
-        ).Trim(';') -split ';'
+    It '[T-002] accepts Name as an alias for VariableName' -Tag 'Unit' {
+        $result = @(Get-PathEnvVar -Name $t_settings.VariableName -Scope $t_settings.Scope)
 
-        $result = @(Get-PathEnvVar -Name Path -Scope Machine)
-
-        $result.Count | Should -Be $expected.Count
-        for ($i = 0; $i -lt $expected.Count; $i++) {
-            $result[$i] | Should -Be $expected[$i]
+        $result.Count | Should -Be $t_settings.Expected.Count
+        for ($i = 0; $i -lt $t_settings.Expected.Count; $i++) {
+            $result[$i] | Should -Be $t_settings.Expected[$i]
         }
     }
 
-    It 'rejects unsupported environment variable names' {
+    It '[T-003] rejects unsupported environment variable names' -Tag 'Unit' {
         { Get-PathEnvVar -VariableName 'Other' } | Should -Throw
     }
 
-    It 'rejects unsupported scopes' {
+    It '[T-004] rejects unsupported scopes' -Tag 'Unit' {
         { Get-PathEnvVar -VariableName Path -Scope Process } | Should -Throw
     }
 }

@@ -94,10 +94,7 @@ function Get-PathEnvVar {
         [string]$Scope = "User"
     )
 
-    # Retrieve current environment paths from both user and system scopes
-    $target = [System.EnvironmentVariableTarget]::$Scope
-    $rawPath = [Environment]::GetEnvironmentVariable($VariableName, $target).Trim(';')
-    return ($rawPath -split ';')
+    return ((Read-EnvironmentVariable -VariableName $VariableName -Scope $Scope) -split ';')
 }
 
 function Read-EnvironmentVariable {
