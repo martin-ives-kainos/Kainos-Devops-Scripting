@@ -21,6 +21,65 @@ if ($privateData.Keys -notcontains 'ScriptScopes') {
 }
 
 #region Embedded Functions
+
+<#
+.SYNOPSIS
+Identifies user environment paths already defined in Machine path.
+
+.DESCRIPTION
+Identifies user environment paths already defined in Machine path.
+
+.PARAMETER VariableName
+The name of the environment variable to update. Must be either "Path" or "PSModulePath".
+
+.PARAMETER NewPath
+The full path to add to the environment variable. This path will be validated against
+both user and system environment variables to prevent duplicates.
+
+.EXAMPLE
+Get-DuplicatedUserEnvPath -VariableName "Path"
+
+This example identifies any paths in the user's Path environment variable that are already defined in the system environment.
+
+.EXAMPLE
+Get-DuplicatedUserEnvPath -VariableName "PSModulePath"
+
+This example adds "C:\CustomModules" to the user's PSModulePath environment variable.
+
+.NOTES
+- The function checks both user and system environment variables to identify duplicates
+
+.LINK
+Get-DuplicatedUserEnvPath
+#>
+function Get-DuplicatedUserEnvPath {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Path", "PSModulePath")]
+        [string]$VariableName
+    )
+    begin {
+        Write-Verbose ('[{0}|{1}] --STARTED: Identifying duplicated user environment paths for $VariableName' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)
+        $duplicatedPaths = @()
+    }
+    process {
+        # Retrieve current environment paths from both user and system scopes
+        $userPaths = (Read-EnvironmentVariable -VariableName $VariableName -Scope 'User') -split ';'
+        $systemPaths = (Read-EnvironmentVariable -VariableName $VariableName -Scope 'Machine') -split ';'
+
+        foreach ($path in $userPaths) {
+            if ($systemPaths -contains $path) {
+                $duplicatedPaths += $path
+            }
+        }
+        return $duplicatedPaths
+    }
+    end {
+        Write-Verbose ('[{0}|{1}] --COMPLETED: Identifying duplicated user environment paths for $VariableName' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)
+    }
+}
 function Get-PathEnvVar {
     [CmdletBinding()]
     [OutputType([array])]
@@ -40,10 +99,20 @@ function Get-PathEnvVar {
     $rawPath = [Environment]::GetEnvironmentVariable($VariableName, $target).Trim(';')
     return ($rawPath -split ';')
 }
-Export-ModuleMember -Function Update-UserEnvPath, Get-PathEnvVar
 
+function Read-EnvironmentVariable {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$VariableName,
+        [ValidateSet("User", "Machine")]
+        [string]$Scope = "User"
+    )
+    Write-Verbose ('[{0}|{1}] --RETRIEVING: Reading environment variable $VariableName for scope $Scope' -f (Get-Date -Format 'yyyy-MMM-dd HH:mm:ss'), (Get-PSCallStack)[0].FunctionName)
+    return [Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::$Scope)
+}
 
 function Update-UserEnvPath {
+
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true)]
@@ -157,7 +226,8 @@ function Update-UserEnvPath {
             if ($this.IsDirty) {
                 Write-Host "Saving user path for $($this.Name)"
                 [Environment]::SetEnvironmentVariable($this.Name, ($this.PathList.ToArray() -join ';'), [System.EnvironmentVariableTarget]::User)
-            } else {
+            }
+            else {
                 Write-Host "Nothing to save"
             }
         }
@@ -177,7 +247,7 @@ function Update-UserEnvPath {
     }
 
 }
-Export-ModuleMember -Function Update-UserEnvPath
+Export-ModuleMember -Function Read-EnvironmentVariable, Get-DuplicatedUserEnvPath, Get-PathEnvVar, Update-UserEnvPath
 #endregion Embedded Functions
 
 $ModuleManifest | Add-Member -MemberType ScriptMethod -Name PrivateDataValue -Value {

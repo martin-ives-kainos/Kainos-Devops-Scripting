@@ -71,7 +71,9 @@
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = @(
         'Update-UserEnvPath',
-        'Get-PathEnvVar'
+        'Get-PathEnvVar',
+        'Get-DuplicatedUserEnvPath',
+        'Read-EnvironmentVariable'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -126,8 +128,6 @@
         ScriptScopes        = @('classes', 'private', 'public')
 
         ScriptsToPreload    = @(
-            'Update-UserEnvPath.ps1',
-            'Get-PathEnvVar.ps1',
             'Get-DuplicatedUserEnvPaths.ps1',
             'Install-ReqdUserModule.ps1'
         )
