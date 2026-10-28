@@ -20,6 +20,165 @@ if ($privateData.Keys -notcontains 'ScriptScopes') {
     $privateData['ScriptScopes'] = @('classes', 'private', 'public')
 }
 
+#region Embedded Functions
+function Get-PathEnvVar {
+    [CmdletBinding()]
+    [OutputType([array])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Path", "PSModulePath")]
+        [Alias('Name')]
+        [string]$VariableName,
+
+
+        [ValidateSet("User", "Machine")]
+        [string]$Scope = "User"
+    )
+
+    # Retrieve current environment paths from both user and system scopes
+    $target = [System.EnvironmentVariableTarget]::$Scope
+    $rawPath = [Environment]::GetEnvironmentVariable($VariableName, $target).Trim(';')
+    return ($rawPath -split ';')
+}
+Export-ModuleMember -Function Update-UserEnvPath, Get-PathEnvVar
+
+
+function Update-UserEnvPath {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Path", "PSModulePath")]
+        [string]$VariableName,
+
+        [Parameter(Mandatory = $true)]
+        [Alias('NewPath', 'NewPaths')]
+        [string[]]$Paths,
+
+        [ValidateSet('Add', 'Remove')]
+        [string]$Action = 'Add'
+
+    )
+
+    # Retrieve current environment paths from both user and system scopes
+
+    class EnvPaths {
+        [string]$Name
+        [System.Collections.Generic.List[string]]$UserPaths = @()
+        [System.Collections.Generic.List[string]]$MachinePaths = @()
+        [System.Collections.Generic.List[string]]$PathList
+        [bool]$IsDirty
+
+        EnvPaths([string]$Name) {
+            $this.Name = $Name
+            $this.LoadPathList()
+
+        }
+
+        [void] LoadPathList() {
+            $this.UserPaths = [System.Collections.Generic.List[string]](Get-PathEnvVar $this.Name)
+            $this.MachinePaths = [System.Collections.Generic.List[string]](Get-PathEnvVar $this.Name 'Machine')
+
+            $this.PathList = [System.Collections.Generic.List[string]]::new()
+
+            foreach ($path in ($this.UserPaths | Select-Object -Unique -CaseInsensitive)) {
+                $trimmed = $path.Trim()
+                if (-not [string]::IsNullOrWhiteSpace($trimmed) -and $this.MachinePaths -notcontains $trimmed) {
+                    $this.PathList.Add($trimmed)
+                }
+            }
+            $this.IsDirty = $false
+        }
+
+        [string[]] NormalisedPaths([string[]]$Paths) {
+            [string[]]$normList = @()
+            foreach ($path in $Paths) {
+                try {
+                    $normList += [IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables($path)).TrimEnd('\')
+                }
+                catch {
+                    $normList += $path.TrimEnd('\')
+                }
+            }
+            return $normList
+        }
+
+        [string] FullExpandedPath([string]$RawPath) {
+            return try {
+                [IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables($RawPath)).TrimEnd('\')
+            }
+            catch {
+                $existing.TrimEnd('\')
+            }
+        }
+
+        [bool] ExistsInMachinePaths([string]$Path) {
+            return $this.ExistsInPathList($Path, $this.MachinePaths)
+        }
+        [bool] ExistsInPathList([string]$Path) {
+            return $this.ExistsInPathList($Path, $this.PathList)
+        }
+        [bool] ExistsInUserPaths([string]$Path) {
+            return $this.ExistsInPathList($Path, $this.UserPaths)
+        }
+        [bool] ExistsInPathList([string]$Path, [System.Collections.Generic.List[string]]$TargetList) {
+            return ($TargetList.IndexOf($Path) -gt -1)
+        }
+
+        [void] AddPaths([string[]]$Paths) {
+
+            foreach ($newPath in $this.NormalisedPaths($Paths)) {
+                if ($this.ExistsInPathList($newPath)) {
+                    Write-Host "Path $newPath already exists, skipped"
+                }
+                else {
+                    Write-Host "Path $newPath will be added when saved"
+                    $this.PathList.Add($newPath)
+                    $this.IsDirty = $true
+                }
+            }
+        }
+
+        [void] RemovePaths([string[]]$Paths) {
+
+            foreach ($oldPath in $this.NormalisedPaths($Paths)) {
+                if ($this.ExistsInPathList($oldPath)) {
+                    $index = $this.PathList.IndexOf($oldPath)
+                    $this.PathList.RemoveAt($index)
+                    Write-Host "Path $oldPath found in list at $index, will be removed on save"
+                    $this.IsDirty = $true
+                }
+                else {
+                    Write-Host "Path $oldPath not found. skipped"
+                }
+            }
+        }
+
+        [void] Save() {
+            if ($this.IsDirty) {
+                Write-Host "Saving user path for $($this.Name)"
+                [Environment]::SetEnvironmentVariable($this.Name, ($this.PathList.ToArray() -join ';'), [System.EnvironmentVariableTarget]::User)
+            } else {
+                Write-Host "Nothing to save"
+            }
+        }
+    }
+
+    $myEnvPaths = [EnvPaths]::New($VariableName)
+    if ($PSCmdlet.ShouldProcess("User environment variable '$VariableName'", "$Action paths: $($Paths -join ';')")) {
+        switch ($Action) {
+            'Add' {
+                $myEnvPaths.AddPaths($Paths)
+            }
+            'Remove' {
+                $myEnvPaths.RemovePaths($Paths)
+            }
+        }
+        $myEnvPaths.Save()
+    }
+
+}
+Export-ModuleMember -Function Update-UserEnvPath
+#endregion Embedded Functions
 
 $ModuleManifest | Add-Member -MemberType ScriptMethod -Name PrivateDataValue -Value {
     param([string]$key)

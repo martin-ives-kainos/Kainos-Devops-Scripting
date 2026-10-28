@@ -1,6 +1,16 @@
-. (Join-Path $PSScriptRoot '..\public\Get-PathEnvVar.ps1')
+if ($null -eq $PesterPreference) {
+    $PesterPreference = New-PesterConfiguration
+    $PesterPreference.Output.Verbosity = 'Detailed'
+    # $PesterPreference.Debug.WriteDebugMessages = $true
+    # $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+    $PesterPreference.Filter.Tag = @('Unit')
+}
 
-Describe 'Get-PathEnvVar' {
+BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '..\..\UtilsModule.psd1' -Resolve)
+}
+
+Describe 'Get-PathEnvVar' -Tags 'Unit' {
     It 'returns the machine Path split on semicolons with boundary semicolons removed' {
         $rawPath = [Environment]::GetEnvironmentVariable(
             'Path',

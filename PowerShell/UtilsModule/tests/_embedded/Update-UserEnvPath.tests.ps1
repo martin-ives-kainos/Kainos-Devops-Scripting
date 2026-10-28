@@ -1,3 +1,12 @@
+if ($null -eq $PesterPreference) {
+    $PesterPreference = New-PesterConfiguration
+    $PesterPreference.Output.Verbosity = 'Detailed'
+    # $PesterPreference.Debug.WriteDebugMessages = $true
+    # $PesterPreference.Debug.WriteDebugMessagesFrom = "Mock"
+    $PesterPreference.Filter.Tag = @('Unit')
+}
+
+
 BeforeAll {
     . (Join-Path $PSScriptRoot '..\..\public\Get-PathEnvVar.ps1')
     . (Join-Path $PSScriptRoot '..\..\public\system\Update-UserEnvPath.ps1')
