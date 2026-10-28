@@ -20,7 +20,7 @@ if ($dupPath.Count -gt 0) {
 }
 
 # determine user specific module paths
-$userPaths = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
+$userPaths = ((Read-EnvironmentVariable -VariableName "PSModulePath" -scope User) -split ';')
 
 $modulePaths = @{}
 
