@@ -216,10 +216,20 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
             [int]$MaxDepth = 15,
             [switch]$ReturnStringIfNull
         )
+        $RootPath = [System.IO.Path]::GetFullPath($RootPath)
+        $pathRoot = [System.IO.Path]::GetPathRoot($RootPath)
+        $rootFolders = @(
+            $RootPath.Substring($pathRoot.Length) -split '[\\/]+' | Where-Object { $_ -and $_ -notmatch '^[A-Za-z]:$' }
+        )
         $depth = 0
+
         $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        while ($null -eq $foundFile -and $depth -lt $MaxDepth) {
-            $RootPath = Join-Path $RootPath '..' -Resolve
+        while ($null -eq $foundFile -and $depth -lt $MaxDepth -and $depth -lt $rootFolders.Count) {
+            $parentPath = Split-Path -Path $RootPath -Parent
+            if ([string]::IsNullOrEmpty($parentPath) -or $parentPath -eq $RootPath) {
+                break
+            }
+            $RootPath = $parentPath
             $foundFile = Get-ChildItem -Path $RootPath -Recurse -Filter $FileName -File -ErrorAction SilentlyContinue | Select-Object -First 1
             $depth++
         }
@@ -243,6 +253,7 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
     function Get-ModuleManifestData {
         [CmdletBinding()]
         [OutputType([System.Collections.Hashtable])]
+        [OutputType([PSObject])]
         param (
             [Parameter(Mandatory)]
             [ValidateScript({ (Test-Path $_ -PathType Leaf) })]
@@ -257,7 +268,8 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
                 TestFolders      = @('tests')
                 TestExcludeRules = @()
                 TestTags         = @('Unit', 'Integration', 'Functional', 'Smoke', 'Debug', 'All')
-            }
+            },
+            [switch]$AsObject
         )
         begin {
             Write-Verbose ('[{0:yyyy-MM-dd HH:mm:ss}] {1} BEGIN' -f (Get-Date), $funcName)
@@ -298,7 +310,21 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
                     }
                 }
             }
-
+            if ($AsObject) {
+                $t_ManifestObject = [PSCustomObject]::new()
+                $t_ManifestObject | Add-Member -MemberType NoteProperty -Name Keys -Value $t_Manifest.PrivateData.Keys
+                foreach ($key in $t_Manifest.PrivateData.Keys) {
+                    $t_ManifestObject | Add-Member -MemberType NoteProperty -Name $key -Value $t_Manifest.PrivateData[$key]
+                }
+                # TODO: Consider adding additional processing or validation for the manifest object if needed
+                $t_ManifestObject | Add-Member -MemberType ScriptMethod -Name 'TestableFolders' -Value {
+                    if ($this.Keys -contains 'ScriptScopes') {
+                        return $this.ScriptScopes
+                    }
+                    return @('Classes', 'Private', 'Public')
+                }
+                return $t_ManifestObject
+            }
             return ($t_Manifest.PrivateData)
         }
         end {
@@ -321,9 +347,10 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         if (!$SkipRoot) {
             $folderList.Add("Root", $ModulePath)
         }
-        Get-ChildItem -Path (Join-Path $PSScriptRoot '..' -Resolve) -Directory -Exclude '.*' | ForEach-Object {
-            $folderList.Add($_.Name, $_.FullName)
-        }
+        #TODO: Iterate through the testable folders defined in the manifest and add them to the folder list
+        $manifestData = Get-ModuleManifest -ModulePath (Get-ChildItem ) -AsObject
+
+        $folderList.Add($_.Name, $_.FullName) += $manifestData.TestableFolders
 
         return $folderList
     }

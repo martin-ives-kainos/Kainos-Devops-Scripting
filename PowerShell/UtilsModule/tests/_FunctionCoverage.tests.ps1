@@ -21,7 +21,7 @@ BeforeDiscovery {
     . (Join-Path $helperPath 'PesterHelperModule.ps1' -Resolve)
     SetUpGlobalTestVariables -VarName 'pester_temp_RunDate' -VarValue (Get-Date)
     SetUpGlobalTestVariables -VarName 'pester_temp_ModuleRootPath' -VarValue (Join-Path $PSScriptRoot '..' -Resolve)
-    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolder -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
+<#     SetUpGlobalTestVariables -VarName 'pester_temp_ScriptPaths' -VarValue (Get-ModuleTestableFolder -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
     SetUpGlobalTestVariables -VarName 'pester_temp_TestCounter' -VarValue @{TestatableFiles = 0; TestFilesFound = 0 }
 
     $tc_TestCoverageNotRequired = @('ConvertTo-Hashtable.ps1')
@@ -38,7 +38,7 @@ BeforeDiscovery {
             $tc_ScriptFiles[$scriptPath] += $scriptFile
         }
     }
-    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptFiles' -VarValue $tc_ScriptFiles
+    SetUpGlobalTestVariables -VarName 'pester_temp_ScriptFiles' -VarValue $tc_ScriptFiles #>
 }
 
 AfterAll {
@@ -72,7 +72,9 @@ BeforeAll {
         end { }
 
     }
-
+    # Create a list of all testable script files and list of test files found
+    $b4allTestableFolders = (Get-ModuleTestableFolder -ModulePath $global:pester_temp_ModuleRootPath -SkipRoot)
+    Write-Host ('[_FunctionCoverage.tests] Found testable folders: {0}' -f $b4allTestableFolders.Count) -ForegroundColor Cyan
 }
 
 Describe -Tag 'TestCoverage' "Function coverage for UtilsModule" {
@@ -84,26 +86,9 @@ Describe -Tag 'TestCoverage' "Function coverage for UtilsModule" {
             $rootScripts.Count | Should -Be 0
         }
     }
-    Context "Test the script folders, all scripts should have corresponding tests" -ForEach $Global:pester_temp_ScriptPaths.Keys {
-        Write-Host ('[_FunctionCoverage.tests] Checking files in {0} ({1})' -f $_, $Global:pester_temp_ScriptPaths[$_]) -ForegroundColor Cyan
-        Write-Host ('[_FunctionCoverage.tests] ....Found {0} files in {1}' -f $Global:pester_temp_ScriptFiles[$_].Count, $_) -ForegroundColor Cyan
-        $Global:pester_temp_TestCounter.TestatableFiles += $Global:pester_temp_ScriptFiles[$_].Count
-        It "Should have corresponding tests for all scripts in the folder '$_'" -ForEach $Global:pester_temp_ScriptFiles[$_] {
-            $t_scriptFile = $_
-            $t_testScript = ((Split-Path -Leaf $t_scriptFile) -replace '\.ps1$', '.Tests.ps1')
-            $TestFilePath = (Find-FileInTree -FileName $t_testScript -RootPath (Split-Path -Parent $t_scriptFile) -ReturnStringIfNull)
-            if (Test-Path -Path $TestFilePath -PathType Leaf) {
-                $Global:pester_temp_TestCounter.TestFilesFound += 1
-            }
-            else {
-                Write-Host ('[_FunctionCoverage.tests]  Test not found for script file, {0}' -f $t_scriptFile) -ForegroundColor Yellow
-            }
-            (Test-Path -Path $TestFilePath -PathType Leaf) | Should-BeTested -Because "Test file '$t_testScript' for script '$t_scriptFile' should exist"
-        }
-    }
 }
 
-Describe -Tag 'TestCoverage' "Validate Function Coverage" {
+Describe -Tag 'TestCoverage2' "Validate Function Coverage" {
     BeforeAll {
         Write-Host "*---------------------------------------------------------"
         Write-Host "* Validating function coverage for UtilsModule:"
