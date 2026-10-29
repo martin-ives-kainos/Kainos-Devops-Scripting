@@ -8,18 +8,18 @@ $ErrorActionPreference = 'Stop'
         - Checking and installing required modules
         - Updating module paths
  #>
-$ModuleFilePath = $PSCommandPath
+$manifestFilePath = (Resolve-Path -LiteralPath ($PSCommandPath -replace '\.psm1$', '.psd1'))
 
 # $ModuleName = [System.IO.Path]::GetFileNameWithoutExtension($ModuleFilePath)
 
-$ModuleManifest = Import-PowerShellDataFile -Path (Resolve-Path -LiteralPath ($ModuleFilePath -replace '\.psm1$', '.psd1') -ErrorAction Stop)
-
-$privateData = $ModuleManifest.PrivateData
-
-if ($privateData.Keys -notcontains 'ScriptScopes') {
-    $privateData['ScriptScopes'] = @('classes', 'private', 'public')
+$ModuleManifest = Import-PowerShellDataFile -Path $manifestFilePath -ErrorAction Stop
+$ModuleManifest | Add-Member -MemberType ScriptMethod -Name PrivateDataValue -Value {
+    param([string]$key)
+    if (-not $this.PrivateData.ContainsKey($key)) {
+        throw "Key '$key' not found in PrivateData."
+    }
+    return $this.PrivateData[$key]
 }
-
 #region Embedded Functions
 
 <#
@@ -244,15 +244,15 @@ function Update-UserEnvPath {
     }
 
 }
-Export-ModuleMember -Function Read-EnvironmentVariable, Get-DuplicatedUserEnvPath, Get-PathEnvVar, Update-UserEnvPath
-#endregion Embedded Functions
 
-$ModuleManifest | Add-Member -MemberType ScriptMethod -Name PrivateDataValue -Value {
-    param([string]$key)
-    if (-not $this.PrivateData.ContainsKey($key)) {
-        throw "Key '$key' not found in PrivateData."
-    }
-    return $this.PrivateData[$key]
+$ExportFunctionList = Get-ChildItem Function: | Where-Object { $_.ScriptBlock.File -eq $PSCommandPath } | Select-Object -ExpandProperty Name
+
+#Export-ModuleMember -Function Read-EnvironmentVariable, Get-DuplicatedUserEnvPath, Get-PathEnvVar, Update-UserEnvPath
+#endregion Embedded Functions
+$privateData = $ModuleManifest.PrivateData
+
+if ($privateData.Keys -notcontains 'ScriptScopes') {
+    $privateData['ScriptScopes'] = @('classes', 'private', 'public')
 }
 
 foreach ($scope in $ModuleManifest.PrivateDataValue('ScriptScopes') | Sort-Object) {
@@ -263,13 +263,38 @@ foreach ($scope in $ModuleManifest.PrivateDataValue('ScriptScopes') | Sort-Objec
         }
 
         if ($scope -like 'public*') {
-            Export-ModuleMember -Function ($scriptFiles | Select-Object -ExpandProperty BaseName)
+            $ExportFunctionList = $scriptFiles | Select-Object -ExpandProperty BaseName
+            # Export-ModuleMember -Function ($scriptFiles | Select-Object -ExpandProperty BaseName)
         }
     }
     catch {
         Write-Warning "Error accessing script scope '$scope': $($_.Exception.Message)"
     }
 }
+
+if ($ExportFunctionList.Count -gt 0) {
+    Export-ModuleMember -Function $ExportFunctionList
+}
+
+# Compare the functions exported by the module manifest with the functions actually exported
+$manifestDirty = $false
+foreach ($exportFunc in $ExportFunctionList) {
+    if ($ModuleManifest.FunctionsToExport -notcontains $exportFunc) {
+        Write-Warning "Function '$exportFunc' is required to be exported missing from  the module manifest."
+        $ModuleManifest.FunctionsToExport += $exportFunc
+        $manifestDirty = $true
+    }
+}
+if ($manifestDirty) {
+#    $ModuleManifest | Export-PowerShellDataFile -Path $manifestFilePath -Force
+    if ((-not $env:TF_BUILD) -and (-not $env:GITHUB_ACTION)) {
+        Write-Host "Module manifest changes exported to $manifestFilePath." -ForegroundColor Yellow
+        Update-ModuleManifest -Path $manifestFilePath -FunctionsToExport $ModuleManifest.FunctionsToExport
+    } else {
+        Write-Host "Module manifest changes detected but not exported due to pipeline environment." -ForegroundColor Yellow
+    }
+}
+
 
 $envPaths = (Get-PathEnvVar -Name 'PSModulePath')
 

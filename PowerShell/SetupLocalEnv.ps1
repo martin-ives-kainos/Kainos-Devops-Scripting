@@ -88,7 +88,7 @@ Update-UserEnvPath -VariableName "Path" -Paths @($pwshPath) -Action Add
 $dupPath = Get-DuplicatedUserEnvPath -VariableName "PSModulePath"
 if ($dupPath.Count -gt 0) {
     Write-Host "Duplicate entries found in user PSModulePath: $($dupPath -join ', ')"
-    $userPSModulePath = [Environment]::GetEnvironmentVariable("PSModulePath", [System.EnvironmentVariableTarget]::User) -split ';'
+    $userPSModulePath = ((Read-EnvironmentVariable -VariableName "PSModulePath" -Scope 'User') -split ';')
     $cleanedPaths = $userPSModulePath | Where-Object { $dupPath -notcontains $_ }
     [Environment]::SetEnvironmentVariable("PSModulePath", ($cleanedPaths -join ';'), [System.EnvironmentVariableTarget]::User)
     Write-Host "Cleaned up duplicate entries in user PSModulePath."

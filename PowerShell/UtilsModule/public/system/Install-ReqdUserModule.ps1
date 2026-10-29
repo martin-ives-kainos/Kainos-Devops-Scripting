@@ -24,7 +24,7 @@ function Install-ReqdUserModule {
     #
     # Find a writable user module path
     #
-    $userModulePaths = [Environment]::GetEnvironmentVariable('PSModulePath','User') -split [IO.Path]::PathSeparator | Where-Object { $_ }
+    $userModulePaths = (Read-EnvironmentVariable -VariableName 'PSModulePath' -Scope 'User') -split [IO.Path]::PathSeparator | Where-Object { $_ }
 
     $modulePath = $userModulePaths |
     Where-Object {
@@ -67,9 +67,7 @@ function Install-ReqdUserModule {
             -AllowClobber `
             -ErrorAction Stop
 
-        $installedModule = Get-Module -ListAvailable -Name $Name |
-        Sort-Object Version -Descending |
-        Select-Object -First 1
+        $installedModule = Get-Module -ListAvailable -Name $Name | Sort-Object Version -Descending | Select-Object -First 1
 
         if ($installedModule -and $installedModule.Version -ge $galleryModule.Version) {
             return $installedModule

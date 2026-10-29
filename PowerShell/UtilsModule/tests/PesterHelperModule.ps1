@@ -21,6 +21,44 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
+    function ConvertFrom-PesterBoundParameters {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory = $true,
+                Position = 0,
+                ValueFromPipeline = $true,
+                ValueFromPipelineByPropertyName = $true,
+                HelpMessage = 'The bound parameters from Pester')]
+            [ValidateNotNullOrEmpty()]
+            [hashtable]            $PesterBoundParameters
+        )
+        process {
+            $params = @{}
+
+            foreach ($key in $PesterBoundParameters.Keys) {
+                $p_Type = $PesterBoundParameters[$key].GetType().Name
+                switch ($p_Type) {
+                    'string' {
+                        $params.Add($key, $PesterBoundParameters[$key])
+                        break
+                    }
+                    'string[]' {
+                        $params.Add($key, ($PesterBoundParameters[$key] -join ','))
+                        break
+                    }
+                    'Version' {
+                        $params.Add($key, $PesterBoundParameters[$key].ToString())
+                        break
+                    }
+                    default {
+                        Write-Host ("{0} Adding unrecognized parameter: {1} of type {2}" -f $stepId, $key, $p_Type) -ForegroundColor Cyan
+                        $params.Add($key, $PesterBoundParameters[$key])
+                    }
+                }
+            }
+            return $params
+        }
+    }
     function ConvertFrom-JsonFile {
         [CmdletBinding()]
         param (
@@ -447,6 +485,20 @@ New-Module -Name 'PesterHelper' -ScriptBlock {
         }
     }
 
+    function Get-PesterStepId {
+        [CmdletBinding()]
+        param(
+            [OutputType([string])]
+            [Parameter(Mandatory)]
+            [ValidateNotNullOrEmpty()]
+            [string]$testName
+        )
+
+        if ($testName -match '\[(.*?)\]') {
+            return $Matches[0]
+        }
+        return $testName
+    }
     function GetScriptFileNames {
         [CmdletBinding()]
         [OutputType([string[]])]
